@@ -37,14 +37,16 @@ async def send_message(
         user = await user_service.create_or_get_user(db, request.session_id)
         
         # Save user message
-        existing_messages = chat_repository.get_messages_by_user(db, user.id)
-        user_message_data = {
-            "user_id": user.id,
-            "message_id": f"user_{user.id}_{len(existing_messages)}",
-            "role": "user",
-            "content": request.message
-        }
-        chat_repository.create_message(db, user_message_data)
+        import uuid
+        user_message = ChatMessage(
+            user_id=user.id,
+            message_id=str(uuid.uuid4()),
+            role="user",
+            content=request.message
+        )
+        db.add(user_message)
+        db.commit()
+        db.refresh(user_message)
         
         # Send to OpenAI
         await openai_service.send_message(str(user.thread_id), request.message)
@@ -54,14 +56,15 @@ async def send_message(
         )
         
         # Save assistant message
-        updated_messages = chat_repository.get_messages_by_user(db, user.id)
-        assistant_message_data = {
-            "user_id": user.id,
-            "message_id": f"assistant_{user.id}_{len(updated_messages)}",
-            "role": "assistant",
-            "content": assistant_response
-        }
-        assistant_message = chat_repository.create_message(db, assistant_message_data)
+        assistant_message = ChatMessage(
+            user_id=user.id,
+            message_id=str(uuid.uuid4()),
+            role="assistant",
+            content=assistant_response
+        )
+        db.add(assistant_message)
+        db.commit()
+        db.refresh(assistant_message)
         
         return {
             "success": True,
@@ -94,13 +97,16 @@ async def select_categories(
         confirmation_message = f"Perfect! I've configured your dashboard to monitor {len(request.categories)} data categories: {', '.join(category_names)}. Your personalized HEOR Signal dashboard is now being prepared."
         
         # Save assistant message
-        assistant_message_data = {
-            "user_id": user.id,
-            "message_id": f"assistant_{user.id}_categories",
-            "role": "assistant", 
-            "content": confirmation_message
-        }
-        chat_repository.create_message(db, assistant_message_data)
+        import uuid
+        assistant_message = ChatMessage(
+            user_id=user.id,
+            message_id=str(uuid.uuid4()),
+            role="assistant", 
+            content=confirmation_message
+        )
+        db.add(assistant_message)
+        db.commit()
+        db.refresh(assistant_message)
         
         return {
             "success": True,
