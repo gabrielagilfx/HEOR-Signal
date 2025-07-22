@@ -27,7 +27,6 @@ interface MessagesResponse {
 
 export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleChatInterfaceProps) {
   const [inputMessage, setInputMessage] = useState("");
-  const [showCategorySelection, setShowCategorySelection] = useState(true);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
@@ -37,16 +36,15 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Category selection is shown if onboarding is not completed
+  const showCategorySelection = !onboardingCompleted;
+
   // Load messages on mount and when sessionId changes
   useEffect(() => {
-    console.log('SimpleChatInterface - onboardingCompleted:', onboardingCompleted);
-    console.log('SimpleChatInterface - showCategorySelection will be:', !onboardingCompleted);
     if (sessionId) {
       loadMessages();
-      // Hide category selection if onboarding is already completed
-      setShowCategorySelection(!onboardingCompleted);
     }
-  }, [sessionId, onboardingCompleted]);
+  }, [sessionId]);
 
   const loadMessages = async () => {
     try {
@@ -147,9 +145,10 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
       const result = await response.json();
       
       if (result.success) {
-        setShowCategorySelection(false);
         // Reload messages to get the confirmation message
         await loadMessages();
+        // Force page refresh to update onboardingCompleted state
+        window.location.reload();
       }
     } catch (error) {
       console.error('Error selecting categories:', error);
@@ -213,10 +212,7 @@ To get started, please select the data categories you'd like to monitor. You can
       </div>
 
       {/* Chat Input - Hidden during category selection */}
-      {(() => {
-        console.log('SimpleChatInterface - rendering chat input, showCategorySelection:', showCategorySelection);
-        return !showCategorySelection;
-      })() && (
+      {!showCategorySelection && (
         <Card className="border border-border shadow-sm p-4 flex-shrink-0">
           <div className="flex items-end space-x-3">
             <div className="flex-1">
