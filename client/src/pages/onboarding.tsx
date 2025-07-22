@@ -13,6 +13,7 @@ interface UserStatus {
 
 export default function Onboarding() {
   const [sessionId, setSessionId] = useState<string>("");
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const queryClient = useQueryClient();
 
   // Initialize user session
@@ -27,9 +28,11 @@ export default function Onboarding() {
     onSuccess: (data) => {
       console.log('Setting session ID:', data.session_id);
       setSessionId(data.session_id);
+      setIsInitialized(true);
     },
     onError: (error) => {
       console.error('Failed to initialize user:', error);
+      setIsInitialized(true); // Still mark as initialized to prevent retry loop
     },
   });
 
@@ -40,10 +43,17 @@ export default function Onboarding() {
   });
 
   useEffect(() => {
-    // Initialize user on component mount
-    initUserMutation.mutate();
+    // Initialize user only once on component mount
+    if (!isInitialized && !initUserMutation.isPending) {
+      console.log('Starting user initialization...');
+      initUserMutation.mutate();
+    }
+  }, [isInitialized, initUserMutation]);
+
+  useEffect(() => {
+    // Listen for onboarding completion events only when we have a session
+    if (!sessionId) return;
     
-    // Listen for onboarding completion events
     const handleOnboardingCompleted = () => {
       queryClient.invalidateQueries({ queryKey: ['/api/user/status', sessionId] });
     };
