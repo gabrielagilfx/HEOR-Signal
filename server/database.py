@@ -16,7 +16,8 @@ def get_db():
 
 # Import models to register them with Base
 from models.user import User
-from models.chat import ChatMessage
+from models.chat import Message
+from models.thread import Thread
 
 # Export models for easy importing
-__all__ = ['Base', 'engine', 'SessionLocal', 'get_db', 'User', 'ChatMessage']
+__all__ = ['Base', 'engine', 'SessionLocal', 'get_db', 'User', 'Message', 'Thread']

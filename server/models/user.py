@@ -10,7 +10,6 @@ class User(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     session_id = Column(String, unique=True, index=True, nullable=False)
     assistant_id = Column(String, nullable=True)
-    thread_id = Column(String, nullable=True)
     selected_categories = Column(JSON, default=[])
     onboarding_completed = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

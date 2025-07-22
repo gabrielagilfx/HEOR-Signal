@@ -6,7 +6,8 @@ from pydantic import BaseModel
 from database import get_db
 from services.user_service import UserService
 from services.openai_service import OpenAIService
-from database import ChatMessage
+from models.chat import Message
+from models.thread import Thread
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
@@ -38,8 +39,9 @@ async def send_message(
         
         # Save user message
         import uuid
-        user_message = ChatMessage(
+        user_message = Message(
             user_id=user.id,
+            thread_id=user.thread_id,  # We'll need to create thread logic
             message_id=str(uuid.uuid4()),
             role="user",
             content=request.message
@@ -56,8 +58,9 @@ async def send_message(
         )
         
         # Save assistant message
-        assistant_message = ChatMessage(
+        assistant_message = Message(
             user_id=user.id,
+            thread_id=user.thread_id,  # We'll need to create thread logic
             message_id=str(uuid.uuid4()),
             role="assistant",
             content=assistant_response
@@ -98,8 +101,9 @@ async def select_categories(
         
         # Save assistant message
         import uuid
-        assistant_message = ChatMessage(
+        assistant_message = Message(
             user_id=user.id,
+            thread_id=user.thread_id,  # We'll need to create thread logic
             message_id=str(uuid.uuid4()),
             role="assistant", 
             content=confirmation_message
