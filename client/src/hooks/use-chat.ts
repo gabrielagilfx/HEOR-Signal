@@ -8,10 +8,12 @@ export function useChat(sessionId: string) {
   const queryClient = useQueryClient();
 
   // Get chat messages
-  const { data: messages = [], isLoading } = useQuery<ChatMessage[]>({
+  const { data: messagesResponse, isLoading } = useQuery<{success: boolean, messages: ChatMessage[]}>({
     queryKey: ['/api/chat/messages', sessionId],
     enabled: !!sessionId,
   });
+
+  const messages = messagesResponse?.messages || [];
 
   // Send message mutation
   const sendMessageMutation = useMutation({

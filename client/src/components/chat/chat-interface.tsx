@@ -74,7 +74,7 @@ To get started, please select the data categories you'd like to monitor. You can
     timestamp: new Date(),
   };
 
-  const allMessages = [welcomeMessage, ...messages];
+  const allMessages = [welcomeMessage, ...(Array.isArray(messages) ? messages : [])];
 
   return (
     <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 min-h-0">
