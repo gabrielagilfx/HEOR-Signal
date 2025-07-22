@@ -5,8 +5,8 @@
   "license": "MIT",
   "scripts": {
     "dev": "cd server && python main.py",
-    "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
-    "start": "NODE_ENV=production node dist/index.js",
+    "build": "vite build",
+    "start": "cd server && python main.py",
     "check": "tsc",
     "db:push": "drizzle-kit push"
   },
