@@ -14,12 +14,14 @@ export function useChat(sessionId: string) {
   });
 
   // Transform API response to match ChatMessage interface
-  const messages: ChatMessage[] = (messagesResponse?.messages || []).map((msg: any) => ({
-    id: msg.id,
-    role: msg.role,
-    content: msg.content,
-    timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date()
-  }));
+  const messages: ChatMessage[] = Array.isArray(messagesResponse?.messages) 
+    ? messagesResponse.messages.map((msg: any) => ({
+        id: msg.id,
+        role: msg.role,
+        content: msg.content,
+        timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date()
+      }))
+    : [];
 
   // Send message mutation
   const sendMessageMutation = useMutation({
