@@ -11,7 +11,6 @@ class Message(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     thread_id = Column(UUID(as_uuid=True), ForeignKey("threads.id"), nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    message_id = Column(String, nullable=False)  # OpenAI message ID
     role = Column(String, nullable=False)  # 'user' | 'assistant'
     content = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

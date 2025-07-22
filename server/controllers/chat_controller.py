@@ -42,7 +42,6 @@ async def send_message(
         user_message = Message(
             user_id=user.id,
             thread_id=user.thread_id,  # We'll need to create thread logic
-            message_id=str(uuid.uuid4()),
             role="user",
             content=request.message
         )
@@ -61,7 +60,6 @@ async def send_message(
         assistant_message = Message(
             user_id=user.id,
             thread_id=user.thread_id,  # We'll need to create thread logic
-            message_id=str(uuid.uuid4()),
             role="assistant",
             content=assistant_response
         )
@@ -104,7 +102,6 @@ async def select_categories(
         assistant_message = Message(
             user_id=user.id,
             thread_id=user.thread_id,  # We'll need to create thread logic
-            message_id=str(uuid.uuid4()),
             role="assistant", 
             content=confirmation_message
         )
