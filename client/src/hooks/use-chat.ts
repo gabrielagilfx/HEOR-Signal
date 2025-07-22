@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import * as React from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import type { ChatMessage, CategorySelectionResponse, ChatResponse } from '@/types/chat';
@@ -14,12 +15,25 @@ export function useChat(sessionId: string) {
   });
 
   // Transform API response to match ChatMessage interface
-  const messages: ChatMessage[] = (messagesResponse?.messages || []).map((msg: any) => ({
-    id: msg.id,
-    role: msg.role,
-    content: msg.content,
-    timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date()
-  }));
+  const messages: ChatMessage[] = React.useMemo(() => {
+    console.log('messagesResponse:', messagesResponse);
+    if (!messagesResponse || !messagesResponse.messages) {
+      console.log('No messages in response, returning empty array');
+      return [];
+    }
+    
+    if (!Array.isArray(messagesResponse.messages)) {
+      console.error('messagesResponse.messages is not an array:', messagesResponse.messages);
+      return [];
+    }
+    
+    return messagesResponse.messages.map((msg: any) => ({
+      id: msg.id,
+      role: msg.role,
+      content: msg.content,
+      timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date()
+    }));
+  }, [messagesResponse]);
 
   // Send message mutation
   const sendMessageMutation = useMutation({

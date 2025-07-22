@@ -11,6 +11,7 @@ interface CategorySelectionProps {
 }
 
 export function CategorySelection({ onConfirm, isLoading, initialSelected = [] }: CategorySelectionProps) {
+  console.log('CategorySelection - CATEGORIES:', CATEGORIES, 'isArray:', Array.isArray(CATEGORIES));
   const [selectedCategories, setSelectedCategories] = useState<string[]>(initialSelected);
 
   const handleCategoryChange = (categoryId: string, checked: boolean) => {
@@ -35,7 +36,7 @@ export function CategorySelection({ onConfirm, isLoading, initialSelected = [] }
       </h4>
       
       <div className="space-y-3">
-        {CATEGORIES.map((category) => (
+        {Array.isArray(CATEGORIES) ? CATEGORIES.map((category) => (
           <label 
             key={category.id}
             className="flex items-start p-4 bg-card rounded-lg border border-border hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 cursor-pointer group"
@@ -57,7 +58,7 @@ export function CategorySelection({ onConfirm, isLoading, initialSelected = [] }
               </p>
             </div>
           </label>
-        ))}
+        )) : <div>Error: Categories not loaded</div>}
       </div>
       
       <Button
