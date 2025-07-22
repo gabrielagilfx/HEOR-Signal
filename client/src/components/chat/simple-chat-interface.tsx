@@ -208,43 +208,45 @@ To get started, please select the data categories you'd like to monitor. You can
         )}
       </div>
 
-      {/* Chat Input */}
-      <Card className="border border-border shadow-sm p-4 flex-shrink-0">
-        <div className="flex items-end space-x-3">
-          <div className="flex-1">
-            <Textarea
-              ref={textareaRef}
-              value={inputMessage}
-              onChange={(e) => {
-                setInputMessage(e.target.value);
-                autoResize();
-              }}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask me anything about your dashboard setup or HEOR data sources..."
-              className="resize-none border-0 focus-visible:ring-0 placeholder:text-muted-foreground text-foreground bg-transparent max-h-24 leading-relaxed"
-              rows={1}
-            />
+      {/* Chat Input - Hidden during category selection */}
+      {!showCategorySelection && (
+        <Card className="border border-border shadow-sm p-4 flex-shrink-0">
+          <div className="flex items-end space-x-3">
+            <div className="flex-1">
+              <Textarea
+                ref={textareaRef}
+                value={inputMessage}
+                onChange={(e) => {
+                  setInputMessage(e.target.value);
+                  autoResize();
+                }}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask me anything about your dashboard setup or HEOR data sources..."
+                className="resize-none border-0 focus-visible:ring-0 placeholder:text-muted-foreground text-foreground bg-transparent max-h-24 leading-relaxed"
+                rows={1}
+              />
+            </div>
+            <Button
+              size="sm"
+              onClick={handleSendMessage}
+              disabled={!inputMessage.trim() || isSending}
+              className="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground"
+            >
+              {isSending ? (
+                <>
+                  <i className="fas fa-spinner fa-spin mr-2"></i>
+                  Sending
+                </>
+              ) : (
+                <>
+                  <i className="fas fa-paper-plane mr-2"></i>
+                  Send
+                </>
+              )}
+            </Button>
           </div>
-          <Button
-            size="sm"
-            onClick={handleSendMessage}
-            disabled={!inputMessage.trim() || isSending}
-            className="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground"
-          >
-            {isSending ? (
-              <>
-                <i className="fas fa-spinner fa-spin mr-2"></i>
-                Sending
-              </>
-            ) : (
-              <>
-                <i className="fas fa-paper-plane mr-2"></i>
-                Send
-              </>
-            )}
-          </Button>
-        </div>
-      </Card>
+        </Card>
+      )}
     </div>
   );
 }
