@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import type { ChatMessage, CategorySelectionResponse, ChatResponse } from '@/types/chat';
@@ -13,24 +13,13 @@ export function useChat(sessionId: string) {
     enabled: !!sessionId,
   });
 
-  // Transform API response to match ChatMessage interface - with additional safety
-  const messages: ChatMessage[] = React.useMemo(() => {
-    if (!messagesResponse || !messagesResponse.messages) {
-      return [];
-    }
-    
-    if (!Array.isArray(messagesResponse.messages)) {
-      console.warn('Messages response is not an array:', messagesResponse.messages);
-      return [];
-    }
-    
-    return messagesResponse.messages.map((msg: any) => ({
-      id: msg.id,
-      role: msg.role,
-      content: msg.content,
-      timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date()
-    }));
-  }, [messagesResponse]);
+  // Transform API response to match ChatMessage interface
+  const messages: ChatMessage[] = (messagesResponse?.messages || []).map((msg: any) => ({
+    id: msg.id,
+    role: msg.role,
+    content: msg.content,
+    timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date()
+  }));
 
   // Send message mutation
   const sendMessageMutation = useMutation({

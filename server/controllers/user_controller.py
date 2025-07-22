@@ -25,7 +25,7 @@ async def initialize_user(
             "success": True,
             "session_id": user.session_id,
             "onboarding_completed": user.onboarding_completed,
-            "selected_categories": list(user.selected_categories) if user.selected_categories is not None else []
+            "selected_categories": list(user.selected_categories) if user.selected_categories else []
         }
         
     except Exception as e:
@@ -43,7 +43,7 @@ async def get_user_status(session_id: str, db: Session = Depends(get_db)):
         return {
             "session_id": user.session_id,
             "onboarding_completed": user.onboarding_completed,
-            "selected_categories": list(user.selected_categories) if user.selected_categories is not None else []
+            "selected_categories": list(user.selected_categories) if user.selected_categories else []
         }
         
     except Exception as e:

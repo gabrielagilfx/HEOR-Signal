@@ -2,34 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-
-// HEOR Signal Data Categories
-const CATEGORIES = [
-  {
-    id: "regulatory",
-    name: "Regulatory Alerts",
-    description: "FDA approvals, recalls, labeling changes, and regulatory updates",
-    icon: "fas fa-gavel",
-  },
-  {
-    id: "clinical",
-    name: "Clinical Trial Updates", 
-    description: "New studies, status changes, and results from ClinicalTrials.gov",
-    icon: "fas fa-microscope",
-  },
-  {
-    id: "market",
-    name: "Market Access & Payer News",
-    description: "PBM formulary changes, ICER reports, and CMS policy updates", 
-    icon: "fas fa-handshake",
-  },
-  {
-    id: "rwe",
-    name: "Real-World Evidence & Public Health",
-    description: "CDC WONDER data, AHRQ insights, and disease trend analysis",
-    icon: "fas fa-chart-bar",
-  },
-];
+import { CATEGORIES } from "@shared/schema";
 
 interface CategorySelectionProps {
   onConfirm: (categories: string[]) => void;
@@ -38,18 +11,14 @@ interface CategorySelectionProps {
 }
 
 export function CategorySelection({ onConfirm, isLoading, initialSelected = [] }: CategorySelectionProps) {
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(() => {
-    // Ensure initial state is always an array
-    return Array.isArray(initialSelected) ? initialSelected : [];
-  });
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(initialSelected);
 
   const handleCategoryChange = (categoryId: string, checked: boolean) => {
-    setSelectedCategories(prev => {
-      const currentArray = Array.isArray(prev) ? prev : [];
-      return checked 
-        ? [...currentArray, categoryId]
-        : currentArray.filter(id => id !== categoryId);
-    });
+    setSelectedCategories(prev => 
+      checked 
+        ? [...prev, categoryId]
+        : prev.filter(id => id !== categoryId)
+    );
   };
 
   const handleConfirm = () => {
