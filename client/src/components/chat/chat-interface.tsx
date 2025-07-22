@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -74,9 +75,15 @@ To get started, please select the data categories you'd like to monitor. You can
     timestamp: new Date(),
   };
 
-  console.log('ChatInterface - messages:', messages, 'Array.isArray:', Array.isArray(messages));
-  const allMessages = [welcomeMessage, ...(Array.isArray(messages) ? messages : [])];
-  console.log('ChatInterface - allMessages:', allMessages);
+  const allMessages = React.useMemo(() => {
+    try {
+      const safeMessages = Array.isArray(messages) ? messages : [];
+      return [welcomeMessage, ...safeMessages];
+    } catch (error) {
+      console.error('Error creating allMessages:', error);
+      return [welcomeMessage];
+    }
+  }, [messages, welcomeMessage]);
 
   return (
     <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 min-h-0">

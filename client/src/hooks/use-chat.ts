@@ -16,23 +16,21 @@ export function useChat(sessionId: string) {
 
   // Transform API response to match ChatMessage interface
   const messages: ChatMessage[] = React.useMemo(() => {
-    console.log('messagesResponse:', messagesResponse);
-    if (!messagesResponse || !messagesResponse.messages) {
-      console.log('No messages in response, returning empty array');
+    if (!messagesResponse?.messages || !Array.isArray(messagesResponse.messages)) {
       return [];
     }
     
-    if (!Array.isArray(messagesResponse.messages)) {
-      console.error('messagesResponse.messages is not an array:', messagesResponse.messages);
+    try {
+      return messagesResponse.messages.map((msg: any) => ({
+        id: msg.id,
+        role: msg.role,
+        content: msg.content,
+        timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date()
+      }));
+    } catch (error) {
+      console.error('Error transforming messages:', error);
       return [];
     }
-    
-    return messagesResponse.messages.map((msg: any) => ({
-      id: msg.id,
-      role: msg.role,
-      content: msg.content,
-      timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date()
-    }));
   }, [messagesResponse]);
 
   // Send message mutation
