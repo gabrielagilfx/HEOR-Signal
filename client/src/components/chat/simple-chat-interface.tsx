@@ -1,4 +1,7 @@
 import { useState, useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { MessageBubble } from "./message-bubble";
 import { TypingIndicator } from "./typing-indicator";
 import { CategorySelection } from "./category-selection";
@@ -23,15 +26,16 @@ interface MessagesResponse {
 }
 
 export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleChatInterfaceProps) {
+  const [inputMessage, setInputMessage] = useState("");
+  const [showCategorySelection, setShowCategorySelection] = useState(!onboardingCompleted);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const [isSelectingCategories, setIsSelectingCategories] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // Category selection is shown if onboarding is not completed
-  const showCategorySelection = !onboardingCompleted;
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Load messages on mount and when sessionId changes
   useEffect(() => {
@@ -81,6 +85,52 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
     scrollToBottom();
   }, [messages, isTyping]);
 
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim() || isSending) {
+      return;
+    }
+
+    try {
+      setIsSending(true);
+      setIsTyping(true);
+      
+      const response = await apiRequest('POST', '/api/chat/send', {
+        message: inputMessage.trim(),
+        session_id: sessionId,
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        setInputMessage("");
+        if (textareaRef.current) {
+          textareaRef.current.style.height = 'auto';
+        }
+        // Reload messages to get the latest conversation
+        await loadMessages();
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+    } finally {
+      setIsSending(false);
+      setIsTyping(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const autoResize = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 96) + 'px';
+    }
+  };
+
   const handleCategorySelection = async (categories: string[]) => {
     try {
       setIsSelectingCategories(true);
@@ -93,10 +143,9 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
       const result = await response.json();
       
       if (result.success) {
+        setShowCategorySelection(false);
         // Reload messages to get the confirmation message
         await loadMessages();
-        // Force page refresh to update onboardingCompleted state
-        window.location.reload();
       }
     } catch (error) {
       console.error('Error selecting categories:', error);
@@ -159,8 +208,43 @@ To get started, please select the data categories you'd like to monitor. You can
         )}
       </div>
 
-      {/* NO CHAT INPUT - COMPLETELY REMOVED */}
-      
+      {/* Chat Input */}
+      <Card className="border border-border shadow-sm p-4 flex-shrink-0">
+        <div className="flex items-end space-x-3">
+          <div className="flex-1">
+            <Textarea
+              ref={textareaRef}
+              value={inputMessage}
+              onChange={(e) => {
+                setInputMessage(e.target.value);
+                autoResize();
+              }}
+              onKeyDown={handleKeyDown}
+              placeholder="Ask me anything about your dashboard setup or HEOR data sources..."
+              className="resize-none border-0 focus-visible:ring-0 placeholder:text-muted-foreground text-foreground bg-transparent max-h-24 leading-relaxed"
+              rows={1}
+            />
+          </div>
+          <Button
+            size="sm"
+            onClick={handleSendMessage}
+            disabled={!inputMessage.trim() || isSending}
+            className="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground"
+          >
+            {isSending ? (
+              <>
+                <i className="fas fa-spinner fa-spin mr-2"></i>
+                Sending
+              </>
+            ) : (
+              <>
+                <i className="fas fa-paper-plane mr-2"></i>
+                Send
+              </>
+            )}
+          </Button>
+        </div>
+      </Card>
     </div>
   );
 }
