@@ -68,36 +68,40 @@ const ChartContainer = React.forwardRef<
 ChartContainer.displayName = "Chart"
 
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
-  const colorConfig = Object.entries(config).filter(
-    ([, config]) => config.theme || config.color
-  )
+  try {
+    const colorConfig = Object.entries(config || {}).filter(
+      ([, config]) => config?.theme || config?.color
+    )
 
-  if (!colorConfig.length) {
+    if (!colorConfig.length) {
+      return null
+    }
+
+    const themesEntries = Object.entries(THEMES || {})
+    if (!themesEntries.length) {
+      return null
+    }
+
+    const themeStyles = themesEntries.map(([theme, prefix]) => {
+      const colorStyles = colorConfig.map(([key, itemConfig]) => {
+        const color = itemConfig?.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig?.color
+        return color ? `  --color-${key}: ${color};` : null
+      }).filter(Boolean).join("\n")
+      
+      return `${prefix} [data-chart=${id}] {\n${colorStyles}\n}`
+    }).join("\n")
+
+    return (
+      <style
+        dangerouslySetInnerHTML={{
+          __html: themeStyles,
+        }}
+      />
+    )
+  } catch (error) {
+    console.error('ChartStyle error:', error)
     return null
   }
-
-  return (
-    <style
-      dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
-          .map(
-            ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
-${colorConfig
-  .map(([key, itemConfig]) => {
-    const color =
-      itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
-      itemConfig.color
-    return color ? `  --color-${key}: ${color};` : null
-  })
-  .join("\n")}
-}
-`
-          )
-          .join("\n"),
-      }}
-    />
-  )
 }
 
 const ChartTooltip = RechartsPrimitive.Tooltip
@@ -185,7 +189,7 @@ const ChartTooltipContent = React.forwardRef<
       >
         {!nestLabel ? tooltipLabel : null}
         <div className="grid gap-1.5">
-          {payload.map((item, index) => {
+          {(payload || []).map((item, index) => {
             const key = `${nameKey || item.name || item.dataKey || "value"}`
             const itemConfig = getPayloadConfigFromPayload(config, item, key)
             const indicatorColor = color || item.payload.fill || item.color
@@ -285,7 +289,7 @@ const ChartLegendContent = React.forwardRef<
           className
         )}
       >
-        {payload.map((item) => {
+        {(payload || []).map((item) => {
           const key = `${nameKey || item.dataKey || "value"}`
           const itemConfig = getPayloadConfigFromPayload(config, item, key)
 
