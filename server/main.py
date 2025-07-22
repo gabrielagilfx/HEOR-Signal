@@ -32,13 +32,24 @@ app.include_router(user_controller.router)
 async def health_check():
     return {"status": "healthy", "service": "HEOR Signal API"}
 
-# Serve static files in production
-if settings.environment == "production":
-    app.mount("/", StaticFiles(directory="dist/public", html=True), name="static")
+# Serve static files for React frontend
+try:
+    if os.path.exists("../dist/public"):
+        app.mount("/", StaticFiles(directory="../dist/public", html=True), name="static")
+        
+        @app.get("/{path:path}")
+        async def serve_spa(path: str):
+            return FileResponse("../dist/public/index.html")
+    else:
+        @app.get("/")
+        async def serve_root():
+            return {"message": "HEOR Signal API running", "frontend": "Build frontend with 'npm run build'"}
+except Exception as e:
+    print(f"Static files not available: {e}")
     
-    @app.get("/{path:path}")
-    async def serve_spa(path: str):
-        return FileResponse("dist/public/index.html")
+    @app.get("/")
+    async def serve_root():
+        return {"message": "HEOR Signal API running", "frontend": "Build frontend with 'npm run build'"}
 
 if __name__ == "__main__":
     uvicorn.run(
