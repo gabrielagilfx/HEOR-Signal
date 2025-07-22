@@ -121,7 +121,7 @@ To get started, please select the data categories you'd like to monitor. You can
                 autoResize();
               }}
               onKeyDown={handleKeyDown}
-              placeholder="Ask me anything about your dashboard setup or HEOR data sources..."
+              placeholder="TESTING"
               className="resize-none border-0 focus-visible:ring-0 placeholder:text-muted-foreground text-foreground bg-transparent max-h-24 leading-relaxed"
               rows={1}
             />
