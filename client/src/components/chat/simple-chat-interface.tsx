@@ -37,6 +37,11 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Update category selection state when onboardingCompleted changes
+  useEffect(() => {
+    setShowCategorySelection(!onboardingCompleted);
+  }, [onboardingCompleted]);
+
   // Load messages on mount and when sessionId changes
   useEffect(() => {
     if (sessionId) {
@@ -208,6 +213,11 @@ To get started, please select the data categories you'd like to monitor. You can
         )}
       </div>
 
+      {/* DEBUG INFO */}
+      <div className="p-2 bg-yellow-100 text-black text-xs">
+        DEBUG: showCategorySelection={showCategorySelection.toString()}, onboardingCompleted={onboardingCompleted.toString()}
+      </div>
+      
       {/* Chat Input - Hidden during category selection */}
       {!showCategorySelection && (
         <Card className="border border-border shadow-sm p-4 flex-shrink-0">
@@ -221,7 +231,7 @@ To get started, please select the data categories you'd like to monitor. You can
                   autoResize();
                 }}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask me anything about your dashboard setup or HEOR data sources..."
+                placeholder="TESTING"
                 className="resize-none border-0 focus-visible:ring-0 placeholder:text-muted-foreground text-foreground bg-transparent max-h-24 leading-relaxed"
                 rows={1}
               />
