@@ -39,6 +39,8 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
 
   // Load messages on mount and when sessionId changes
   useEffect(() => {
+    console.log('SimpleChatInterface - onboardingCompleted:', onboardingCompleted);
+    console.log('SimpleChatInterface - showCategorySelection will be:', !onboardingCompleted);
     if (sessionId) {
       loadMessages();
       // Hide category selection if onboarding is already completed
@@ -211,7 +213,10 @@ To get started, please select the data categories you'd like to monitor. You can
       </div>
 
       {/* Chat Input - Hidden during category selection */}
-      {!showCategorySelection && (
+      {(() => {
+        console.log('SimpleChatInterface - rendering chat input, showCategorySelection:', showCategorySelection);
+        return !showCategorySelection;
+      })() && (
         <Card className="border border-border shadow-sm p-4 flex-shrink-0">
           <div className="flex items-end space-x-3">
             <div className="flex-1">
