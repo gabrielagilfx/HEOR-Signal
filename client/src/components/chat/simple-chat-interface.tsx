@@ -27,7 +27,7 @@ interface MessagesResponse {
 
 export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleChatInterfaceProps) {
   const [inputMessage, setInputMessage] = useState("");
-  const [showCategorySelection, setShowCategorySelection] = useState(!onboardingCompleted);
+  const [showCategorySelection, setShowCategorySelection] = useState(true);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
@@ -41,8 +41,10 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
   useEffect(() => {
     if (sessionId) {
       loadMessages();
+      // Hide category selection if onboarding is already completed
+      setShowCategorySelection(!onboardingCompleted);
     }
-  }, [sessionId]);
+  }, [sessionId, onboardingCompleted]);
 
   const loadMessages = async () => {
     try {
