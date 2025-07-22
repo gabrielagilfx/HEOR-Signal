@@ -5,8 +5,9 @@ import { users, type User, type InsertUser } from "@shared/schema";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  getUserBySessionId(sessionId: string): Promise<User | undefined>;
+  insertUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, updates: Partial<User>): Promise<User>;
 }
 
 export class MemStorage implements IStorage {
@@ -22,17 +23,42 @@ export class MemStorage implements IStorage {
     return this.users.get(id);
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
+  async getUserBySessionId(sessionId: string): Promise<User | undefined> {
     return Array.from(this.users.values()).find(
-      (user) => user.username === username,
+      (user) => user.sessionId === sessionId,
     );
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
+  async insertUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentId++;
-    const user: User = { ...insertUser, id };
+    const user: User = { 
+      id,
+      sessionId: insertUser.sessionId,
+      assistantId: insertUser.assistantId ?? null,
+      threadId: insertUser.threadId ?? null,
+      selectedCategories: insertUser.selectedCategories ?? null,
+      onboardingCompleted: insertUser.onboardingCompleted ?? false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
     this.users.set(id, user);
     return user;
+  }
+
+  async updateUser(id: number, updates: Partial<User>): Promise<User> {
+    const user = this.users.get(id);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    
+    const updatedUser: User = { 
+      ...user, 
+      ...updates, 
+      id,
+      updatedAt: new Date()
+    };
+    this.users.set(id, updatedUser);
+    return updatedUser;
   }
 }
 

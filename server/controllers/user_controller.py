@@ -1,14 +1,14 @@
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from ..database import get_db
-from ..services.user_service import UserService
+from database import get_db
+from services.user_service import UserService
 
 router = APIRouter(prefix="/api/user", tags=["user"])
 
 class InitUserRequest(BaseModel):
-    session_id: str = None
+    session_id: Optional[str] = None
 
 user_service = UserService()
 
@@ -25,7 +25,7 @@ async def initialize_user(
             "success": True,
             "session_id": user.session_id,
             "onboarding_completed": user.onboarding_completed,
-            "selected_categories": user.selected_categories or []
+            "selected_categories": list(user.selected_categories) if user.selected_categories else []
         }
         
     except Exception as e:
@@ -43,7 +43,7 @@ async def get_user_status(session_id: str, db: Session = Depends(get_db)):
         return {
             "session_id": user.session_id,
             "onboarding_completed": user.onboarding_completed,
-            "selected_categories": user.selected_categories or []
+            "selected_categories": list(user.selected_categories) if user.selected_categories else []
         }
         
     except Exception as e:

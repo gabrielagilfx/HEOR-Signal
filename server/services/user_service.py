@@ -1,9 +1,9 @@
 import uuid
 from typing import Optional, List
 from sqlalchemy.orm import Session
-from ..models.user import User
-from ..repositories.user_repository import UserRepository
-from ..services.openai_service import OpenAIService
+from models.user import User
+from repositories.user_repository import UserRepository
+from services.openai_service import OpenAIService
 
 class UserService:
     def __init__(self):

@@ -1,6 +1,6 @@
 from typing import Optional, Dict, Any
 from sqlalchemy.orm import Session
-from ..models.user import User
+from models.user import User
 
 class UserRepository:
     def create(self, db: Session, user_data: Dict[str, Any]) -> User:

@@ -3,10 +3,10 @@ from typing import Dict, Any, List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from ..database import get_db
-from ..services.user_service import UserService
-from ..services.openai_service import OpenAIService
-from ..repositories.chat_repository import ChatRepository
+from database import get_db
+from services.user_service import UserService
+from services.openai_service import OpenAIService
+from repositories.chat_repository import ChatRepository
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
@@ -38,25 +38,27 @@ async def send_message(
         user = await user_service.create_or_get_user(db, request.session_id)
         
         # Save user message
+        existing_messages = chat_repository.get_messages_by_user(db, user.id)
         user_message_data = {
             "user_id": user.id,
-            "message_id": f"user_{user.id}_{len(await get_user_messages(db, user.id))}",
+            "message_id": f"user_{user.id}_{len(existing_messages)}",
             "role": "user",
             "content": request.message
         }
         chat_repository.create_message(db, user_message_data)
         
         # Send to OpenAI
-        await openai_service.send_message(user.thread_id, request.message)
+        await openai_service.send_message(str(user.thread_id), request.message)
         assistant_response = await openai_service.run_assistant(
-            user.assistant_id, 
-            user.thread_id
+            str(user.assistant_id), 
+            str(user.thread_id)
         )
         
         # Save assistant message
+        updated_messages = chat_repository.get_messages_by_user(db, user.id)
         assistant_message_data = {
             "user_id": user.id,
-            "message_id": f"assistant_{user.id}_{len(await get_user_messages(db, user.id))}",
+            "message_id": f"assistant_{user.id}_{len(updated_messages)}",
             "role": "assistant",
             "content": assistant_response
         }
@@ -85,7 +87,7 @@ async def select_categories(
         
         # Update categories
         updated_user = await user_service.update_categories(
-            db, user.id, request.categories
+            db, int(user.id), request.categories
         )
         
         # Generate confirmation message
@@ -119,7 +121,7 @@ async def get_messages(session_id: str, db: Session = Depends(get_db)):
     """Get chat messages for a session"""
     try:
         user = await user_service.create_or_get_user(db, session_id)
-        messages = chat_repository.get_messages_by_user(db, user.id)
+        messages = chat_repository.get_messages_by_user(db, int(user.id))
         
         return [
             {
@@ -136,6 +138,4 @@ async def get_messages(session_id: str, db: Session = Depends(get_db)):
             detail=f"Error retrieving messages: {str(e)}"
         )
 
-async def get_user_messages(db: Session, user_id: int) -> List:
-    """Helper to get user message count"""
-    return chat_repository.get_messages_by_user(db, user_id)
+

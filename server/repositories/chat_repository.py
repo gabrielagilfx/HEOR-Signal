@@ -1,6 +1,6 @@
 from typing import List, Dict, Any
 from sqlalchemy.orm import Session
-from ..models.chat import ChatMessage
+from models.chat import ChatMessage
 
 class ChatRepository:
     def create_message(self, db: Session, message_data: Dict[str, Any]) -> ChatMessage:

@@ -5,9 +5,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import uvicorn
 import os
-from .config import settings
-from .database import engine, Base
-from .controllers import chat_controller, user_controller
+from config import settings
+from database import engine, Base
+from controllers import chat_controller, user_controller
 
 # Create tables
 Base.metadata.create_all(bind=engine)

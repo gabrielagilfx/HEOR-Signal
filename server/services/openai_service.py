@@ -1,13 +1,21 @@
+import asyncio
 import logging
 from typing import List, Dict, Any, Optional
 from openai import AsyncOpenAI
-from ..config import settings
+from config import settings
 
 logger = logging.getLogger(__name__)
 
 class OpenAIService:
     def __init__(self):
-        self.client = AsyncOpenAI(api_key=settings.openai_api_key)
+        try:
+            self.client = AsyncOpenAI(
+                api_key=settings.openai_api_key,
+                timeout=30.0
+            )
+        except Exception as e:
+            logger.error(f"Failed to initialize OpenAI client: {e}")
+            self.client = None
         self.assistant_instructions = """
 You are a professional HEOR (Health Economics and Outcomes Research) assistant helping users set up their personalized dashboard for monitoring critical pharmaceutical industry data.
 
@@ -80,7 +88,10 @@ Be conversational but professional, and focus on the practical aspects of HEOR s
                 )
                 
                 if messages.data:
-                    return messages.data[0].content[0].text.value
+                    content = messages.data[0].content[0]
+                    if hasattr(content, 'text'):
+                        return content.text.value
+                    return str(content)
                 
             return "Assistant processing failed"
             
