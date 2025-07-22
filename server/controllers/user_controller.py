@@ -24,8 +24,8 @@ async def initialize_user(
         return {
             "success": True,
             "session_id": user.session_id,
-            "onboarding_completed": user.onboarding_completed,
-            "selected_categories": user.selected_categories or []
+            "onboarding_completed": bool(user.onboarding_completed),
+            "selected_categories": list(user.selected_categories) if user.selected_categories else []
         }
         
     except Exception as e:
@@ -42,8 +42,8 @@ async def get_user_status(session_id: str, db: Session = Depends(get_db)):
         
         return {
             "session_id": user.session_id,
-            "onboarding_completed": user.onboarding_completed,
-            "selected_categories": user.selected_categories or []
+            "onboarding_completed": bool(user.onboarding_completed),
+            "selected_categories": list(user.selected_categories) if user.selected_categories else []
         }
         
     except Exception as e:
