@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { SimpleCard, SimpleCardContent, SimpleButton } from './components/simple/SimpleCard';
 
 interface UserStatus {
   session_id: string;
@@ -155,8 +154,14 @@ function HEORSignalApp() {
         </header>
 
         {!userStatus?.onboarding_completed ? (
-          <SimpleCard className="mb-6">
-            <SimpleCardContent>
+          <div style={{ 
+            backgroundColor: 'white', 
+            borderRadius: '8px', 
+            border: '1px solid #e5e7eb', 
+            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)', 
+            marginBottom: '24px' 
+          }}>
+            <div style={{ padding: '24px' }}>
               <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '20px', color: '#1f2937' }}>
                 Welcome! Select Your Data Categories
               </h2>
@@ -197,18 +202,34 @@ function HEORSignalApp() {
               </div>
               
               <div style={{ marginTop: '20px', textAlign: 'center' }}>
-                <SimpleButton 
+                <button
                   onClick={submitCategories}
                   disabled={selectedCategories.length === 0}
+                  style={{
+                    padding: '12px 24px',
+                    backgroundColor: selectedCategories.length === 0 ? '#9ca3af' : '#2563eb',
+                    color: 'white',
+                    borderRadius: '6px',
+                    border: 'none',
+                    cursor: selectedCategories.length === 0 ? 'not-allowed' : 'pointer',
+                    fontSize: '1rem',
+                    fontWeight: '500'
+                  }}
                 >
                   Complete Setup ({selectedCategories.length} selected)
-                </SimpleButton>
+                </button>
               </div>
-            </SimpleCardContent>
-          </SimpleCard>
+            </div>
+          </div>
         ) : (
-          <SimpleCard className="mb-6">
-            <SimpleCardContent>
+          <div style={{ 
+            backgroundColor: 'white', 
+            borderRadius: '8px', 
+            border: '1px solid #e5e7eb', 
+            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)', 
+            marginBottom: '24px' 
+          }}>
+            <div style={{ padding: '24px' }}>
               <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '20px', color: '#1f2937' }}>
                 Chat with HEOR Signal
               </h2>
@@ -263,12 +284,25 @@ function HEORSignalApp() {
                     fontSize: '1rem'
                   }}
                 />
-                <SimpleButton onClick={sendMessage} disabled={!inputMessage.trim()}>
+                <button 
+                  onClick={sendMessage} 
+                  disabled={!inputMessage.trim()}
+                  style={{
+                    padding: '12px 24px',
+                    backgroundColor: !inputMessage.trim() ? '#9ca3af' : '#2563eb',
+                    color: 'white',
+                    borderRadius: '6px',
+                    border: 'none',
+                    cursor: !inputMessage.trim() ? 'not-allowed' : 'pointer',
+                    fontSize: '1rem',
+                    fontWeight: '500'
+                  }}
+                >
                   Send
-                </SimpleButton>
+                </button>
               </div>
-            </SimpleCardContent>
-          </SimpleCard>
+            </div>
+          </div>
         )}
 
         <div style={{ textAlign: 'center', color: '#6b7280', fontSize: '0.9rem' }}>
