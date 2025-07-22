@@ -17,12 +17,23 @@ export default function Onboarding() {
   // Initialize user session
   const initUserMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest('POST', '/api/user/init', {});
-      return response.json() as Promise<UserStatus>;
+      try {
+        const response = await apiRequest('POST', '/api/user/init', {});
+        const data = await response.json();
+        console.log('User init response:', data);
+        return data as UserStatus;
+      } catch (error) {
+        console.error('User init error:', error);
+        throw error;
+      }
     },
     onSuccess: (data) => {
+      console.log('Setting session ID:', data.session_id);
       setSessionId(data.session_id);
     },
+    onError: (error) => {
+      console.error('User init mutation error:', error);
+    }
   });
 
   // Get user status

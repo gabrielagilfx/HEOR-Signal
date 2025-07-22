@@ -6,14 +6,31 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Onboarding from "@/pages/onboarding";
 
+// Add error boundary to catch React errors
+import React from 'react';
+
 function Router() {
-  return (
-    <Switch>
-      <Route path="/" component={Onboarding} />
-      <Route path="/onboarding" component={Onboarding} />
-      <Route component={NotFound} />
-    </Switch>
-  );
+  try {
+    return (
+      <Switch>
+        <Route path="/" component={Onboarding} />
+        <Route path="/onboarding" component={Onboarding} />
+        <Route component={NotFound} />
+      </Switch>
+    );
+  } catch (error) {
+    console.error('Router error:', error);
+    return (
+      <div style={{ padding: '20px', background: '#fee', color: '#800' }}>
+        <h2>Application Error</h2>
+        <p>There was an error loading the application. Please refresh the page.</p>
+        <details>
+          <summary>Error Details</summary>
+          <pre>{error instanceof Error ? error.message : String(error)}</pre>
+        </details>
+      </div>
+    );
+  }
 }
 
 function App() {

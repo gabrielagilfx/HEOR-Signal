@@ -38,14 +38,18 @@ interface CategorySelectionProps {
 }
 
 export function CategorySelection({ onConfirm, isLoading, initialSelected = [] }: CategorySelectionProps) {
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(initialSelected);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(() => {
+    // Ensure initial state is always an array
+    return Array.isArray(initialSelected) ? initialSelected : [];
+  });
 
   const handleCategoryChange = (categoryId: string, checked: boolean) => {
-    setSelectedCategories(prev => 
-      checked 
-        ? [...prev, categoryId]
-        : prev.filter(id => id !== categoryId)
-    );
+    setSelectedCategories(prev => {
+      const currentArray = Array.isArray(prev) ? prev : [];
+      return checked 
+        ? [...currentArray, categoryId]
+        : currentArray.filter(id => id !== categoryId);
+    });
   };
 
   const handleConfirm = () => {

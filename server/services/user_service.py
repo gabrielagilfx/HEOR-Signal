@@ -1,8 +1,7 @@
 import uuid
 from typing import Optional, List
 from sqlalchemy.orm import Session
-from database import User
-from models.thread import Thread
+from models.user import User
 from services.openai_service import OpenAIService
 
 class UserService:
@@ -17,11 +16,10 @@ class UserService:
         user = db.query(User).filter(User.session_id == session_id).first()
         
         if not user:
-            # Create OpenAI Assistant and Thread
+            # Create OpenAI Assistant (thread will be created separately by ThreadService)
             assistant_id = await self.openai_service.create_assistant()
-            openai_thread_id = await self.openai_service.create_thread()
             
-            # Create user first
+            # Create user
             user = User(
                 session_id=session_id,
                 assistant_id=assistant_id,
@@ -32,18 +30,6 @@ class UserService:
             db.add(user)
             db.commit()
             db.refresh(user)
-            
-            # Create thread linked to user
-            thread = Thread(
-                user_id=user.id,
-                thread_id=openai_thread_id,
-                title="HEOR Signal Chat",
-                status="active"
-            )
-            
-            db.add(thread)
-            db.commit()
-            db.refresh(thread)
         
         return user
     
@@ -51,8 +37,11 @@ class UserService:
         """Update user's selected categories"""
         user = db.query(User).filter(User.id == user_id).first()
         if user:
-            user.selected_categories = categories
-            user.onboarding_completed = len(categories) > 0
+            # Update using SQLAlchemy update method
+            db.query(User).filter(User.id == user_id).update({
+                "selected_categories": categories,
+                "onboarding_completed": len(categories) > 0
+            })
             db.commit()
             db.refresh(user)
         return user
@@ -61,7 +50,8 @@ class UserService:
         """Mark onboarding as completed"""
         user = db.query(User).filter(User.id == user_id).first()
         if user:
-            user.onboarding_completed = True
+            # Update using SQLAlchemy update method
+            db.query(User).filter(User.id == user_id).update({"onboarding_completed": True})
             db.commit()
             db.refresh(user)
         return user

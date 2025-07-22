@@ -19,15 +19,14 @@ export function ChatInterface({ sessionId, onboardingCompleted }: ChatInterfaceP
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
-  const {
-    messages,
-    isLoading,
-    isTyping,
-    isSending,
-    isSelectingCategories,
-    sendMessage,
-    selectCategories,
-  } = useChat(sessionId);
+  const chatData = useChat(sessionId);
+  const messages = chatData?.messages || [];
+  const isLoading = chatData?.isLoading || false;
+  const isTyping = chatData?.isTyping || false;
+  const isSending = chatData?.isSending || false;
+  const isSelectingCategories = chatData?.isSelectingCategories || false;
+  const sendMessage = chatData?.sendMessage || (() => {});
+  const selectCategories = chatData?.selectCategories || (() => {});
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
