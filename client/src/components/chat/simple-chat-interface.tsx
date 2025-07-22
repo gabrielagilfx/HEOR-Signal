@@ -39,7 +39,6 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
 
   // Update category selection state when onboardingCompleted changes
   useEffect(() => {
-    console.log('onboardingCompleted changed:', onboardingCompleted);
     setShowCategorySelection(!onboardingCompleted);
   }, [onboardingCompleted]);
 

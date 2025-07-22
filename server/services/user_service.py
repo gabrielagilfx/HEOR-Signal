@@ -51,8 +51,8 @@ class UserService:
         """Update user's selected categories"""
         user = db.query(User).filter(User.id == user_id).first()
         if user:
-            user.selected_categories = categories
-            user.onboarding_completed = len(categories) > 0
+            user.selected_categories = categories  # type: ignore
+            user.onboarding_completed = len(categories) > 0  # type: ignore
             db.commit()
             db.refresh(user)
         return user
@@ -61,7 +61,7 @@ class UserService:
         """Mark onboarding as completed"""
         user = db.query(User).filter(User.id == user_id).first()
         if user:
-            user.onboarding_completed = True
+            user.onboarding_completed = True  # type: ignore
             db.commit()
             db.refresh(user)
         return user

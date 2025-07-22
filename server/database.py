@@ -1,11 +1,13 @@
-from sqlalchemy import create_engine, MetaData
+from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from config import settings
 
+# Create Base first
+Base = declarative_base()
+
 engine = create_engine(settings.database_url)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
 
 def get_db():
     db = SessionLocal()
@@ -14,10 +16,10 @@ def get_db():
     finally:
         db.close()
 
-# Import models to register them with Base
+# Import models after Base is defined to register them
 from models.user import User
-from models.chat import Message
+from models.chat import Message  
 from models.thread import Thread
 
-# Export models for easy importing
+# Export everything for easy importing
 __all__ = ['Base', 'engine', 'SessionLocal', 'get_db', 'User', 'Message', 'Thread']
