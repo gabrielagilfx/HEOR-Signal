@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { SimpleChatInterface } from "@/components/chat/simple-chat-interface";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,6 +13,7 @@ interface UserStatus {
 
 export default function Onboarding() {
   const [sessionId, setSessionId] = useState<string>("");
+  const queryClient = useQueryClient();
 
   // Initialize user session
   const initUserMutation = useMutation({
@@ -34,7 +35,15 @@ export default function Onboarding() {
   useEffect(() => {
     // Initialize user on component mount
     initUserMutation.mutate();
-  }, []);
+    
+    // Listen for onboarding completion events
+    const handleOnboardingCompleted = () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/user/status', sessionId] });
+    };
+    
+    window.addEventListener('onboarding-completed', handleOnboardingCompleted);
+    return () => window.removeEventListener('onboarding-completed', handleOnboardingCompleted);
+  }, [sessionId, queryClient]);
 
   if (initUserMutation.isPending || isLoadingStatus || !sessionId) {
     return (

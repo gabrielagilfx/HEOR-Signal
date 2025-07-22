@@ -151,6 +151,8 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
         setShowCategorySelection(false);
         // Reload messages to get the confirmation message
         await loadMessages();
+        // Trigger parent component to refetch user status
+        window.dispatchEvent(new CustomEvent('onboarding-completed'));
       }
     } catch (error) {
       console.error('Error selecting categories:', error);
