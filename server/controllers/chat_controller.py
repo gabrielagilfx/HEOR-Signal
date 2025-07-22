@@ -37,11 +37,16 @@ async def send_message(
         # Get or create user
         user = await user_service.create_or_get_user(db, request.session_id)
         
+        # Get user's thread
+        thread = db.query(Thread).filter(Thread.user_id == user.id).first()
+        if not thread:
+            raise HTTPException(status_code=500, detail="No thread found for user")
+        
         # Save user message
         import uuid
         user_message = Message(
             user_id=user.id,
-            thread_id=user.thread_id,  # We'll need to create thread logic
+            thread_id=thread.id,
             role="user",
             content=request.message
         )
@@ -50,16 +55,16 @@ async def send_message(
         db.refresh(user_message)
         
         # Send to OpenAI
-        await openai_service.send_message(str(user.thread_id), request.message)
+        await openai_service.send_message(thread.thread_id, request.message)
         assistant_response = await openai_service.run_assistant(
-            str(user.assistant_id), 
-            str(user.thread_id)
+            user.assistant_id, 
+            thread.thread_id
         )
         
         # Save assistant message
         assistant_message = Message(
             user_id=user.id,
-            thread_id=user.thread_id,  # We'll need to create thread logic
+            thread_id=thread.id,
             role="assistant",
             content=assistant_response
         )
@@ -70,7 +75,7 @@ async def send_message(
         return {
             "success": True,
             "message": assistant_response,
-            "message_id": assistant_message.message_id
+            "message_id": str(assistant_message.id)
         }
         
     except Exception as e:
@@ -97,11 +102,16 @@ async def select_categories(
         category_names = [cat.replace("_", " ").title() for cat in request.categories]
         confirmation_message = f"Perfect! I've configured your dashboard to monitor {len(request.categories)} data categories: {', '.join(category_names)}. Your personalized HEOR Signal dashboard is now being prepared."
         
+        # Get user's thread
+        thread = db.query(Thread).filter(Thread.user_id == user.id).first()
+        if not thread:
+            raise HTTPException(status_code=500, detail="No thread found for user")
+        
         # Save assistant message
         import uuid
         assistant_message = Message(
             user_id=user.id,
-            thread_id=user.thread_id,  # We'll need to create thread logic
+            thread_id=thread.id,
             role="assistant", 
             content=confirmation_message
         )
@@ -122,21 +132,38 @@ async def select_categories(
             detail=f"Error updating categories: {str(e)}"
         )
 
-@router.get("/messages/{session_id}", response_model=List[ChatResponse])
+@router.get("/messages/{session_id}", response_model=Dict[str, Any])
 async def get_messages(session_id: str, db: Session = Depends(get_db)):
-    """Get chat messages for a session"""
+    """Get chat messages for a user session"""
     try:
-        user = await user_service.create_or_get_user(db, session_id)
-        messages = chat_repository.get_messages_by_user(db, int(user.id))
+        from models.user import User
         
-        return [
-            {
-                "message": msg.content,
+        # Get user
+        user = db.query(User).filter(User.session_id == session_id).first()
+        if not user:
+            return {"success": True, "messages": []}
+        
+        # Get user's thread
+        thread = db.query(Thread).filter(Thread.user_id == user.id).first()
+        if not thread:
+            return {"success": True, "messages": []}
+        
+        # Get messages for this thread
+        messages = db.query(Message).filter(Message.thread_id == thread.id).order_by(Message.created_at).all()
+        
+        message_list = []
+        for msg in messages:
+            message_list.append({
+                "id": str(msg.id),
                 "role": msg.role,
-                "timestamp": msg.timestamp.isoformat()
-            }
-            for msg in reversed(messages)
-        ]
+                "content": msg.content,
+                "timestamp": msg.created_at.isoformat() if msg.created_at else None
+            })
+        
+        return {
+            "success": True,
+            "messages": message_list
+        }
         
     except Exception as e:
         raise HTTPException(

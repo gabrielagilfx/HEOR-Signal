@@ -2,6 +2,7 @@ import uuid
 from typing import Optional, List
 from sqlalchemy.orm import Session
 from database import User
+from models.thread import Thread
 from services.openai_service import OpenAIService
 
 class UserService:
@@ -18,12 +19,12 @@ class UserService:
         if not user:
             # Create OpenAI Assistant and Thread
             assistant_id = await self.openai_service.create_assistant()
-            thread_id = await self.openai_service.create_thread()
+            openai_thread_id = await self.openai_service.create_thread()
             
+            # Create user first
             user = User(
                 session_id=session_id,
                 assistant_id=assistant_id,
-                thread_id=thread_id,
                 selected_categories=[],
                 onboarding_completed=False
             )
@@ -31,10 +32,22 @@ class UserService:
             db.add(user)
             db.commit()
             db.refresh(user)
+            
+            # Create thread linked to user
+            thread = Thread(
+                user_id=user.id,
+                thread_id=openai_thread_id,
+                title="HEOR Signal Chat",
+                status="active"
+            )
+            
+            db.add(thread)
+            db.commit()
+            db.refresh(thread)
         
         return user
     
-    async def update_categories(self, db: Session, user_id: int, categories: List[str]) -> User:
+    async def update_categories(self, db: Session, user_id: str, categories: List[str]) -> User:
         """Update user's selected categories"""
         user = db.query(User).filter(User.id == user_id).first()
         if user:
@@ -44,7 +57,7 @@ class UserService:
             db.refresh(user)
         return user
     
-    async def complete_onboarding(self, db: Session, user_id: int) -> User:
+    async def complete_onboarding(self, db: Session, user_id: str) -> User:
         """Mark onboarding as completed"""
         user = db.query(User).filter(User.id == user_id).first()
         if user:
