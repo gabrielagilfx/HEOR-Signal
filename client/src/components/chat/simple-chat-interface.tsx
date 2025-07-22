@@ -39,6 +39,7 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
 
   // Update category selection state when onboardingCompleted changes
   useEffect(() => {
+    console.log('onboardingCompleted changed:', onboardingCompleted);
     setShowCategorySelection(!onboardingCompleted);
   }, [onboardingCompleted]);
 
@@ -213,11 +214,7 @@ To get started, please select the data categories you'd like to monitor. You can
         )}
       </div>
 
-      {/* DEBUG INFO */}
-      <div className="p-2 bg-yellow-100 text-black text-xs">
-        DEBUG: showCategorySelection={showCategorySelection.toString()}, onboardingCompleted={onboardingCompleted.toString()}
-      </div>
-      
+
       {/* Chat Input - Hidden during category selection */}
       {!showCategorySelection && (
         <Card className="border border-border shadow-sm p-4 flex-shrink-0">

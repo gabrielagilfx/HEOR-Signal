@@ -81,7 +81,7 @@ export default function Onboarding() {
       <Header />
       <SimpleChatInterface 
         sessionId={sessionId} 
-        onboardingCompleted={userStatus?.onboarding_completed || false}
+        onboardingCompleted={userStatus?.onboarding_completed ?? false}
       />
     </div>
   );
