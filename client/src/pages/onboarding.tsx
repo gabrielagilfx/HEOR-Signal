@@ -18,11 +18,18 @@ export default function Onboarding() {
   // Initialize user session
   const initUserMutation = useMutation({
     mutationFn: async () => {
+      console.log('Initializing user session...');
       const response = await apiRequest('POST', '/api/user/init', {});
-      return response.json() as Promise<UserStatus>;
+      const data = await response.json();
+      console.log('User session initialized:', data);
+      return data as UserStatus;
     },
     onSuccess: (data) => {
+      console.log('Setting session ID:', data.session_id);
       setSessionId(data.session_id);
+    },
+    onError: (error) => {
+      console.error('Failed to initialize user:', error);
     },
   });
 
@@ -63,6 +70,7 @@ export default function Onboarding() {
   }
 
   if (initUserMutation.error) {
+    console.error('Init mutation error:', initUserMutation.error);
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <Header />
@@ -75,9 +83,15 @@ export default function Onboarding() {
               <h2 className="text-xl font-semibold text-foreground mb-2">
                 Connection Error
               </h2>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground mb-4">
                 Unable to initialize your session. Please refresh the page to try again.
               </p>
+              <details className="text-sm text-left">
+                <summary>Error Details</summary>
+                <pre className="mt-2 text-xs bg-gray-100 p-2 rounded">
+                  {JSON.stringify(initUserMutation.error, null, 2)}
+                </pre>
+              </details>
             </CardContent>
           </Card>
         </div>
