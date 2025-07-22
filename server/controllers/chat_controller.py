@@ -100,7 +100,7 @@ async def select_categories(
         
         # Generate confirmation message
         category_names = [cat.replace("_", " ").title() for cat in request.categories]
-        confirmation_message = f"Perfect! I've configured your dashboard to monitor {len(request.categories)} data categories: {', '.join(category_names)}. Your personalized HEOR Signal dashboard is now being prepared."
+        confirmation_message = f"Perfect! I've configured your dashboard to monitor {len(request.categories)} data categories: {', '.join(category_names)}. Please tell us your expertise/preference to personalize the categories you've chosen."
         
         # Get user's thread
         thread = db.query(Thread).filter(Thread.user_id == user.id).first()
