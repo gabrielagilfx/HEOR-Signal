@@ -89,7 +89,7 @@ async def select_categories(
         
         # Update categories
         updated_user = await user_service.update_categories(
-            db, int(user.id), request.categories
+            db, user.id, request.categories
         )
         
         # Generate confirmation message
