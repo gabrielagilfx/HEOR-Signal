@@ -42,8 +42,8 @@ if settings.environment == "production":
 
 if __name__ == "__main__":
     uvicorn.run(
-        "server.main:app",
+        "main:app",
         host="0.0.0.0",
-        port=settings.port,
+        port=5000,
         reload=settings.environment == "development"
     )

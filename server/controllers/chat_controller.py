@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from database import get_db
 from services.user_service import UserService
 from services.openai_service import OpenAIService
-from repositories.chat_repository import ChatRepository
+from database import ChatMessage
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
@@ -25,7 +25,6 @@ class ChatResponse(BaseModel):
 
 user_service = UserService()
 openai_service = OpenAIService()
-chat_repository = ChatRepository()
 
 @router.post("/send", response_model=Dict[str, Any])
 async def send_message(

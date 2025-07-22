@@ -13,3 +13,10 @@ def get_db():
         yield db
     finally:
         db.close()
+
+# Import models to register them with Base
+from models.user import User
+from models.chat import ChatMessage
+
+# Export models for easy importing
+__all__ = ['Base', 'engine', 'SessionLocal', 'get_db', 'User', 'ChatMessage']

@@ -8,14 +8,10 @@ logger = logging.getLogger(__name__)
 
 class OpenAIService:
     def __init__(self):
-        try:
-            self.client = AsyncOpenAI(
-                api_key=settings.openai_api_key,
-                timeout=30.0
-            )
-        except Exception as e:
-            logger.error(f"Failed to initialize OpenAI client: {e}")
-            self.client = None
+        self.client = AsyncOpenAI(
+            api_key=settings.openai_api_key,
+            default_headers={"OpenAI-Beta": "assistants=v2"}
+        )
         self.assistant_instructions = """
 You are a professional HEOR (Health Economics and Outcomes Research) assistant helping users set up their personalized dashboard for monitoring critical pharmaceutical industry data.
 
@@ -34,7 +30,7 @@ Be conversational but professional, and focus on the practical aspects of HEOR s
             assistant = await self.client.beta.assistants.create(
                 name="HEOR Signal Assistant",
                 instructions=self.assistant_instructions,
-                model="gpt-4-1106-preview",
+                model="gpt-4o-mini",
                 tools=[]
             )
             return assistant.id

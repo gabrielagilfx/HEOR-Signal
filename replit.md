@@ -11,9 +11,11 @@ Preferred communication style: Simple, everyday language.
 ## System Architecture
 
 ### Full-Stack Architecture
-The application follows a hybrid architecture pattern with both Node.js/TypeScript and Python/FastAPI server implementations, suggesting a transition or dual-service approach. The frontend is built with React and TypeScript, utilizing a modern component-based architecture with shadcn/ui components.
+The application is built with a **Python FastAPI backend** and React TypeScript frontend. The backend provides complete OpenAI Assistant API integration for intelligent HEOR chat functionality, with PostgreSQL database integration for user session management.
 
-**Rationale**: This hybrid approach allows for leveraging Python's strengths in data processing and AI integration while maintaining TypeScript for consistent type safety across the stack.
+**Status**: Python backend is fully operational with OpenAI GPT-4 Assistant API, database connectivity, and all chat functionality implemented.
+
+**Rationale**: Python backend provides superior AI/ML capabilities and OpenAI integration, essential for the HEOR Signal chat assistant functionality.
 
 ### Frontend Architecture
 - **Framework**: React with TypeScript
