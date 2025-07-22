@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ChatInterface } from "@/components/chat/chat-interface";
+import { SimpleChatInterface } from "@/components/chat/simple-chat-interface";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -79,7 +79,7 @@ export default function Onboarding() {
   return (
     <div className="min-h-screen bg-background flex flex-col overflow-hidden">
       <Header />
-      <ChatInterface 
+      <SimpleChatInterface 
         sessionId={sessionId} 
         onboardingCompleted={userStatus?.onboarding_completed || false}
       />

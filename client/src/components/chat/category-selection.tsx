@@ -2,7 +2,33 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CATEGORIES } from "@shared/schema";
+// HEOR Signal Data Categories
+const CATEGORIES = [
+  {
+    id: "regulatory",
+    name: "Regulatory Alerts",
+    description: "FDA approvals, recalls, labeling changes, and regulatory updates",
+    icon: "fas fa-gavel",
+  },
+  {
+    id: "clinical",
+    name: "Clinical Trial Updates", 
+    description: "New studies, status changes, and results from ClinicalTrials.gov",
+    icon: "fas fa-microscope",
+  },
+  {
+    id: "market",
+    name: "Market Access & Payer News",
+    description: "PBM formulary changes, ICER reports, and CMS policy updates", 
+    icon: "fas fa-handshake",
+  },
+  {
+    id: "rwe",
+    name: "Real-World Evidence & Public Health",
+    description: "CDC WONDER data, AHRQ insights, and disease trend analysis",
+    icon: "fas fa-chart-bar",
+  },
+];
 
 interface CategorySelectionProps {
   onConfirm: (categories: string[]) => void;
@@ -35,7 +61,7 @@ export function CategorySelection({ onConfirm, isLoading, initialSelected = [] }
       </h4>
       
       <div className="space-y-3">
-        {CATEGORIES && Array.isArray(CATEGORIES) ? CATEGORIES.map((category) => (
+        {CATEGORIES.map((category) => (
           <label 
             key={category.id}
             className="flex items-start p-4 bg-card rounded-lg border border-border hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 cursor-pointer group"
@@ -57,11 +83,7 @@ export function CategorySelection({ onConfirm, isLoading, initialSelected = [] }
               </p>
             </div>
           </label>
-        )) : (
-          <div className="text-center py-4">
-            <p className="text-muted-foreground">Loading categories...</p>
-          </div>
-        )}
+        ))}
       </div>
       
       <Button
