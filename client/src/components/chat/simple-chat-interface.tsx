@@ -6,6 +6,7 @@ import { MessageBubble } from "./message-bubble";
 import { TypingIndicator } from "./typing-indicator";
 import { CategorySelection } from "./category-selection";
 import { LoadingScreen } from "@/components/ui/loading-screen";
+import { HEORDashboard } from "@/components/dashboard/heor-dashboard";
 import { apiRequest } from "@/lib/queryClient";
 import type { ChatMessage } from "@/types/chat";
 
@@ -35,6 +36,9 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
   const [isSending, setIsSending] = useState(false);
   const [isSelectingCategories, setIsSelectingCategories] = useState(false);
   const [showCategoryLoader, setShowCategoryLoader] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(onboardingCompleted);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [isNavigatingToDashboard, setIsNavigatingToDashboard] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -44,6 +48,7 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
   // Update category selection state when onboardingCompleted changes
   useEffect(() => {
     setShowCategorySelection(!onboardingCompleted);
+    setShowDashboard(onboardingCompleted);
   }, [onboardingCompleted]);
 
   // Load messages on mount and when sessionId changes
@@ -113,18 +118,19 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
 
     const userMessage = inputMessage.trim();
     
+    // Create user message outside try block for proper scope
+    const newUserMessage: ChatMessage = {
+      id: `temp-user-${Date.now()}`,
+      role: 'user',
+      content: userMessage,
+      timestamp: new Date()
+    };
+    
     try {
       setIsSending(true);
       setIsTyping(true);
       
       // Immediately add user message to chat for smooth UX
-      const newUserMessage: ChatMessage = {
-        id: `temp-user-${Date.now()}`,
-        role: 'user',
-        content: userMessage,
-        timestamp: new Date()
-      };
-      
       setMessages(prev => [...prev, newUserMessage]);
       setInputMessage("");
       if (textareaRef.current) {
@@ -186,6 +192,7 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
       const result = await response.json();
       
       if (result.success) {
+        setSelectedCategories(categories);
         setShowCategorySelection(false);
         
         // Add the confirmation message smoothly instead of reloading all messages
@@ -198,6 +205,21 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
           };
           setMessages(prev => [...prev, confirmationMessage]);
         }
+        
+        // Show navigation message and wait 3 seconds before showing dashboard
+        setIsNavigatingToDashboard(true);
+        const dashboardMessage: ChatMessage = {
+          id: `dashboard-navigation-${Date.now()}`,
+          role: 'assistant',
+          content: "Perfect! I'm now setting up your personalized HEOR dashboard. You'll be redirected in just a moment...",
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, dashboardMessage]);
+        
+        setTimeout(() => {
+          setShowDashboard(true);
+          setIsNavigatingToDashboard(false);
+        }, 3000);
         
         window.dispatchEvent(new CustomEvent('onboarding-completed'));
       }
@@ -234,6 +256,16 @@ To get started, please select the data categories you'd like to monitor. You can
   }
 
 
+
+  // Show dashboard loading screen during transition
+  if (isNavigatingToDashboard) {
+    return <LoadingScreen message="Setting up your HEOR dashboard..." />;
+  }
+
+  // Show dashboard if onboarding is completed and showDashboard is true
+  if (showDashboard) {
+    return <HEORDashboard selectedCategories={selectedCategories} sessionId={sessionId} />;
+  }
 
   return (
     <div className="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-gray-900">
