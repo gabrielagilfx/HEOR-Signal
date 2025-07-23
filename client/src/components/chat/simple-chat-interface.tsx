@@ -139,8 +139,28 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
       const result = await response.json();
       
       if (result.success) {
-        // Reload messages to get the proper user message with real ID and assistant response
-        await loadMessages();
+        // Add assistant response to existing messages instead of reloading everything
+        const assistantMessage: ChatMessage = {
+          id: result.message_id || `assistant-${Date.now()}`,
+          role: 'assistant',
+          content: result.message,
+          timestamp: new Date()
+        };
+        
+        setMessages(prevMessages => {
+          // Replace temporary user message with real one and add assistant response
+          const updatedMessages = prevMessages.filter(msg => msg.id !== tempMessageId);
+          
+          // Add the real user message
+          const realUserMessage: ChatMessage = {
+            id: `user-${Date.now()}`,
+            role: 'user',
+            content: userMessageContent,
+            timestamp: new Date()
+          };
+          
+          return [...updatedMessages, realUserMessage, assistantMessage];
+        });
       } else {
         // If API fails, remove the temporary message
         setMessages(prevMessages => prevMessages.filter(msg => msg.id !== tempMessageId));
