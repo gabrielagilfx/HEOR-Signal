@@ -21,13 +21,14 @@ The application is built with a **Python FastAPI backend** and React TypeScript 
 
 ## Recent Changes
 
-### July 23, 2025 - Added User Preference/Expertise Field
-- **Enhancement**: Added new `preference_expertise` field to user table and models
-- **Database**: Added VARCHAR(500) column `preference_expertise` to users table
-- **Backend**: Updated Python User model with String(500) type and UserService with new field support
-- **TypeScript**: Updated shared schema with preferenceExpertise field
-- **API**: Added `update_preference_expertise` method to UserService
-- **Status**: ✅ COMPLETED - Field tested and working correctly with VARCHAR(500) type
+### July 23, 2025 - HEOR Expertise Validation System
+- **AI Validation**: Implemented OpenAI-powered expertise validation for HEOR fields
+- **Smart Flow**: System validates user responses against comprehensive healthcare/HEOR criteria
+- **Database Enhancement**: Added `preference_expertise` VARCHAR(500) field with cascading deletion
+- **Validation Logic**: Uses temporary OpenAI assistant to validate expertise relevance
+- **User Experience**: Guides users to provide HEOR-related expertise, asks again if invalid
+- **Cascading Deletion**: Confirmed user→threads→messages deletion relationships working
+- **Status**: ✅ FULLY OPERATIONAL - AI validation system active and tested
 
 ### July 22, 2025 - Fixed Frontend Initialization Loop
 - **Issue**: React component was stuck in infinite loop during user session initialization
