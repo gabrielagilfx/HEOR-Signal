@@ -110,7 +110,8 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden">
+      <Header />
       <SimpleChatInterface 
         sessionId={sessionId} 
         onboardingCompleted={userStatus?.onboarding_completed ?? false}
@@ -121,24 +122,22 @@ export default function Onboarding() {
 
 function Header() {
   return (
-    <header className="bg-card border-b border-border px-6 py-4 flex-shrink-0">
+    <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex-shrink-0">
       <div className="flex items-center justify-between max-w-6xl mx-auto">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary/80 rounded-lg flex items-center justify-center shadow-lg">
-            <i className="fas fa-chart-line text-white text-lg"></i>
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <i className="fas fa-chart-line text-white text-sm"></i>
           </div>
           <div>
-            <h1 className="text-xl font-bold text-foreground">HEOR Signal</h1>
-            <p className="text-xs text-muted-foreground font-medium">
-              Professional Dashboard Setup
+            <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">HEOR Signal</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Onboarding Assistant
             </p>
           </div>
         </div>
-        <div className="flex items-center space-x-3">
-          <div className="hidden sm:flex items-center text-sm text-muted-foreground">
-            <i className="fas fa-shield-alt text-green-500 mr-2"></i>
-            <span>Secure Setup</span>
-          </div>
+        <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+          <i className="fas fa-shield-alt text-gray-400"></i>
+          <span>Secure Session</span>
         </div>
       </div>
     </header>
