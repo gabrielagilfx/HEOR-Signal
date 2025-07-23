@@ -143,9 +143,12 @@ export default function Onboarding() {
     );
   }
 
+  // Check if dashboard should be shown (both onboarding completed and expertise set)
+  const shouldShowDashboard = userStatus?.onboarding_completed && userStatus?.preference_expertise;
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden">
-      <Header />
+      {!shouldShowDashboard && <Header />}
       <SimpleChatInterface 
         sessionId={sessionId} 
         userStatus={userStatus}
