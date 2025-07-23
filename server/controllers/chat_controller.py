@@ -55,10 +55,10 @@ async def send_message(
         db.refresh(user_message)
         
         # Send to OpenAI
-        await openai_service.send_message(thread.thread_id, request.message)
+        await openai_service.send_message(str(thread.thread_id), request.message)
         assistant_response = await openai_service.run_assistant(
-            user.assistant_id, 
-            thread.thread_id
+            str(user.assistant_id), 
+            str(thread.thread_id)
         )
         
         # Save assistant message
@@ -95,7 +95,7 @@ async def select_categories(
         
         # Update categories
         updated_user = await user_service.update_categories(
-            db, user.id, request.categories
+            db, str(user.id), request.categories
         )
         
         # Generate confirmation message
@@ -157,7 +157,7 @@ async def get_messages(session_id: str, db: Session = Depends(get_db)):
                 "id": str(msg.id),
                 "role": msg.role,
                 "content": msg.content,
-                "timestamp": msg.created_at.isoformat() if msg.created_at else None
+                "timestamp": msg.created_at.isoformat() if msg.created_at is not None else None
             })
         
         return {
