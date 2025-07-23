@@ -89,7 +89,7 @@ export function CategorySelection({ onConfirm, isLoading, initialSelected = [] }
       <Button
         onClick={handleConfirm}
         disabled={selectedCategories.length === 0 || isLoading}
-        className="w-full mt-5"
+        className="w-full mt-5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 hover:shadow-md transition-all duration-200 hover:scale-[1.02]"
       >
         {isLoading ? (
           <>

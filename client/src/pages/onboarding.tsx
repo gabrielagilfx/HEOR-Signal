@@ -163,7 +163,7 @@ function Header() {
             onClick={handleNewSession}
             variant="outline"
             size="sm"
-            className="text-sm border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="text-sm border-gray-300 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-400 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200"
           >
             <i className="fas fa-plus mr-2"></i>
             New Session
