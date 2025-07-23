@@ -5,7 +5,6 @@ import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LoadingScreen } from "@/components/ui/loading-screen";
-import { Button } from "@/components/ui/button";
 
 interface UserStatus {
   session_id: string;
@@ -117,7 +116,6 @@ export default function Onboarding() {
     console.error('Init mutation error:', initUserMutation.error);
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <Header />
         <div className="flex-1 flex items-center justify-center">
           <Card className="w-full max-w-md">
             <CardContent className="p-6 text-center">
@@ -153,45 +151,5 @@ export default function Onboarding() {
         userStatus={userStatus}
       />
     </div>
-  );
-}
-
-function Header() {
-  const handleNewSession = () => {
-    // Trigger a full page reload to reinitialize everything
-    window.location.reload();
-  };
-
-  return (
-    <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex-shrink-0">
-      <div className="flex items-center justify-between max-w-6xl mx-auto">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <i className="fas fa-chart-line text-white text-sm"></i>
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">HEOR Signal</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Onboarding Assistant
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center space-x-4">
-          <Button 
-            onClick={handleNewSession}
-            variant="outline"
-            size="sm"
-            className="text-sm border-gray-300 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-400 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200"
-          >
-            <i className="fas fa-plus mr-2"></i>
-            New Session
-          </Button>
-          <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
-            <i className="fas fa-shield-alt text-gray-400"></i>
-            <span>Secure Session</span>
-          </div>
-        </div>
-      </div>
-    </header>
   );
 }
