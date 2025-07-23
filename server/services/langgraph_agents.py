@@ -705,7 +705,7 @@ class LangGraphNewsAgents:
         # Second pass: Deep LLM analysis for personalization
         filtered_items = []
         
-        for item in pre_filtered_items[:25]:  # Increased limit for better selection
+        for item in pre_filtered_items[:30]:  # Increased limit for better selection
             try:
                 # Enhanced personalized prompt with specific criteria
                 prompt = f"""
@@ -734,7 +734,7 @@ class LangGraphNewsAgents:
                 - Is this something they would discuss with colleagues?
                 - Does it mention specific drugs/treatments in their focus area?
 
-                Be AGGRESSIVE in filtering - only return high scores (0.7+) for truly relevant content.
+                Be selective but fair - return scores 0.6+ for relevant content, 0.8+ for highly relevant.
                 Return ONLY a number between 0.0 and 1.0.
                 """
                 
@@ -749,8 +749,8 @@ class LangGraphNewsAgents:
                 boosted_score = await self._apply_personalization_boost(item, state.user_preferences)
                 item.relevance_score = min(1.0, boosted_score)
                 
-                # Much higher threshold for inclusion (more aggressive filtering)
-                if item.relevance_score >= 0.65:
+                # Balanced threshold for inclusion (selective but not too strict)
+                if item.relevance_score >= 0.5:
                     filtered_items.append(item)
                     
             except Exception as e:
@@ -760,8 +760,8 @@ class LangGraphNewsAgents:
         # Enhanced sorting with multiple factors
         filtered_items.sort(key=lambda x: (x.relevance_score, self._calculate_recency_score(x)), reverse=True)
         
-        # Return top 8 most relevant (reduced for higher quality)
-        state.news_items = filtered_items[:8]
+        # Return top 10 most relevant (balanced quantity and quality)
+        state.news_items = filtered_items[:10]
         
         return state
 
@@ -790,9 +790,9 @@ class LangGraphNewsAgents:
             matches = sum(1 for keyword in all_keywords if keyword in text_to_search)
             keyword_score = min(matches / 3.0, 1.0)  # Normalize to 0-1
             
-            # Include items with decent keyword matches or from trusted sources
-            if keyword_score > 0.1 or item.source in ["ClinicalTrials.gov", "FDA", "EMA"]:
-                item.relevance_score = keyword_score * 0.5  # Initial score
+            # Include items with keyword matches or from trusted sources (more lenient)
+            if keyword_score > 0.05 or item.source in ["ClinicalTrials.gov", "FDA", "EMA", "PubMed"]:
+                item.relevance_score = keyword_score * 0.6  # Initial score
                 filtered_items.append(item)
         
         return filtered_items
@@ -807,36 +807,37 @@ class LangGraphNewsAgents:
         # Boost for exact expertise matches
         for expertise in preferences.expertise_areas:
             if expertise.lower() in text_content:
-                boost += 0.15
+                boost += 0.1
         
         # Boost for therapeutic area matches
         for area in preferences.therapeutic_areas:
             if area.lower() in text_content:
-                boost += 0.12
+                boost += 0.08
         
-        # Boost for high-value keywords
+        # Boost for high-value keywords (more moderate boosts)
         high_value_keywords = {
-            "fda approval": 0.2,
-            "clinical trial results": 0.18,
-            "breakthrough therapy": 0.15,
-            "cost effectiveness": 0.15,
-            "market access": 0.12,
-            "reimbursement": 0.12,
-            "heor": 0.1,
-            "real world evidence": 0.1
+            "fda approval": 0.15,
+            "clinical trial results": 0.12,
+            "breakthrough therapy": 0.1,
+            "cost effectiveness": 0.1,
+            "market access": 0.08,
+            "reimbursement": 0.08,
+            "heor": 0.06,
+            "real world evidence": 0.06
         }
         
         for keyword, boost_value in high_value_keywords.items():
             if keyword in text_content:
                 boost += boost_value
         
-        # Boost for trusted sources
+        # Boost for trusted sources (moderate boosts)
         trusted_sources = {
-            "ClinicalTrials.gov": 0.1,
-            "FDA": 0.15,
-            "EMA": 0.12,
-            "NEJM": 0.1,
-            "The Lancet": 0.1
+            "ClinicalTrials.gov": 0.08,
+            "FDA": 0.1,
+            "EMA": 0.08,
+            "NEJM": 0.06,
+            "The Lancet": 0.06,
+            "PubMed": 0.05
         }
         
         for source, boost_value in trusted_sources.items():
