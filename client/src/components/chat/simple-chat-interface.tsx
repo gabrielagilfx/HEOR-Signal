@@ -162,13 +162,16 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
       const result = await response.json();
       
       if (result.success) {
-        setShowCategorySelection(false);
-        await loadMessages();
-        window.dispatchEvent(new CustomEvent('onboarding-completed'));
+        // Small delay to show loading state
+        setTimeout(async () => {
+          setShowCategorySelection(false);
+          await loadMessages();
+          window.dispatchEvent(new CustomEvent('onboarding-completed'));
+          setIsSelectingCategories(false);
+        }, 800);
       }
     } catch (error) {
       console.error('Error selecting categories:', error);
-    } finally {
       setIsSelectingCategories(false);
     }
   };
@@ -296,12 +299,20 @@ To get started, please select the data categories you'd like to monitor. You can
               ))}
               
               {/* Show category selection if no messages yet but onboarding not completed */}
-              {allMessages.length === 0 && showCategorySelection && !onboardingCompleted && (
+              {allMessages.length === 0 && showCategorySelection && !onboardingCompleted && !isSelectingCategories && (
                 <div className="mt-6 ml-11">
                   <CategorySelection
                     onConfirm={handleCategorySelection}
                     isLoading={isSelectingCategories}
                   />
+                </div>
+              )}
+              
+              {/* Show simple loading animation during category selection */}
+              {isSelectingCategories && (
+                <div className="mt-6 ml-11 flex items-center space-x-3 text-gray-600 dark:text-gray-400">
+                  <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                  <span className="text-sm">Setting up your personalized dashboard...</span>
                 </div>
               )}
               
