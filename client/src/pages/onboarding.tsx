@@ -5,6 +5,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LoadingScreen } from "@/components/ui/loading-screen";
+import { Button } from "@/components/ui/button";
 
 interface UserStatus {
   session_id: string;
@@ -138,6 +139,11 @@ export default function Onboarding() {
 }
 
 function Header() {
+  const handleNewSession = () => {
+    // Trigger a full page reload to reinitialize everything
+    window.location.reload();
+  };
+
   return (
     <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex-shrink-0">
       <div className="flex items-center justify-between max-w-6xl mx-auto">
@@ -152,9 +158,20 @@ function Header() {
             </p>
           </div>
         </div>
-        <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
-          <i className="fas fa-shield-alt text-gray-400"></i>
-          <span>Secure Session</span>
+        <div className="flex items-center space-x-4">
+          <Button 
+            onClick={handleNewSession}
+            variant="outline"
+            size="sm"
+            className="text-sm border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+          >
+            <i className="fas fa-plus mr-2"></i>
+            New Session
+          </Button>
+          <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+            <i className="fas fa-shield-alt text-gray-400"></i>
+            <span>Secure Session</span>
+          </div>
         </div>
       </div>
     </header>

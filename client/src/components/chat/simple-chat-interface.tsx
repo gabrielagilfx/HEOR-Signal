@@ -39,20 +39,7 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleNewSession = () => {
-    // Clear all local state
-    setMessages([]);
-    setInputMessage("");
-    setShowCategorySelection(true);
-    setIsLoading(false);
-    setIsTyping(false);
-    setIsSending(false);
-    setIsSelectingCategories(false);
-    setShowCategoryLoader(false);
-    
-    // Trigger a full page reload to reinitialize everything
-    window.location.reload();
-  };
+
 
   // Update category selection state when onboardingCompleted changes
   useEffect(() => {
@@ -270,20 +257,9 @@ To get started, please select the data categories you'd like to monitor. You can
                     <p className="text-sm text-gray-500 dark:text-gray-400">Personalizing your dashboard experience</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-4">
-                  <Button 
-                    onClick={handleNewSession}
-                    variant="outline"
-                    size="sm"
-                    className="text-sm border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
-                  >
-                    <i className="fas fa-plus mr-2"></i>
-                    New Session
-                  </Button>
-                  <div className="flex items-center space-x-2 text-sm">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-gray-600 dark:text-gray-300">Online</span>
-                  </div>
+                <div className="flex items-center space-x-2 text-sm">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="text-gray-600 dark:text-gray-300">Online</span>
                 </div>
               </div>
             </div>
