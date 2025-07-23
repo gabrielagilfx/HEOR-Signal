@@ -8,6 +8,7 @@ export const users = pgTable("users", {
   assistantId: text("assistant_id"),
   threadId: text("thread_id"),
   selectedCategories: jsonb("selected_categories").default([]).$type<string[]>(),
+  preferenceExpertise: text("preference_expertise"),
   onboardingCompleted: boolean("onboarding_completed").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

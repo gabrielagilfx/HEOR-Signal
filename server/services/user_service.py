@@ -57,6 +57,15 @@ class UserService:
             db.refresh(user)
         return user
     
+    async def update_preference_expertise(self, db: Session, user_id: str, preference_expertise: str) -> User:
+        """Update user's preference/expertise"""
+        user = db.query(User).filter(User.id == user_id).first()
+        if user:
+            user.preference_expertise = preference_expertise  # type: ignore
+            db.commit()
+            db.refresh(user)
+        return user
+
     async def complete_onboarding(self, db: Session, user_id: str) -> User:
         """Mark onboarding as completed"""
         user = db.query(User).filter(User.id == user_id).first()

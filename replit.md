@@ -21,6 +21,14 @@ The application is built with a **Python FastAPI backend** and React TypeScript 
 
 ## Recent Changes
 
+### July 23, 2025 - Added User Preference/Expertise Field
+- **Enhancement**: Added new `preference_expertise` field to user table and models
+- **Database**: Added TEXT column `preference_expertise` to users table
+- **Backend**: Updated Python User model and UserService with new field support
+- **TypeScript**: Updated shared schema with preferenceExpertise field
+- **API**: Added `update_preference_expertise` method to UserService
+- **Status**: ✅ COMPLETED - Field tested and working correctly
+
 ### July 22, 2025 - Fixed Frontend Initialization Loop
 - **Issue**: React component was stuck in infinite loop during user session initialization
 - **Root Cause**: useEffect dependency array causing repeated API calls when sessionId changed
