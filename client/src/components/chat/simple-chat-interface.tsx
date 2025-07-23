@@ -295,23 +295,32 @@ To get started, please select the data categories you'd like to monitor. You can
               {/* Display actual chat messages */}
               {allMessages.map((message, index) => (
                 <div key={`${message.id}-${index}`}>
-                  <div className={`flex items-start space-x-3 ${message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                      message.role === 'user' 
-                        ? 'bg-gray-200 dark:bg-gray-600' 
-                        : 'bg-blue-600'
-                    }`}>
-                      <i className={`text-sm ${
-                        message.role === 'user' 
-                          ? 'fas fa-user text-gray-600 dark:text-gray-300' 
-                          : 'fas fa-robot text-white'
-                      }`}></i>
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                        {message.content}
-                      </div>
-                    </div>
+                  <div className={`flex items-start space-x-3 ${message.role === 'user' ? 'justify-end' : ''}`}>
+                    {message.role === 'user' ? (
+                      // User message - right aligned
+                      <>
+                        <div className="flex-1 flex justify-end">
+                          <div className="max-w-[80%] bg-blue-600 text-white rounded-lg px-4 py-2">
+                            {message.content}
+                          </div>
+                        </div>
+                        <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <i className="fas fa-user text-gray-600 dark:text-gray-300 text-sm"></i>
+                        </div>
+                      </>
+                    ) : (
+                      // Assistant message - left aligned
+                      <>
+                        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <i className="fas fa-robot text-white text-sm"></i>
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                            {message.content}
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                   
                   {/* Show category selection after welcome message */}
