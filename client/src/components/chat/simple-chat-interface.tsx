@@ -190,132 +190,114 @@ To get started, please select the data categories you'd like to monitor. You can
 
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex-shrink-0">
-        <div className="flex items-center justify-between max-w-4xl mx-auto">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <i className="fas fa-robot text-white text-sm"></i>
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">HEOR Signal</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Onboarding Assistant</p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
-            <i className="fas fa-shield-alt text-green-500"></i>
-            <span>Secure Session</span>
-          </div>
-        </div>
-      </div>
-
       {/* Chat Messages Area */}
-      <div className="flex-1 overflow-y-auto px-6 py-6">
-        <div className="max-w-4xl mx-auto">
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="max-w-3xl mx-auto">
           {isLoading ? (
             <div className="flex justify-center py-8">
               <div className="text-gray-500 dark:text-gray-400">Loading conversation...</div>
             </div>
           ) : (
-            <div className="space-y-4">
-              {/* Always show initial welcome messages */}
-              {allMessages.length === 0 && (
-                <>
-                  <div className="flex items-start space-x-3">
-                    <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center flex-shrink-0">
-                      <i className="fas fa-robot text-blue-600 dark:text-blue-400 text-sm"></i>
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+              {/* Header inside the card */}
+              <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                      <i className="fas fa-robot text-white text-sm"></i>
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">HEOR Assistant</span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">Personalizing your dashboard experience</span>
-                      </div>
-                      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
-                        <p className="text-gray-700 dark:text-gray-300 mb-0">
-                          Welcome to <strong>HEOR Signal!</strong> I'm here to help you set up your personalized dashboard for health economics and outcomes research insights.
-                        </p>
-                      </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">HEOR Assistant</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Personalizing your dashboard experience</p>
                     </div>
                   </div>
+                  <div className="flex items-center space-x-2 text-sm">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-gray-600 dark:text-gray-300">Online</span>
+                  </div>
+                </div>
+              </div>
 
-                  <div className="flex items-start space-x-3">
-                    <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center flex-shrink-0">
-                      <i className="fas fa-robot text-blue-600 dark:text-blue-400 text-sm"></i>
-                    </div>
-                    <div className="flex-1">
-                      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
-                        <p className="text-gray-700 dark:text-gray-300 mb-0">
-                          To get started, please select the data categories you'd like to monitor on your dashboard. You can always modify these preferences later:
-                        </p>
+              {/* Messages */}
+              <div className="p-6 space-y-6 min-h-[400px]">
+                {/* Always show initial welcome messages */}
+                {allMessages.length === 0 && (
+                  <>
+                    <div className="flex items-start space-x-3">
+                      <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i className="fas fa-robot text-white text-sm"></i>
                       </div>
-                    </div>
-                  </div>
-                </>
-              )}
-              
-              {/* Display actual chat messages */}
-              {allMessages.map((message, index) => (
-                <div key={`${message.id}-${index}`}>
-                  <div className={`flex items-start space-x-3 ${message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      message.role === 'user' 
-                        ? 'bg-gray-200 dark:bg-gray-600' 
-                        : 'bg-blue-100 dark:bg-blue-900'
-                    }`}>
-                      <i className={`text-sm ${
-                        message.role === 'user' 
-                          ? 'fas fa-user text-gray-600 dark:text-gray-300' 
-                          : 'fas fa-robot text-blue-600 dark:text-blue-400'
-                      }`}></i>
-                    </div>
-                    <div className="flex-1">
-                      {message.role === 'assistant' && (
-                        <div className="flex items-center space-x-2 mb-1">
-                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">HEOR Assistant</span>
+                      <div className="flex-1">
+                        <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                          Welcome to <strong>HEOR Signal!</strong> I'm here to help you set up your personalized dashboard for health economics and outcomes research insights.
                         </div>
-                      )}
-                      <div className={`rounded-lg border p-4 shadow-sm ${
-                        message.role === 'user'
-                          ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 ml-8'
-                          : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
-                      }`}>
-                        <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap mb-0">{message.content}</p>
+                        <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">now</div>
                       </div>
                     </div>
-                  </div>
-                  
-                  {/* Show category selection after welcome message */}
-                  {message.id === 'welcome' && showCategorySelection && !onboardingCompleted && (
-                    <div className="mt-4 ml-11">
-                      <CategorySelection
-                        onConfirm={handleCategorySelection}
-                        isLoading={isSelectingCategories}
-                      />
+
+                    <div className="flex items-start space-x-3">
+                      <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i className="fas fa-robot text-white text-sm"></i>
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                          To get started, please select the data categories you'd like to monitor on your dashboard. You can always modify these preferences later:
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </div>
-              ))}
-              
-              {/* Show category selection if no messages yet but onboarding not completed */}
-              {allMessages.length === 0 && showCategorySelection && !onboardingCompleted && (
-                <div className="mt-4 ml-11">
-                  <CategorySelection
-                    onConfirm={handleCategorySelection}
-                    isLoading={isSelectingCategories}
-                  />
-                </div>
-              )}
-              
-              {isTyping && (
-                <div className="flex items-start space-x-3">
-                  <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center flex-shrink-0">
-                    <i className="fas fa-robot text-blue-600 dark:text-blue-400 text-sm"></i>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-1">
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">HEOR Assistant</span>
+                  </>
+                )}
+                
+                {/* Display actual chat messages */}
+                {allMessages.map((message, index) => (
+                  <div key={`${message.id}-${index}`}>
+                    <div className={`flex items-start space-x-3 ${message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                        message.role === 'user' 
+                          ? 'bg-gray-200 dark:bg-gray-600' 
+                          : 'bg-blue-600'
+                      }`}>
+                        <i className={`text-sm ${
+                          message.role === 'user' 
+                            ? 'fas fa-user text-gray-600 dark:text-gray-300' 
+                            : 'fas fa-robot text-white'
+                        }`}></i>
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                          {message.content}
+                        </div>
+                      </div>
                     </div>
-                    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+                    
+                    {/* Show category selection after welcome message */}
+                    {message.id === 'welcome' && showCategorySelection && !onboardingCompleted && (
+                      <div className="mt-6 ml-11">
+                        <CategorySelection
+                          onConfirm={handleCategorySelection}
+                          isLoading={isSelectingCategories}
+                        />
+                      </div>
+                    )}
+                  </div>
+                ))}
+                
+                {/* Show category selection if no messages yet but onboarding not completed */}
+                {allMessages.length === 0 && showCategorySelection && !onboardingCompleted && (
+                  <div className="mt-6 ml-11">
+                    <CategorySelection
+                      onConfirm={handleCategorySelection}
+                      isLoading={isSelectingCategories}
+                    />
+                  </div>
+                )}
+                
+                {isTyping && (
+                  <div className="flex items-start space-x-3">
+                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <i className="fas fa-robot text-white text-sm"></i>
+                    </div>
+                    <div className="flex-1">
                       <div className="flex space-x-1">
                         <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
                         <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
@@ -323,55 +305,53 @@ To get started, please select the data categories you'd like to monitor. You can
                       </div>
                     </div>
                   </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+              
+              {/* Input Area */}
+              {!showCategorySelection && (
+                <div className="p-6 border-t border-gray-100 dark:border-gray-700">
+                  <div className="flex items-end space-x-3">
+                    <div className="flex-1">
+                      <Textarea
+                        ref={textareaRef}
+                        value={inputMessage}
+                        onChange={(e) => {
+                          setInputMessage(e.target.value);
+                          autoResize();
+                        }}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Type a message or question about your preferences..."
+                        className="w-full min-h-[48px] max-h-[120px] resize-none border-gray-200 dark:border-gray-600 rounded-lg px-4 py-3 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        disabled={isSending}
+                      />
+                      <div className="flex items-center justify-between mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        <span>Press Enter to send, Shift+Enter for new line</span>
+                        <div className="flex items-center space-x-1">
+                          <i className="fas fa-shield-alt text-gray-400"></i>
+                          <span>Secure & Private</span>
+                        </div>
+                      </div>
+                    </div>
+                    <Button 
+                      onClick={handleSendMessage}
+                      disabled={!inputMessage.trim() || isSending}
+                      className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg flex-shrink-0"
+                    >
+                      {isSending ? (
+                        <i className="fas fa-spinner fa-spin"></i>
+                      ) : (
+                        <i className="fas fa-paper-plane"></i>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               )}
-              <div ref={messagesEndRef} />
             </div>
           )}
         </div>
       </div>
-      
-      {/* Input Area */}
-      {!showCategorySelection && (
-        <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-6 py-4 flex-shrink-0">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex items-end space-x-3">
-              <div className="flex-1">
-                <Textarea
-                  ref={textareaRef}
-                  value={inputMessage}
-                  onChange={(e) => {
-                    setInputMessage(e.target.value);
-                    autoResize();
-                  }}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Type a message or question about your preferences..."
-                  className="w-full min-h-[44px] max-h-[120px] resize-none border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  disabled={isSending}
-                />
-                <div className="flex items-center justify-between mt-2 text-xs text-gray-500 dark:text-gray-400">
-                  <span>Press Enter to send, Shift+Enter for new line</span>
-                  <div className="flex items-center space-x-1">
-                    <i className="fas fa-shield-alt text-green-500"></i>
-                    <span>Secure & Private</span>
-                  </div>
-                </div>
-              </div>
-              <Button 
-                onClick={handleSendMessage}
-                disabled={!inputMessage.trim() || isSending}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex-shrink-0"
-              >
-                {isSending ? (
-                  <i className="fas fa-spinner fa-spin"></i>
-                ) : (
-                  <i className="fas fa-paper-plane"></i>
-                )}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
