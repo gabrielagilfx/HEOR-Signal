@@ -109,27 +109,46 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
       return;
     }
 
+    const userMessageContent = inputMessage.trim();
+    const tempMessageId = `temp-${Date.now()}`;
+
     try {
       setIsSending(true);
       setIsTyping(true);
       
+      // Immediately add user message to display
+      const userMessage: ChatMessage = {
+        id: tempMessageId,
+        role: 'user',
+        content: userMessageContent,
+        timestamp: new Date()
+      };
+      
+      setMessages(prevMessages => [...prevMessages, userMessage]);
+      setInputMessage("");
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto';
+      }
+      
+      // Send to API
       const response = await apiRequest('POST', '/api/chat/send', {
-        message: inputMessage.trim(),
+        message: userMessageContent,
         session_id: sessionId,
       });
       
       const result = await response.json();
       
       if (result.success) {
-        setInputMessage("");
-        if (textareaRef.current) {
-          textareaRef.current.style.height = 'auto';
-        }
-        // Reload messages to get the latest conversation
+        // Reload messages to get the proper user message with real ID and assistant response
         await loadMessages();
+      } else {
+        // If API fails, remove the temporary message
+        setMessages(prevMessages => prevMessages.filter(msg => msg.id !== tempMessageId));
       }
     } catch (error) {
       console.error('Error sending message:', error);
+      // Remove temporary message on error
+      setMessages(prevMessages => prevMessages.filter(msg => msg.id !== tempMessageId));
     } finally {
       setIsSending(false);
       setIsTyping(false);
