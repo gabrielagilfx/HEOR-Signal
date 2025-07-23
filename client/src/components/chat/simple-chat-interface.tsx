@@ -56,12 +56,16 @@ export function SimpleChatInterface({ sessionId, userStatus }: SimpleChatInterfa
 
 
 
-  // Update category selection state when userStatus changes
+  // Update category selection state when userStatus changes  
   useEffect(() => {
     setShowCategorySelection(!onboardingCompleted);
-    setShowDashboard(canShowDashboard);
+    // Only set dashboard if we're not in a timer-controlled state
+    // (Don't override dashboard state set by the 3-second timer)
+    if (!showDashboard) {
+      setShowDashboard(canShowDashboard);
+    }
     setSelectedCategories(userStatus?.selected_categories || []);
-  }, [onboardingCompleted, canShowDashboard, userStatus?.selected_categories]);
+  }, [onboardingCompleted, canShowDashboard, userStatus?.selected_categories, showDashboard]);
 
   // Load messages on mount and when sessionId changes
   useEffect(() => {
@@ -170,8 +174,10 @@ export function SimpleChatInterface({ sessionId, userStatus }: SimpleChatInterfa
         
         // Check if this response indicates the dashboard should be shown
         if (result.show_dashboard) {
+          console.log('Dashboard navigation triggered after expertise validation');
           // 3-second pause then navigate directly to dashboard
           setTimeout(() => {
+            console.log('Setting showDashboard to true after 3 seconds');
             setShowDashboard(true);
           }, 3000);
         }
@@ -272,6 +278,7 @@ To get started, please select the data categories you'd like to monitor. You can
 
   // Show dashboard only if onboarding is completed AND preference_expertise is set
   if (showDashboard && canShowDashboard) {
+    console.log('Rendering HEOR Dashboard with categories:', selectedCategories);
     return <HEORDashboard selectedCategories={selectedCategories} sessionId={sessionId} />;
   }
 
