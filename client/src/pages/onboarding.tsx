@@ -17,6 +17,7 @@ export default function Onboarding() {
   const [sessionId, setSessionId] = useState<string>("");
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [showInitialLoader, setShowInitialLoader] = useState<boolean>(true);
+  const [retryCount, setRetryCount] = useState<number>(0);
   const queryClient = useQueryClient();
 
   // Initialize user session
@@ -28,14 +29,19 @@ export default function Onboarding() {
       console.log('User session initialized:', data);
       return data as UserStatus;
     },
+    retry: (failureCount, error) => {
+      setRetryCount(failureCount);
+      return failureCount < 3; // Max 3 attempts
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
     onSuccess: (data) => {
       console.log('Setting session ID:', data.session_id);
       setSessionId(data.session_id);
       setIsInitialized(true);
-      // Don't hide the loader yet - wait for messages to load
+      setRetryCount(0); // Reset retry count on success
     },
     onError: (error) => {
-      console.error('Failed to initialize user:', error);
+      console.error('Failed to initialize user after retries:', error);
       setIsInitialized(true); // Still mark as initialized to prevent retry loop
       setTimeout(() => setShowInitialLoader(false), 1000);
     },
@@ -94,7 +100,10 @@ export default function Onboarding() {
 
   // Show loading screen when initializing or when showInitialLoader is true
   if (showInitialLoader || initUserMutation.isPending || isLoadingStatus || !sessionId) {
-    return <LoadingScreen message="Initializing your assistant..." />;
+    const loadingMessage = retryCount > 0 
+      ? `Retrying connection... (attempt ${retryCount + 1}/3)`
+      : "Initializing your assistant...";
+    return <LoadingScreen message={loadingMessage} />;
   }
 
   if (initUserMutation.error) {
