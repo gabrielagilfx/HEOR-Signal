@@ -8,9 +8,9 @@ from dataclasses import dataclass
 from enum import Enum
 
 from langgraph.graph import StateGraph, END
-from langgraph.prebuilt import ToolExecutor
+from langgraph.prebuilt import ToolNode
 from langchain_openai import ChatOpenAI
-from langchain.schema import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_community.tools import DuckDuckGoSearchRun
 from pydantic import BaseModel
 
