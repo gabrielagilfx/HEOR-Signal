@@ -10,9 +10,16 @@ import { HEORDashboard } from "@/components/dashboard/heor-dashboard";
 import { apiRequest } from "@/lib/queryClient";
 import type { ChatMessage } from "@/types/chat";
 
+interface UserStatus {
+  session_id: string;
+  onboarding_completed: boolean;
+  selected_categories: string[];
+  preference_expertise?: string;
+}
+
 interface SimpleChatInterfaceProps {
   sessionId: string;
-  onboardingCompleted: boolean;
+  userStatus?: UserStatus;
 }
 
 interface ApiMessage {
@@ -27,7 +34,11 @@ interface MessagesResponse {
   messages: ApiMessage[];
 }
 
-export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleChatInterfaceProps) {
+export function SimpleChatInterface({ sessionId, userStatus }: SimpleChatInterfaceProps) {
+  const onboardingCompleted = userStatus?.onboarding_completed ?? false;
+  const hasPreferenceExpertise = !!(userStatus?.preference_expertise);
+  const canShowDashboard = onboardingCompleted && hasPreferenceExpertise;
+  
   const [inputMessage, setInputMessage] = useState("");
   const [showCategorySelection, setShowCategorySelection] = useState(!onboardingCompleted);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -36,8 +47,8 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
   const [isSending, setIsSending] = useState(false);
   const [isSelectingCategories, setIsSelectingCategories] = useState(false);
   const [showCategoryLoader, setShowCategoryLoader] = useState(false);
-  const [showDashboard, setShowDashboard] = useState(onboardingCompleted);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [showDashboard, setShowDashboard] = useState(canShowDashboard);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(userStatus?.selected_categories || []);
   const [isNavigatingToDashboard, setIsNavigatingToDashboard] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -45,11 +56,12 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
 
 
 
-  // Update category selection state when onboardingCompleted changes
+  // Update category selection state when userStatus changes
   useEffect(() => {
     setShowCategorySelection(!onboardingCompleted);
-    setShowDashboard(onboardingCompleted);
-  }, [onboardingCompleted]);
+    setShowDashboard(canShowDashboard);
+    setSelectedCategories(userStatus?.selected_categories || []);
+  }, [onboardingCompleted, canShowDashboard, userStatus?.selected_categories]);
 
   // Load messages on mount and when sessionId changes
   useEffect(() => {
@@ -206,20 +218,8 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
           setMessages(prev => [...prev, confirmationMessage]);
         }
         
-        // Show navigation message and wait 3 seconds before showing dashboard
-        setIsNavigatingToDashboard(true);
-        const dashboardMessage: ChatMessage = {
-          id: `dashboard-navigation-${Date.now()}`,
-          role: 'assistant',
-          content: "Perfect! I'm now setting up your personalized HEOR dashboard. You'll be redirected in just a moment...",
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, dashboardMessage]);
-        
-        setTimeout(() => {
-          setShowDashboard(true);
-          setIsNavigatingToDashboard(false);
-        }, 3000);
+        // Don't navigate to dashboard yet - need to collect expertise preference first
+        // Just acknowledge category selection for now
         
         window.dispatchEvent(new CustomEvent('onboarding-completed'));
       }
@@ -262,8 +262,8 @@ To get started, please select the data categories you'd like to monitor. You can
     return <LoadingScreen message="Setting up your HEOR dashboard..." />;
   }
 
-  // Show dashboard if onboarding is completed and showDashboard is true
-  if (showDashboard) {
+  // Show dashboard only if onboarding is completed AND preference_expertise is set
+  if (showDashboard && canShowDashboard) {
     return <HEORDashboard selectedCategories={selectedCategories} sessionId={sessionId} />;
   }
 
@@ -358,7 +358,7 @@ To get started, please select the data categories you'd like to monitor. You can
                   </div>
                   
                   {/* Show category selection after welcome message */}
-                  {message.id === 'welcome' && showCategorySelection && !onboardingCompleted && (
+                  {message.id === 'welcome' && showCategorySelection && !canShowDashboard && (
                     <div className="mt-6 ml-11">
                       <CategorySelection
                         onConfirm={handleCategorySelection}
@@ -369,8 +369,8 @@ To get started, please select the data categories you'd like to monitor. You can
                 </div>
               ))}
               
-              {/* Show category selection if no messages yet but onboarding not completed */}
-              {allMessages.length === 0 && showCategorySelection && !onboardingCompleted && (
+              {/* Show category selection if no messages yet but dashboard cannot be shown */}
+              {allMessages.length === 0 && showCategorySelection && !canShowDashboard && (
                 <div className="mt-6 ml-11">
                   <CategorySelection
                     onConfirm={handleCategorySelection}
@@ -401,8 +401,8 @@ To get started, please select the data categories you'd like to monitor. You can
           </div>
         )}
         
-        {/* Input Area at Bottom */}
-        {!showCategorySelection && (
+        {/* Input Area at Bottom - only show if categories selected but no dashboard yet */}
+        {!showCategorySelection && !canShowDashboard && (
           <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-4">
             <div className="flex items-start space-x-3">
               <div className="flex-1">

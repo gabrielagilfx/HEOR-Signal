@@ -11,6 +11,7 @@ interface UserStatus {
   session_id: string;
   onboarding_completed: boolean;
   selected_categories: string[];
+  preference_expertise?: string;
 }
 
 export default function Onboarding() {
@@ -141,7 +142,7 @@ export default function Onboarding() {
       <Header />
       <SimpleChatInterface 
         sessionId={sessionId} 
-        onboardingCompleted={(userStatus as any)?.onboarding_completed ?? false}
+        userStatus={userStatus}
       />
     </div>
   );
