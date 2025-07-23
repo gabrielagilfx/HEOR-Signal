@@ -124,7 +124,13 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
         timestamp: new Date()
       };
       
-      setMessages(prevMessages => [...prevMessages, userMessage]);
+      console.log('Adding immediate user message:', userMessage);
+      setMessages(prevMessages => {
+        console.log('Previous messages count:', prevMessages.length);
+        const newMessages = [...prevMessages, userMessage];
+        console.log('New messages count:', newMessages.length);
+        return newMessages;
+      });
       setInputMessage("");
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
@@ -139,7 +145,7 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
       const result = await response.json();
       
       if (result.success) {
-        // Add assistant response to existing messages instead of reloading everything
+        // Simply add assistant response to existing messages (user message already there)
         const assistantMessage: ChatMessage = {
           id: result.message_id || `assistant-${Date.now()}`,
           role: 'assistant',
@@ -147,19 +153,12 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
           timestamp: new Date()
         };
         
+        console.log('API response received, adding assistant message');
         setMessages(prevMessages => {
-          // Replace temporary user message with real one and add assistant response
-          const updatedMessages = prevMessages.filter(msg => msg.id !== tempMessageId);
-          
-          // Add the real user message
-          const realUserMessage: ChatMessage = {
-            id: `user-${Date.now()}`,
-            role: 'user',
-            content: userMessageContent,
-            timestamp: new Date()
-          };
-          
-          return [...updatedMessages, realUserMessage, assistantMessage];
+          console.log('Before adding assistant - messages count:', prevMessages.length);
+          const finalMessages = [...prevMessages, assistantMessage];
+          console.log('Final messages count:', finalMessages.length);
+          return finalMessages;
         });
       } else {
         // If API fails, remove the temporary message
@@ -229,13 +228,16 @@ To get started, please select the data categories you'd like to monitor. You can
   allMessages.push(welcomeMessage);
   
   // Add actual messages one by one to avoid spread operator issues
+  console.log('Building allMessages, current messages state count:', messages.length);
   if (messages && messages.length > 0) {
     for (const message of messages) {
       if (message && message.id) {
+        console.log('Adding message to allMessages:', message.role, message.content.substring(0, 50));
         allMessages.push(message);
       }
     }
   }
+  console.log('Final allMessages count:', allMessages.length);
 
 
 
