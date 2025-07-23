@@ -91,8 +91,17 @@ export function CategorySelection({ onConfirm, isLoading, initialSelected = [] }
         disabled={selectedCategories.length === 0 || isLoading}
         className="w-full mt-5"
       >
-        <i className="fas fa-check mr-2"></i>
-        {isLoading ? 'Processing...' : 'Confirm Selection'}
+        {isLoading ? (
+          <>
+            <i className="fas fa-spinner fa-spin mr-2"></i>
+            Processing...
+          </>
+        ) : (
+          <>
+            <i className="fas fa-check mr-2"></i>
+            Confirm Selection
+          </>
+        )}
       </Button>
     </Card>
   );
