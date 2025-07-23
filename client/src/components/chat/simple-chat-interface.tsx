@@ -167,6 +167,16 @@ export function SimpleChatInterface({ sessionId, userStatus }: SimpleChatInterfa
         
         // Add assistant response to existing messages (user message already added)
         setMessages(prev => [...prev, assistantMessage]);
+        
+        // Check if this response indicates the dashboard should be shown
+        if (result.show_dashboard) {
+          setIsNavigatingToDashboard(true);
+          
+          setTimeout(() => {
+            setShowDashboard(true);
+            setIsNavigatingToDashboard(false);
+          }, 3000);
+        }
       }
     } catch (error) {
       console.error('Error sending message:', error);
