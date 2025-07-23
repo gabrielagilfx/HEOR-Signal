@@ -4,22 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { useNewsAgents, UserPreferences, NewsItem } from "@/hooks/useNewsAgents";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface DashboardProps {
   selectedCategories: string[];
   sessionId: string;
 }
 
-interface NewsItem {
-  id: string;
-  title: string;
-  snippet: string;
-  source: string;
-  date: string;
-  category: string;
-  isNew?: boolean;
-  url?: string;
-}
+// NewsItem interface now imported from useNewsAgents hook
 
 // Mock data structure - will be replaced with real API calls later
 const CATEGORY_CONFIGS = {
@@ -178,33 +171,53 @@ const MOCK_NEWS: Record<string, NewsItem[]> = {
 };
 
 export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps) {
-  const [isLoading, setIsLoading] = useState(true);
+  const { newsData, loading, error, fetchNews, testApis, clearError } = useNewsAgents();
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [apiStatus, setApiStatus] = useState<{ serp_api: string; nih_api: string } | null>(null);
+
+  // Convert selectedCategories to user preferences
+  const getUserPreferences = (): UserPreferences => {
+    return {
+      expertise_areas: ["HEOR", "Market Access", "Health Economics"],
+      therapeutic_areas: selectedCategories.includes("clinical") ? ["Oncology", "Cardiology", "Diabetes"] : [],
+      regions: ["United States", "Europe"],
+      keywords: selectedCategories.flatMap(cat => {
+        switch(cat) {
+          case "regulatory": return ["FDA approval", "regulatory guidance", "drug recall"];
+          case "clinical": return ["clinical trial", "Phase III", "biomarker"];
+          case "market": return ["payer coverage", "HEOR study", "reimbursement"];
+          case "rwe": return ["real world evidence", "population health", "outcomes research"];
+          default: return [];
+        }
+      }),
+      news_recency_days: 7
+    };
+  };
 
   useEffect(() => {
-    // Simulate data loading
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1500);
+    if (selectedCategories.length > 0) {
+      const preferences = getUserPreferences();
+      fetchNews(preferences);
+      
+      // Test API connectivity
+      testApis().then(setApiStatus);
+    }
+  }, [selectedCategories, fetchNews, testApis]);
 
-    return () => clearTimeout(timer);
-  }, []);
-
-  const handleRefresh = () => {
-    setIsLoading(true);
-    setLastUpdated(new Date());
-    
-    // Simulate refresh
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
+  const handleRefresh = async () => {
+    if (selectedCategories.length > 0) {
+      const preferences = getUserPreferences();
+      await fetchNews(preferences);
+      setLastUpdated(new Date());
+    }
   };
 
   const getNewItemsCount = () => {
+    if (!newsData) return 0;
     let count = 0;
     selectedCategories.forEach(category => {
-      const items = MOCK_NEWS[category] || [];
-      count += items.filter(item => item.isNew).length;
+      const items = newsData[category as keyof typeof newsData] || [];
+      count += items.filter(item => item.is_new).length;
     });
     return count;
   };
@@ -239,10 +252,10 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
                 onClick={handleRefresh}
                 variant="outline"
                 size="sm"
-                disabled={isLoading}
+                disabled={loading}
                 className="hover:bg-blue-50 dark:hover:bg-blue-900/20"
               >
-                <i className={`fas fa-sync-alt mr-2 ${isLoading ? 'animate-spin' : ''}`}></i>
+                <i className={`fas fa-sync-alt mr-2 ${loading ? 'animate-spin' : ''}`}></i>
                 Refresh
               </Button>
               <Button 
@@ -261,6 +274,36 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
+        {/* Error Display */}
+        {error && (
+          <Alert className="mb-6 border-red-200 bg-red-50 dark:bg-red-950">
+            <AlertDescription className="text-red-700 dark:text-red-300">
+              <div className="flex items-center justify-between">
+                <span>{error}</span>
+                <Button onClick={clearError} variant="ghost" size="sm">
+                  <i className="fas fa-times"></i>
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* API Status */}
+        {apiStatus && (
+          <Alert className="mb-6 border-blue-200 bg-blue-50 dark:bg-blue-950">
+            <AlertDescription className="text-blue-700 dark:text-blue-300">
+              <div className="flex items-center space-x-4">
+                <span>API Status:</span>
+                <span className={`px-2 py-1 rounded text-xs ${apiStatus.serp_api === 'connected' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                  SERP: {apiStatus.serp_api}
+                </span>
+                <span className={`px-2 py-1 rounded text-xs ${apiStatus.nih_api === 'connected' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                  NIH: {apiStatus.nih_api}
+                </span>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
         {/* Dashboard Stats */}
         <div className="mb-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -312,11 +355,13 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-purple-600 dark:text-purple-400">System Status</p>
-                    <p className="text-lg font-semibold text-purple-900 dark:text-purple-100">Online</p>
+                    <p className="text-sm font-medium text-purple-600 dark:text-purple-400">Processing Time</p>
+                    <p className="text-lg font-semibold text-purple-900 dark:text-purple-100">
+                      {newsData?.processing_time ? `${newsData.processing_time.toFixed(1)}s` : 'N/A'}
+                    </p>
                   </div>
                   <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center">
-                    <i className="fas fa-check-circle text-white text-lg"></i>
+                    <i className="fas fa-clock text-white text-lg"></i>
                   </div>
                 </div>
               </CardContent>
@@ -328,7 +373,7 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
         <div className="space-y-8">
           {selectedCategories.map((categoryId) => {
             const config = CATEGORY_CONFIGS[categoryId as keyof typeof CATEGORY_CONFIGS];
-            const newsItems = MOCK_NEWS[categoryId] || [];
+            const newsItems = newsData?.[categoryId as keyof typeof newsData] || [];
             
             if (!config) return null;
 
@@ -348,7 +393,7 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
                       </div>
                     </CardTitle>
                     
-                    {newsItems.some(item => item.isNew) && (
+                    {newsItems.some(item => item.is_new) && (
                       <Badge className={`${config.badgeColor} border-0`}>
                         <i className="fas fa-star mr-1"></i>
                         New Updates
@@ -358,7 +403,7 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
                 </CardHeader>
 
                 <CardContent className="pt-0">
-                  {isLoading ? (
+                  {loading ? (
                     <div className="space-y-4">
                       {[1, 2, 3].map((i) => (
                         <div key={i} className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
@@ -375,10 +420,10 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center">
-                                {item.isNew && (
+                                {item.is_new && (
                                   <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
                                 )}
-                                <a href={item.url} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                                <a href={item.url} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors" target="_blank" rel="noopener noreferrer">
                                   {item.title}
                                 </a>
                               </h3>
@@ -393,13 +438,18 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
                                   </span>
                                   <span className="flex items-center">
                                     <i className="fas fa-clock mr-1"></i>
-                                    {item.date}
+                                    {new Date(item.date).toLocaleDateString()}
+                                  </span>
+                                  <span className="flex items-center">
+                                    <i className="fas fa-star mr-1"></i>
+                                    Relevance: {(item.relevance_score * 100).toFixed(0)}%
                                   </span>
                                 </div>
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   className="h-7 px-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700"
+                                  onClick={() => window.open(item.url, '_blank')}
                                 >
                                   <i className="fas fa-external-link-alt mr-1"></i>
                                   Read More

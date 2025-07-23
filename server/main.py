@@ -7,7 +7,7 @@ import uvicorn
 import os
 from config import settings
 from database import engine, Base
-from controllers import chat_controller, user_controller
+from controllers import chat_controller, user_controller, news_controller
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -26,6 +26,7 @@ app.add_middleware(
 # Include routers
 app.include_router(chat_controller.router)
 app.include_router(user_controller.router)
+app.include_router(news_controller.router)
 
 # Health check endpoint
 @app.get("/api/health")
