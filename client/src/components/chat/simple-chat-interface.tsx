@@ -170,16 +170,10 @@ export function SimpleChatInterface({ sessionId, userStatus }: SimpleChatInterfa
         
         // Check if this response indicates the dashboard should be shown
         if (result.show_dashboard) {
-          // Wait a moment for user to read the agent's message, then start 3-second timer
+          // 3-second pause then navigate directly to dashboard
           setTimeout(() => {
-            setIsNavigatingToDashboard(true);
-            
-            // Simple 3-second timer to navigate to dashboard
-            setTimeout(() => {
-              setShowDashboard(true);
-              setIsNavigatingToDashboard(false);
-            }, 3000);
-          }, 1500); // 1.5 second delay to read agent message
+            setShowDashboard(true);
+          }, 3000);
         }
       }
     } catch (error) {
