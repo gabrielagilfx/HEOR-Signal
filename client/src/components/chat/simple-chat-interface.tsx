@@ -186,10 +186,8 @@ To get started, please select the data categories you'd like to monitor. You can
   // Create the full messages array safely
   const allMessages: ChatMessage[] = [];
   
-  // Only show welcome message if onboarding is not completed
-  if (!onboardingCompleted) {
-    allMessages.push(welcomeMessage);
-  }
+  // Always show welcome message
+  allMessages.push(welcomeMessage);
   
   // Add actual messages one by one to avoid spread operator issues
   if (messages && messages.length > 0) {
