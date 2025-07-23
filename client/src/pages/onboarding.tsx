@@ -31,8 +31,7 @@ export default function Onboarding() {
       console.log('Setting session ID:', data.session_id);
       setSessionId(data.session_id);
       setIsInitialized(true);
-      // Hide initial loader after a brief delay to show completion
-      setTimeout(() => setShowInitialLoader(false), 1500);
+      // Don't hide the loader yet - wait for messages to load
     },
     onError: (error) => {
       console.error('Failed to initialize user:', error);
@@ -62,10 +61,22 @@ export default function Onboarding() {
     const handleOnboardingCompleted = () => {
       queryClient.invalidateQueries({ queryKey: ['/api/user/status', sessionId] });
     };
+
+    const handleMessagesLoaded = () => {
+      // Hide loader once messages are loaded (only on initial load)
+      if (showInitialLoader) {
+        setTimeout(() => setShowInitialLoader(false), 600);
+      }
+    };
     
     window.addEventListener('onboarding-completed', handleOnboardingCompleted);
-    return () => window.removeEventListener('onboarding-completed', handleOnboardingCompleted);
-  }, [sessionId, queryClient]);
+    window.addEventListener('messages-loaded', handleMessagesLoaded);
+    
+    return () => {
+      window.removeEventListener('onboarding-completed', handleOnboardingCompleted);
+      window.removeEventListener('messages-loaded', handleMessagesLoaded);
+    };
+  }, [sessionId, queryClient, showInitialLoader]);
 
   // Show loading screen when initializing or when showInitialLoader is true
   if (showInitialLoader || initUserMutation.isPending || isLoadingStatus || !sessionId) {
@@ -107,7 +118,7 @@ export default function Onboarding() {
       <Header />
       <SimpleChatInterface 
         sessionId={sessionId} 
-        onboardingCompleted={userStatus?.onboarding_completed ?? false}
+        onboardingCompleted={(userStatus as any)?.onboarding_completed ?? false}
       />
     </div>
   );

@@ -74,9 +74,14 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
         
         setMessages(transformedMessages);
       }
+      
+      // Notify parent that messages are loaded
+      window.dispatchEvent(new CustomEvent('messages-loaded'));
     } catch (error) {
       console.error('Error loading messages:', error);
       setMessages([]);
+      // Still notify even on error to prevent infinite loading
+      window.dispatchEvent(new CustomEvent('messages-loaded'));
     } finally {
       setIsLoading(false);
     }
