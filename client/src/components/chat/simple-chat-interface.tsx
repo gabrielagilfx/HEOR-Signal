@@ -356,7 +356,7 @@ To get started, please select the data categories you'd like to monitor. You can
             {/* Input Area */}
             {!showCategorySelection && (
               <div className="p-6 border-t border-gray-100 dark:border-gray-700">
-                <div className="flex items-end space-x-3">
+                <div className="flex items-start space-x-3">
                   <div className="flex-1">
                     <Textarea
                       ref={textareaRef}
@@ -370,18 +370,11 @@ To get started, please select the data categories you'd like to monitor. You can
                       className="w-full min-h-[48px] max-h-[120px] resize-none border-gray-200 dark:border-gray-600 rounded-lg px-4 py-3 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       disabled={isSending}
                     />
-                    <div className="flex items-center justify-between mt-2 text-xs text-gray-500 dark:text-gray-400">
-                      <span>Press Enter to send, Shift+Enter for new line</span>
-                      <div className="flex items-center space-x-1">
-                        <i className="fas fa-shield-alt text-gray-400"></i>
-                        <span>Secure & Private</span>
-                      </div>
-                    </div>
                   </div>
                   <Button 
                     onClick={handleSendMessage}
                     disabled={!inputMessage.trim() || isSending}
-                    className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg flex-shrink-0"
+                    className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg flex-shrink-0 min-w-[48px] h-[48px]"
                   >
                     {isSending ? (
                       <i className="fas fa-spinner fa-spin"></i>
@@ -389,6 +382,13 @@ To get started, please select the data categories you'd like to monitor. You can
                       <i className="fas fa-paper-plane"></i>
                     )}
                   </Button>
+                </div>
+                <div className="flex items-center justify-between mt-2 text-xs text-gray-500 dark:text-gray-400">
+                  <span>Press Enter to send, Shift+Enter for new line</span>
+                  <div className="flex items-center space-x-1">
+                    <i className="fas fa-shield-alt text-gray-400"></i>
+                    <span>Secure & Private</span>
+                  </div>
                 </div>
               </div>
             )}
