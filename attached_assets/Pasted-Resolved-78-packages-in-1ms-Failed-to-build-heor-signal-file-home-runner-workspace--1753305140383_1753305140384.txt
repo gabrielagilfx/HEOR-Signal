@@ -1,0 +1,83 @@
+Resolved 78 packages in 1ms
+
+  × Failed to build `heor-signal @ file:///home/runner/workspace`
+  ├─▶ The build backend returned an error
+
+  × Failed to build `heor-signal @ file:///home/runner/workspace`
+  ├─▶ The build backend returned an error
+
+
+      Traceback (most recent call last):
+        File "<string>", line 11, in <module>
+        File
+      "/home/runner/workspace/.cache/uv/builds-v0/.tmpSFTmZ1/lib/python3.11/site-packages/hatchling/build.py",
+      line 83, in build_editable
+          return os.path.basename(next(builder.build(directory=wheel_directory,
+      versions=['editable'])))
+      
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        File
+      "/home/runner/workspace/.cache/uv/builds-v0/.tmpSFTmZ1/lib/python3.11/site-packages/hatchling/builders/plugin/interface.py",
+      line 155, in build
+          artifact = version_api[version](directory, **build_data)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        File
+      "/home/runner/workspace/.cache/uv/builds-v0/.tmpSFTmZ1/lib/python3.11/site-packages/hatchling/builders/wheel.py",
+      line 496, in build_editable
+          return self.build_editable_detection(directory, **build_data)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        File
+      "/home/runner/workspace/.cache/uv/builds-v0/.tmpSFTmZ1/lib/python3.11/site-packages/hatchling/builders/wheel.py",
+      line 507, in build_editable_detection
+          for included_file in self.recurse_selected_project_files():
+        File
+      "/home/runner/workspace/.cache/uv/builds-v0/.tmpSFTmZ1/lib/python3.11/site-packages/hatchling/builders/plugin/interface.py",
+      line 180, in recurse_selected_project_files
+          if self.config.only_include:
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+        File
+      "/nix/store/7d088dip86hlzri9sk0h78b63yfmx0a0-python3-3.11.13/lib/python3.11/functools.py",
+      line 1001, in __get__
+          val = self.func(instance)
+                ^^^^^^^^^^^^^^^^^^^
+        File
+      "/home/runner/workspace/.cache/uv/builds-v0/.tmpSFTmZ1/lib/python3.11/site-packages/hatchling/builders/config.py",
+      line 713, in only_include
+          only_include = only_include_config.get('only-include',
+      self.default_only_include()) or self.packages
+      
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        File
+      "/home/runner/workspace/.cache/uv/builds-v0/.tmpSFTmZ1/lib/python3.11/site-packages/hatchling/builders/wheel.py",
+      line 262, in default_only_include
+          return self.default_file_selection_options.only_include
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        File
+      "/nix/store/7d088dip86hlzri9sk0h78b63yfmx0a0-python3-3.11.13/lib/python3.11/functools.py",
+      line 1001, in __get__
+          val = self.func(instance)
+                ^^^^^^^^^^^^^^^^^^^
+        File
+      "/home/runner/workspace/.cache/uv/builds-v0/.tmpSFTmZ1/lib/python3.11/site-packages/hatchling/builders/wheel.py",
+      line 250, in default_file_selection_options
+          raise ValueError(message)
+      ValueError: Unable to determine which files to ship
+      inside the wheel using the following heuristics:
+      https://hatch.pypa.io/latest/plugins/builder/wheel/#default-file-selection
+
+      The most likely cause of this is that there is no directory that matches
+      the name of your project (heor_signal).
+
+      At least one file selection option must be defined
+      in the `tool.hatch.build.targets.wheel` table, see:
+      https://hatch.pypa.io/latest/config/build/
+
+      As an example, if you intend to ship a directory named `foo` that
+      resides within a `src` directory located at the root of your project,
+      you can define the following:
+
+      [tool.hatch.build.targets.wheel]
+      packages = ["src/foo"]
+
+      hint: This usually indicates a problem with the package or the build
+      environment.
