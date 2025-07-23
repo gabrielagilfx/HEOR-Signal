@@ -21,14 +21,14 @@ The application is built with a **Python FastAPI backend** and React TypeScript 
 
 ## Recent Changes
 
-### July 23, 2025 - Healthcare Expertise Validation System
+### July 23, 2025 - Healthcare Expertise Validation + UI Improvements
 - **AI Validation**: Implemented OpenAI-powered expertise validation for ALL healthcare fields
 - **Inclusive Criteria**: System now accepts any legitimate healthcare/medical expertise including clinical treatments (CAR-T, oncology), pharmaceutical, HEOR, public health, medical professions
+- **Smooth Chat UX**: Fixed message flashing by implementing incremental message addition instead of full reload
+- **UI Layout**: Moved send button inline with chat input for better user experience
 - **Database Enhancement**: Added `preference_expertise` VARCHAR(500) field with cascading deletion
-- **Validation Logic**: Uses temporary OpenAI assistant with expanded healthcare field recognition
-- **User Experience**: Acknowledges any healthcare expertise, asks again only for non-healthcare responses
-- **Cascading Deletion**: Confirmed user→threads→messages deletion relationships working
-- **Status**: ✅ FULLY OPERATIONAL - Inclusive healthcare validation system active
+- **Production Builds**: Automated build process for deployment-ready assets
+- **Status**: ✅ FULLY OPERATIONAL - Complete system with polished user interface
 
 ### July 22, 2025 - Fixed Frontend Initialization Loop
 - **Issue**: React component was stuck in infinite loop during user session initialization
