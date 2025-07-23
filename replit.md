@@ -21,14 +21,14 @@ The application is built with a **Python FastAPI backend** and React TypeScript 
 
 ## Recent Changes
 
-### July 23, 2025 - HEOR Expertise Validation System
-- **AI Validation**: Implemented OpenAI-powered expertise validation for HEOR fields
-- **Smart Flow**: System validates user responses against comprehensive healthcare/HEOR criteria
+### July 23, 2025 - Healthcare Expertise Validation System
+- **AI Validation**: Implemented OpenAI-powered expertise validation for ALL healthcare fields
+- **Inclusive Criteria**: System now accepts any legitimate healthcare/medical expertise including clinical treatments (CAR-T, oncology), pharmaceutical, HEOR, public health, medical professions
 - **Database Enhancement**: Added `preference_expertise` VARCHAR(500) field with cascading deletion
-- **Validation Logic**: Uses temporary OpenAI assistant to validate expertise relevance
-- **User Experience**: Guides users to provide HEOR-related expertise, asks again if invalid
+- **Validation Logic**: Uses temporary OpenAI assistant with expanded healthcare field recognition
+- **User Experience**: Acknowledges any healthcare expertise, asks again only for non-healthcare responses
 - **Cascading Deletion**: Confirmed user→threads→messages deletion relationships working
-- **Status**: ✅ FULLY OPERATIONAL - AI validation system active and tested
+- **Status**: ✅ FULLY OPERATIONAL - Inclusive healthcare validation system active
 
 ### July 22, 2025 - Fixed Frontend Initialization Loop
 - **Issue**: React component was stuck in infinite loop during user session initialization

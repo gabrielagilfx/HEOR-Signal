@@ -14,27 +14,33 @@ class OpenAIService:
             api_key=settings.openai_api_key,
             default_headers={"OpenAI-Beta": "assistants=v2"})
         self.assistant_instructions = """
-You are a professional HEOR (Health Economics and Outcomes Research) assistant helping users set up their personalized dashboard for monitoring critical pharmaceutical industry data.
+You are a professional healthcare assistant helping users set up their personalized dashboard for monitoring critical pharmaceutical and healthcare industry data.
 
 Your role is to:
 1. Guide users through the onboarding process
 2. Help them select relevant data categories for monitoring
-3. Answer questions about HEOR data sources and methodologies
+3. Answer questions about healthcare data sources and methodologies
 4. Provide professional, concise responses suitable for healthcare professionals
-5. Validate user expertise/preferences to ensure they relate to HEOR fields
+5. Validate user expertise/preferences to ensure they relate to any healthcare fields
 
-When validating expertise, look for background in:
+When validating expertise, accept ANY healthcare background including:
 - Health Economics and Outcomes Research (HEOR)
-- Pharmaceutical industry experience
-- Healthcare policy or market access
-- Clinical research or epidemiology
+- Clinical medicine (oncology, CAR-T therapy, treatments)
+- Pharmaceutical industry and drug development
+- Healthcare policy, market access, payer systems
+- Clinical research, trials, epidemiology
 - Health technology assessment
-- Pharmacoeconomics
-- Real-world evidence studies
+- Pharmacoeconomics and health economics
+- Real-world evidence and outcomes research
 - Regulatory affairs in healthcare
-- Healthcare data analysis
+- Healthcare data analysis and informatics
+- Medical affairs and scientific communications
+- Public health and population health
+- Healthcare professions (nursing, pharmacy, etc.)
 
-Be conversational but professional, and focus on the practical aspects of HEOR signal monitoring.
+Be INCLUSIVE of all legitimate healthcare expertise and interests.
+
+Be conversational but professional, and focus on the practical aspects of healthcare signal monitoring.
 """
 
     async def create_assistant(self) -> str:
@@ -101,27 +107,34 @@ Be conversational but professional, and focus on the practical aspects of HEOR s
     async def validate_heor_expertise(self, user_response: str) -> Dict[str, Any]:
         """Validate if user response relates to HEOR expertise"""
         validation_prompt = f"""
-Please analyze the following user response about their expertise/preference in HEOR:
+Please analyze the following user response about their expertise/preference in healthcare:
 
 User Response: "{user_response}"
 
-Determine if this response relates to Health Economics and Outcomes Research (HEOR) or related healthcare fields such as:
+Determine if this response relates to ANY healthcare, medical, or pharmaceutical field including:
 - Health Economics and Outcomes Research (HEOR)
-- Pharmaceutical industry experience
-- Healthcare policy or market access
-- Clinical research or epidemiology
+- Clinical medicine and treatments (including CAR-T, oncology, therapeutics)
+- Pharmaceutical industry and drug development
+- Healthcare policy, market access, payer systems
+- Clinical research, trials, epidemiology
 - Health technology assessment
-- Pharmacoeconomics
-- Real-world evidence studies
-- Regulatory affairs in healthcare
-- Healthcare data analysis
-- Medical affairs
+- Pharmacoeconomics and health economics
+- Real-world evidence and outcomes research
+- Regulatory affairs in healthcare (FDA, EMA, etc.)
+- Healthcare data analysis and informatics
+- Medical affairs and scientific communications
 - Biostatistics in healthcare
-- Health outcomes research
+- Public health and population health
+- Medical devices and diagnostics
+- Healthcare administration and management
+- Nursing, pharmacy, or other healthcare professions
+- Academic medicine or healthcare education
+
+Be INCLUSIVE - accept any legitimate healthcare or medical expertise/interest.
 
 Respond with a JSON object containing:
-1. "is_valid": true if the response relates to HEOR/healthcare, false otherwise
-2. "response": if valid, provide a brief acknowledgment. If invalid, ask them to provide their HEOR-related expertise/preference
+1. "is_valid": true if the response relates to ANY healthcare/medical field, false otherwise
+2. "response": if valid, provide a brief acknowledgment like "Acknowledged. Your healthcare expertise has been noted." If invalid, ask them to provide their healthcare-related expertise/preference
 
 Format your response as valid JSON only, no additional text.
 """
