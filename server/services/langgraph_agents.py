@@ -339,10 +339,10 @@ class LangGraphNewsAgents:
         - Target breakthrough/fast-track designations
         
         EXAMPLES OF TARGETED QUERIES:
-        - "Phase III {therapeutic area} primary endpoint results"
-        - "{therapeutic area} breakthrough therapy designation"
-        - "clinical trial {area} cost effectiveness endpoint"
-        - "real world evidence {area} outcomes study"
+        - "Phase III [therapeutic area] primary endpoint results"
+        - "[therapeutic area] breakthrough therapy designation"
+        - "clinical trial [area] cost effectiveness endpoint"
+        - "real world evidence [area] outcomes study"
         
         Return as JSON array of 5-7 specific query strings.
         """
@@ -392,10 +392,10 @@ class LangGraphNewsAgents:
         - Focus on actionable market access changes
         
         EXAMPLES OF TARGETED QUERIES:
-        - "ICER review {therapeutic area} cost effectiveness"
-        - "{therapeutic area} formulary coverage decision 2024"
-        - "Medicare coverage {area} reimbursement policy"
-        - "payer access {area} budget impact model"
+        - "ICER review [therapeutic area] cost effectiveness"
+        - "[therapeutic area] formulary coverage decision 2024"
+        - "Medicare coverage [area] reimbursement policy"
+        - "payer access [area] budget impact model"
         
         Return as JSON array of 5-7 specific query strings.
         """
@@ -444,10 +444,10 @@ class LangGraphNewsAgents:
         - Focus on post-market surveillance and safety studies
         
         EXAMPLES OF TARGETED QUERIES:
-        - "real world evidence {therapeutic area} comparative effectiveness"
-        - "{area} patient reported outcomes study 2024"
-        - "post market surveillance {area} safety outcomes"
-        - "health economics {area} real world data"
+        - "real world evidence [therapeutic area] comparative effectiveness"
+        - "[area] patient reported outcomes study 2024"
+        - "post market surveillance [area] safety outcomes"
+        - "health economics [area] real world data"
         
         Return as JSON array of 5-7 specific query strings.
         """
