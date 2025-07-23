@@ -81,79 +81,22 @@ class LangGraphNewsAgents:
         if not user:
             # Return default preferences if user not found
             return UserPreferences(
-                expertise_areas=["health economics", "market access"],
-                therapeutic_areas=["oncology", "cardiology"],
-                regions=["US", "EU"],
-                keywords=["FDA approval", "clinical trial"],
+                expertise_areas=["health economics and market access"],
+                therapeutic_areas=["general medicine"],
+                regions=["US"],
+                keywords=["healthcare", "medical"],
                 news_recency_days=7
             )
         
-        # Parse user preferences from database fields
-        expertise_areas = []
-        therapeutic_areas = []
-        regions = ["US"]  # Default region
-        keywords = []
-        
-        # Extract expertise from preference_expertise field
-        if user.preference_expertise:
-            expertise_areas = [user.preference_expertise.lower()]
-            
-            # Map expertise to therapeutic areas and keywords
-            expertise_mapping = {
-                "oncology": {
-                    "therapeutic_areas": ["oncology", "cancer", "hematology"],
-                    "keywords": ["cancer treatment", "oncology drugs", "tumor", "chemotherapy"]
-                },
-                "cardiology": {
-                    "therapeutic_areas": ["cardiology", "cardiovascular"],
-                    "keywords": ["heart disease", "cardiovascular", "cardiac"]
-                },
-                "neurology": {
-                    "therapeutic_areas": ["neurology", "neurological"],
-                    "keywords": ["neurological disorders", "brain", "alzheimer"]
-                },
-                "diabetes": {
-                    "therapeutic_areas": ["endocrinology", "diabetes"],
-                    "keywords": ["diabetes", "insulin", "glucose"]
-                },
-                "health economics": {
-                    "therapeutic_areas": ["general medicine"],
-                    "keywords": ["cost effectiveness", "health economics", "HEOR"]
-                },
-                "market access": {
-                    "therapeutic_areas": ["general medicine"],
-                    "keywords": ["market access", "reimbursement", "payer"]
-                }
-            }
-            
-            # Get mapped areas based on expertise
-            for key, mapping in expertise_mapping.items():
-                if key in user.preference_expertise.lower():
-                    therapeutic_areas.extend(mapping["therapeutic_areas"])
-                    keywords.extend(mapping["keywords"])
-        
-        # Use selected categories to enhance preferences
-        if user.selected_categories:
-            for category in user.selected_categories:
-                if category == "clinical":
-                    keywords.extend(["clinical trial", "Phase III", "drug development"])
-                elif category == "regulatory":
-                    keywords.extend(["FDA approval", "regulatory", "compliance"])
-                elif category == "market":
-                    keywords.extend(["market access", "payer coverage", "reimbursement"])
-                elif category == "rwe":
-                    keywords.extend(["real world evidence", "population health"])
-        
-        # Remove duplicates and set defaults if empty
-        expertise_areas = list(set(expertise_areas)) or ["health economics"]
-        therapeutic_areas = list(set(therapeutic_areas)) or ["general medicine"]
-        keywords = list(set(keywords)) or ["healthcare", "medical"]
+        # Use raw preference_expertise directly instead of mapping
+        raw_expertise = user.preference_expertise or "health economics and market access"
+        selected_categories = user.selected_categories or []
         
         return UserPreferences(
-            expertise_areas=expertise_areas,
-            therapeutic_areas=therapeutic_areas,
-            regions=regions,
-            keywords=keywords,
+            expertise_areas=[raw_expertise],  # Keep the raw expertise as-is
+            therapeutic_areas=[raw_expertise],  # Use same for therapeutic areas
+            regions=["US"],  # Default region
+            keywords=selected_categories,  # Use selected categories as keywords
             news_recency_days=7
         )
 
@@ -277,14 +220,20 @@ class LangGraphNewsAgents:
     # Query Generation Methods
     async def _generate_regulatory_queries(self, state: AgentState) -> AgentState:
         """Generate search queries for regulatory news"""
+        user_expertise = state.user_preferences.expertise_areas[0] if state.user_preferences.expertise_areas else "healthcare"
+        selected_categories = state.user_preferences.keywords
+        
         prompt = f"""
-        Generate 3-5 specific search queries for regulatory alerts and compliance news.
-        User expertise: {', '.join(state.user_preferences.expertise_areas)}
-        Therapeutic areas: {', '.join(state.user_preferences.therapeutic_areas)}
+        Generate 4-5 highly specific search queries for regulatory alerts and compliance news.
+        
+        User's exact expertise: "{user_expertise}"
+        Selected focus areas: {selected_categories}
         Regions: {', '.join(state.user_preferences.regions)}
         
+        Create queries that are precisely tailored to their expertise area. Use domain-specific terminology.
         Focus on: FDA approvals, EMA decisions, regulatory guidance, compliance alerts, drug recalls, policy changes.
-        Return as JSON array of strings.
+        
+        Return as JSON array of strings. Make each query specific to their expertise.
         """
         
         response = await self.llm.ainvoke([SystemMessage(content=prompt)])
@@ -292,25 +241,32 @@ class LangGraphNewsAgents:
             queries = json.loads(response.content)
             state.search_queries = queries if isinstance(queries, list) else [response.content]
         except:
-            # Fallback queries
+            # Fallback queries using raw expertise
             state.search_queries = [
-                f"FDA approval {' '.join(state.user_preferences.therapeutic_areas)}",
-                f"regulatory guidance {' '.join(state.user_preferences.expertise_areas)}",
-                "drug recall alert",
-                "EMA decision pharmaceutical"
+                f"FDA approval {user_expertise}",
+                f"regulatory guidance {user_expertise}",
+                f"EMA decision {user_expertise}",
+                f"compliance alert {user_expertise}",
+                "drug recall pharmaceutical"
             ]
         
         return state
 
     async def _generate_clinical_queries(self, state: AgentState) -> AgentState:
         """Generate search queries for clinical trial news"""
-        prompt = f"""
-        Generate 3-5 specific search queries for clinical trial updates and research news.
-        User expertise: {', '.join(state.user_preferences.expertise_areas)}
-        Therapeutic areas: {', '.join(state.user_preferences.therapeutic_areas)}
+        user_expertise = state.user_preferences.expertise_areas[0] if state.user_preferences.expertise_areas else "healthcare"
+        selected_categories = state.user_preferences.keywords
         
+        prompt = f"""
+        Generate 4-5 highly specific search queries for clinical trial updates and research news.
+        
+        User's exact expertise: "{user_expertise}"
+        Selected focus areas: {selected_categories}
+        
+        Create queries that are precisely tailored to their expertise area. Use domain-specific terminology.
         Focus on: clinical trial results, Phase III trials, drug development, biomarker studies, treatment efficacy.
-        Return as JSON array of strings.
+        
+        Return as JSON array of strings. Make each query specific to their expertise.
         """
         
         response = await self.llm.ainvoke([SystemMessage(content=prompt)])
@@ -318,26 +274,33 @@ class LangGraphNewsAgents:
             queries = json.loads(response.content)
             state.search_queries = queries if isinstance(queries, list) else [response.content]
         except:
-            # Fallback queries
+            # Fallback queries using raw expertise
             state.search_queries = [
-                f"clinical trial {' '.join(state.user_preferences.therapeutic_areas)}",
-                f"Phase III results {' '.join(state.user_preferences.expertise_areas)}",
-                "drug development breakthrough",
-                "biomarker study results"
+                f"clinical trial {user_expertise}",
+                f"Phase III results {user_expertise}",
+                f"drug development {user_expertise}",
+                f"biomarker study {user_expertise}",
+                "treatment efficacy breakthrough"
             ]
         
         return state
 
     async def _generate_market_queries(self, state: AgentState) -> AgentState:
         """Generate search queries for market access news"""
+        user_expertise = state.user_preferences.expertise_areas[0] if state.user_preferences.expertise_areas else "healthcare"
+        selected_categories = state.user_preferences.keywords
+        
         prompt = f"""
-        Generate 3-5 specific search queries for market access and payer news.
-        User expertise: {', '.join(state.user_preferences.expertise_areas)}
-        Therapeutic areas: {', '.join(state.user_preferences.therapeutic_areas)}
+        Generate 4-5 highly specific search queries for market access and payer news.
+        
+        User's exact expertise: "{user_expertise}"
+        Selected focus areas: {selected_categories}
         Regions: {', '.join(state.user_preferences.regions)}
         
+        Create queries that are precisely tailored to their expertise area. Use domain-specific terminology.
         Focus on: payer coverage decisions, HEOR studies, cost-effectiveness, reimbursement, formulary changes.
-        Return as JSON array of strings.
+        
+        Return as JSON array of strings. Make each query specific to their expertise.
         """
         
         response = await self.llm.ainvoke([SystemMessage(content=prompt)])
@@ -345,25 +308,32 @@ class LangGraphNewsAgents:
             queries = json.loads(response.content)
             state.search_queries = queries if isinstance(queries, list) else [response.content]
         except:
-            # Fallback queries
+            # Fallback queries using raw expertise
             state.search_queries = [
-                f"payer coverage {' '.join(state.user_preferences.therapeutic_areas)}",
-                f"HEOR study {' '.join(state.user_preferences.expertise_areas)}",
-                "formulary coverage decision",
-                "cost effectiveness analysis"
+                f"payer coverage {user_expertise}",
+                f"HEOR study {user_expertise}",
+                f"reimbursement {user_expertise}",
+                f"cost effectiveness {user_expertise}",
+                "formulary coverage decision"
             ]
         
         return state
 
     async def _generate_rwe_queries(self, state: AgentState) -> AgentState:
         """Generate search queries for RWE and public health news"""
-        prompt = f"""
-        Generate 3-5 specific search queries for real-world evidence and public health news.
-        User expertise: {', '.join(state.user_preferences.expertise_areas)}
-        Therapeutic areas: {', '.join(state.user_preferences.therapeutic_areas)}
+        user_expertise = state.user_preferences.expertise_areas[0] if state.user_preferences.expertise_areas else "healthcare"
+        selected_categories = state.user_preferences.keywords
         
+        prompt = f"""
+        Generate 4-5 highly specific search queries for real-world evidence and public health news.
+        
+        User's exact expertise: "{user_expertise}"
+        Selected focus areas: {selected_categories}
+        
+        Create queries that are precisely tailored to their expertise area. Use domain-specific terminology.
         Focus on: real-world evidence studies, population health, epidemiology, public health policy, outcomes research.
-        Return as JSON array of strings.
+        
+        Return as JSON array of strings. Make each query specific to their expertise.
         """
         
         response = await self.llm.ainvoke([SystemMessage(content=prompt)])
@@ -371,11 +341,12 @@ class LangGraphNewsAgents:
             queries = json.loads(response.content)
             state.search_queries = queries if isinstance(queries, list) else [response.content]
         except:
-            # Fallback queries
+            # Fallback queries using raw expertise
             state.search_queries = [
-                f"real world evidence {' '.join(state.user_preferences.therapeutic_areas)}",
-                f"population health {' '.join(state.user_preferences.expertise_areas)}",
-                "epidemiology study results",
+                f"real world evidence {user_expertise}",
+                f"population health {user_expertise}",
+                f"epidemiology {user_expertise}",
+                f"outcomes research {user_expertise}",
                 "public health policy update"
             ]
         
@@ -602,19 +573,24 @@ class LangGraphNewsAgents:
         if not state.news_items:
             return state
         
+        user_expertise = state.user_preferences.expertise_areas[0] if state.user_preferences.expertise_areas else "healthcare"
+        selected_categories = state.user_preferences.keywords
+        
         # Batch process items for efficiency
         filtered_items = []
         
         for item in state.news_items[:20]:  # Limit to top 20 for performance
             try:
                 prompt = f"""
-                Rate the relevance of this news item for a HEOR professional interested in {domain_focus}.
-                User expertise: {', '.join(state.user_preferences.expertise_areas)}
-                Therapeutic areas: {', '.join(state.user_preferences.therapeutic_areas)}
+                Rate the relevance of this news item for a professional with expertise in "{user_expertise}" who is interested in {domain_focus}.
+                
+                User's specific expertise: "{user_expertise}"
+                Selected focus areas: {selected_categories}
                 
                 Title: {item.title}
                 Snippet: {item.snippet}
                 
+                Consider how well this article matches their specific expertise area and professional interests.
                 Return only a number between 0.0 and 1.0 representing relevance score.
                 """
                 
