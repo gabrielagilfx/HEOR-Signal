@@ -140,8 +140,9 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
 
   const handleCategorySelection = async (categories: string[]) => {
     try {
-      setIsSelectingCategories(true);
+      // Show loader immediately when user clicks confirm
       setShowCategoryLoader(true);
+      setIsSelectingCategories(true);
       
       const response = await apiRequest('POST', '/api/chat/select-categories', {
         categories,
@@ -151,15 +152,15 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
       const result = await response.json();
       
       if (result.success) {
-        // Show loader for a bit to indicate processing
-        setTimeout(async () => {
-          setShowCategorySelection(false);
+        // Update state and reload messages while loader is still showing
+        setShowCategorySelection(false);
+        await loadMessages();
+        window.dispatchEvent(new CustomEvent('onboarding-completed'));
+        
+        // Keep loader visible for a moment to ensure smooth transition
+        setTimeout(() => {
           setShowCategoryLoader(false);
-          // Reload messages to get the confirmation message
-          await loadMessages();
-          // Trigger parent component to refetch user status
-          window.dispatchEvent(new CustomEvent('onboarding-completed'));
-        }, 1500);
+        }, 1200);
       }
     } catch (error) {
       console.error('Error selecting categories:', error);
