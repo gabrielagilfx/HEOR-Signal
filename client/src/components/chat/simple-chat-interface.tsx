@@ -110,33 +110,18 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
     }
 
     const userMessageContent = inputMessage.trim();
-    const tempMessageId = `temp-${Date.now()}`;
 
     try {
       setIsSending(true);
       setIsTyping(true);
       
-      // Immediately add user message to display
-      const userMessage: ChatMessage = {
-        id: tempMessageId,
-        role: 'user',
-        content: userMessageContent,
-        timestamp: new Date()
-      };
-      
-      console.log('Adding immediate user message:', userMessage);
-      setMessages(prevMessages => {
-        console.log('Previous messages count:', prevMessages.length);
-        const newMessages = [...prevMessages, userMessage];
-        console.log('New messages count:', newMessages.length);
-        return newMessages;
-      });
+      // Clear input immediately
       setInputMessage("");
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
       }
       
-      // Send to API
+      // Send to API (this saves user message and gets assistant response)
       const response = await apiRequest('POST', '/api/chat/send', {
         message: userMessageContent,
         session_id: sessionId,
@@ -145,29 +130,11 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
       const result = await response.json();
       
       if (result.success) {
-        // Simply add assistant response to existing messages (user message already there)
-        const assistantMessage: ChatMessage = {
-          id: result.message_id || `assistant-${Date.now()}`,
-          role: 'assistant',
-          content: result.message,
-          timestamp: new Date()
-        };
-        
-        console.log('API response received, adding assistant message');
-        setMessages(prevMessages => {
-          console.log('Before adding assistant - messages count:', prevMessages.length);
-          const finalMessages = [...prevMessages, assistantMessage];
-          console.log('Final messages count:', finalMessages.length);
-          return finalMessages;
-        });
-      } else {
-        // If API fails, remove the temporary message
-        setMessages(prevMessages => prevMessages.filter(msg => msg.id !== tempMessageId));
+        // Reload messages to show both user message and assistant response
+        await loadMessages();
       }
     } catch (error) {
       console.error('Error sending message:', error);
-      // Remove temporary message on error
-      setMessages(prevMessages => prevMessages.filter(msg => msg.id !== tempMessageId));
     } finally {
       setIsSending(false);
       setIsTyping(false);
@@ -228,16 +195,13 @@ To get started, please select the data categories you'd like to monitor. You can
   allMessages.push(welcomeMessage);
   
   // Add actual messages one by one to avoid spread operator issues
-  console.log('Building allMessages, current messages state count:', messages.length);
   if (messages && messages.length > 0) {
     for (const message of messages) {
       if (message && message.id) {
-        console.log('Adding message to allMessages:', message.role, message.content.substring(0, 50));
         allMessages.push(message);
       }
     }
   }
-  console.log('Final allMessages count:', allMessages.length);
 
 
 
