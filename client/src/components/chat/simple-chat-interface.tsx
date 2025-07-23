@@ -109,28 +109,23 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
       return;
     }
 
-    const userMessageContent = inputMessage.trim();
-
     try {
       setIsSending(true);
       setIsTyping(true);
       
-      // Clear input immediately
-      setInputMessage("");
-      if (textareaRef.current) {
-        textareaRef.current.style.height = 'auto';
-      }
-      
-      // Send to API (this saves user message and gets assistant response)
       const response = await apiRequest('POST', '/api/chat/send', {
-        message: userMessageContent,
+        message: inputMessage.trim(),
         session_id: sessionId,
       });
       
       const result = await response.json();
       
       if (result.success) {
-        // Reload messages to show both user message and assistant response
+        setInputMessage("");
+        if (textareaRef.current) {
+          textareaRef.current.style.height = 'auto';
+        }
+        // Reload messages to get the latest conversation
         await loadMessages();
       }
     } catch (error) {
