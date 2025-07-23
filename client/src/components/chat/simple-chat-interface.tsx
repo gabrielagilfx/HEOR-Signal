@@ -208,13 +208,26 @@ To get started, please select the data categories you'd like to monitor. You can
   return (
     <div className="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-gray-900">
       <div className="max-w-4xl mx-auto">
-        {/* Only show loading text if this is NOT the initial load (messages are empty) */}
-        {isLoading && messages.length > 0 ? (
-          <div className="flex justify-center py-8">
-            <div className="text-gray-500 dark:text-gray-400">Loading conversation...</div>
-          </div>
-        ) : (
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm relative">
+          {/* Category selection loading overlay */}
+          {isSelectingCategories && (
+            <div className="absolute inset-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg flex items-center justify-center z-10">
+              <div className="flex items-center space-x-3 text-gray-600 dark:text-gray-400">
+                <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-base font-medium">Setting up your personalized dashboard...</span>
+              </div>
+            </div>
+          )}
+          
+          {/* Only show loading text if this is NOT the initial load (messages are empty) */}
+          {isLoading && messages.length > 0 && (
+            <div className="flex justify-center py-8">
+              <div className="text-gray-500 dark:text-gray-400">Loading conversation...</div>
+            </div>
+          )}
+          
+          {(!isLoading || messages.length === 0) && (
+            <>
             {/* Header inside the card */}
             <div className="p-6 border-b border-gray-100 dark:border-gray-700">
               <div className="flex items-center justify-between">
@@ -299,20 +312,12 @@ To get started, please select the data categories you'd like to monitor. You can
               ))}
               
               {/* Show category selection if no messages yet but onboarding not completed */}
-              {allMessages.length === 0 && showCategorySelection && !onboardingCompleted && !isSelectingCategories && (
+              {allMessages.length === 0 && showCategorySelection && !onboardingCompleted && (
                 <div className="mt-6 ml-11">
                   <CategorySelection
                     onConfirm={handleCategorySelection}
                     isLoading={isSelectingCategories}
                   />
-                </div>
-              )}
-              
-              {/* Show simple loading animation during category selection */}
-              {isSelectingCategories && (
-                <div className="mt-6 ml-11 flex items-center space-x-3 text-gray-600 dark:text-gray-400">
-                  <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                  <span className="text-sm">Setting up your personalized dashboard...</span>
                 </div>
               )}
               
@@ -372,8 +377,9 @@ To get started, please select the data categories you'd like to monitor. You can
                 </div>
               </div>
             )}
-          </div>
-        )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
