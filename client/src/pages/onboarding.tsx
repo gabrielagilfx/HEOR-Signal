@@ -85,7 +85,7 @@ export default function Onboarding() {
       const fallbackTimer = setTimeout(() => {
         console.log('Fallback: hiding loader after user status loaded');
         setShowInitialLoader(false);
-      }, 2000);
+      }, 1500);
       
       return () => clearTimeout(fallbackTimer);
     }

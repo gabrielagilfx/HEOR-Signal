@@ -217,7 +217,8 @@ To get started, please select the data categories you'd like to monitor. You can
   return (
     <div className="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-gray-900">
       <div className="max-w-4xl mx-auto">
-        {isLoading ? (
+        {/* Only show loading text if this is NOT the initial load (messages are empty) */}
+        {isLoading && messages.length > 0 ? (
           <div className="flex justify-center py-8">
             <div className="text-gray-500 dark:text-gray-400">Loading conversation...</div>
           </div>
