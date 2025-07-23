@@ -177,7 +177,7 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
   const welcomeMessage: ChatMessage = {
     id: 'welcome',
     role: 'assistant',
-    content: `Welcome to **HEOR Signal**! I'm here to help you set up your personalized dashboard for Health Economics and Outcomes Research insights.
+    content: `Welcome to HEOR Signal! I'm here to help you set up your personalized dashboard for Health Economics and Outcomes Research insights.
 
 To get started, please select the data categories you'd like to monitor. You can always adjust these preferences later in your dashboard settings.`,
     timestamp: new Date(),
