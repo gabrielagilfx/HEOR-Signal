@@ -66,12 +66,27 @@ class LangGraphNewsAgents:
         )
         self.http_client = httpx.AsyncClient(timeout=30.0)
         
-        # Initialize the four agent workflows
-        self.agents = {
-            AgentCategory.REGULATORY: self._create_regulatory_agent(),
-            AgentCategory.CLINICAL: self._create_clinical_agent(),
-            AgentCategory.MARKET_ACCESS: self._create_market_access_agent(),
-            AgentCategory.RWE_PUBLIC_HEALTH: self._create_rwe_agent()
+        # Initialize the 12 specialized sub-agents (3 APIs × 4 domains)
+        self.sub_agents = {
+            # Regulatory agents
+            "regulatory_serp": self._create_domain_api_agent("regulatory", "serp"),
+            "regulatory_nih": self._create_domain_api_agent("regulatory", "nih"),
+            "regulatory_clinical_data": self._create_domain_api_agent("regulatory", "clinical_data"),
+            
+            # Clinical agents
+            "clinical_serp": self._create_domain_api_agent("clinical", "serp"),
+            "clinical_nih": self._create_domain_api_agent("clinical", "nih"),
+            "clinical_clinical_data": self._create_domain_api_agent("clinical", "clinical_data"),
+            
+            # Market agents
+            "market_serp": self._create_domain_api_agent("market", "serp"),
+            "market_nih": self._create_domain_api_agent("market", "nih"),
+            "market_clinical_data": self._create_domain_api_agent("market", "clinical_data"),
+            
+            # RWE agents
+            "rwe_serp": self._create_domain_api_agent("rwe", "serp"),
+            "rwe_nih": self._create_domain_api_agent("rwe", "nih"),
+            "rwe_clinical_data": self._create_domain_api_agent("rwe", "clinical_data"),
         }
 
     def _get_user_preferences_from_db(self, session_id: str, db: Session) -> UserPreferences:
@@ -108,119 +123,317 @@ class LangGraphNewsAgents:
         # Run agents with fetched preferences
         return await self.run_parallel_agents(user_preferences)
 
-    def _create_regulatory_agent(self) -> StateGraph:
-        """Create agent for regulatory alerts and compliance news"""
+    def _create_domain_api_agent(self, domain: str, api: str) -> StateGraph:
+        """Create a specialized agent for a specific domain-API combination"""
         workflow = StateGraph(AgentState)
         
-        workflow.add_node("generate_queries", self._generate_regulatory_queries)
-        workflow.add_node("search_news", self._search_regulatory_news)
-        workflow.add_node("filter_relevance", self._filter_regulatory_relevance)
+        # Add nodes with domain and API specific methods
+        workflow.add_node("generate_queries", self._create_query_generator(domain))
+        workflow.add_node("search_api", self._create_api_searcher(domain, api))
+        workflow.add_node("filter_relevance", self._create_relevance_filter(domain))
         workflow.add_node("finalize", self._finalize_results)
         
+        # Simple linear workflow
         workflow.set_entry_point("generate_queries")
-        workflow.add_edge("generate_queries", "search_news")
-        workflow.add_edge("search_news", "filter_relevance")
-        workflow.add_edge("filter_relevance", "finalize")
-        workflow.add_edge("finalize", END)
-        
-        return workflow.compile()
-
-    def _create_clinical_agent(self) -> StateGraph:
-        """Create agent for clinical trial updates"""
-        workflow = StateGraph(AgentState)
-        
-        workflow.add_node("generate_queries", self._generate_clinical_queries)
-        workflow.add_node("search_nih", self._search_nih_clinical)
-        workflow.add_node("search_clinical_data_api", self._search_clinical_data_api)
-        workflow.add_node("search_general", self._search_clinical_news)
-        workflow.add_node("merge_results", self._merge_clinical_results)
-        workflow.add_node("filter_relevance", self._filter_clinical_relevance)
-        workflow.add_node("finalize", self._finalize_results)
-        
-        workflow.set_entry_point("generate_queries")
-        workflow.add_edge("generate_queries", "search_nih")
-        workflow.add_edge("generate_queries", "search_clinical_data_api")
-        workflow.add_edge("generate_queries", "search_general")
-        workflow.add_edge("search_nih", "merge_results")
-        workflow.add_edge("search_clinical_data_api", "merge_results")
-        workflow.add_edge("search_general", "merge_results")
-        workflow.add_edge("merge_results", "filter_relevance")
-        workflow.add_edge("filter_relevance", "finalize")
-        workflow.add_edge("finalize", END)
-        
-        return workflow.compile()
-
-    def _create_market_access_agent(self) -> StateGraph:
-        """Create agent for market access and payer news"""
-        workflow = StateGraph(AgentState)
-        
-        workflow.add_node("generate_queries", self._generate_market_queries)
-        workflow.add_node("search_news", self._search_market_news)
-        workflow.add_node("filter_relevance", self._filter_market_relevance)
-        workflow.add_node("finalize", self._finalize_results)
-        
-        workflow.set_entry_point("generate_queries")
-        workflow.add_edge("generate_queries", "search_news")
-        workflow.add_edge("search_news", "filter_relevance")
-        workflow.add_edge("filter_relevance", "finalize")
-        workflow.add_edge("finalize", END)
-        
-        return workflow.compile()
-
-    def _create_rwe_agent(self) -> StateGraph:
-        """Create agent for real-world evidence and public health news"""
-        workflow = StateGraph(AgentState)
-        
-        workflow.add_node("generate_queries", self._generate_rwe_queries)
-        workflow.add_node("search_news", self._search_rwe_news)
-        workflow.add_node("filter_relevance", self._filter_rwe_relevance)
-        workflow.add_node("finalize", self._finalize_results)
-        
-        workflow.set_entry_point("generate_queries")
-        workflow.add_edge("generate_queries", "search_news")
-        workflow.add_edge("search_news", "filter_relevance")
+        workflow.add_edge("generate_queries", "search_api")
+        workflow.add_edge("search_api", "filter_relevance")
         workflow.add_edge("filter_relevance", "finalize")
         workflow.add_edge("finalize", END)
         
         return workflow.compile()
 
     async def run_parallel_agents(self, user_preferences: UserPreferences) -> Dict[str, List[NewsItem]]:
-        """Run all four agents in parallel and return aggregated results"""
+        """Run all 12 sub-agents in parallel and aggregate results by domain"""
         tasks = []
         
-        for category, agent in self.agents.items():
+        # Create tasks for all 12 sub-agents
+        for agent_key, agent in self.sub_agents.items():
+            domain = agent_key.split('_')[0]  # Extract domain from key like "regulatory_serp"
+            category = self._get_category_enum(domain)
+            
             state = AgentState(
                 user_preferences=user_preferences,
                 category=category
             )
-            tasks.append(self._run_single_agent(agent, state))
+            tasks.append(self._run_single_agent(agent, state, agent_key))
         
-        # Run all agents in parallel
+        # Run all 12 agents in parallel
         results = await asyncio.gather(*tasks, return_exceptions=True)
         
-        # Process results
-        final_results = {}
-        for i, (category, result) in enumerate(zip(self.agents.keys(), results)):
-            if isinstance(result, Exception):
-                print(f"Error in {category.value} agent: {result}")
-                final_results[category.value] = []
-            else:
-                final_results[category.value] = result.news_items
+        # Group results by domain
+        domain_results = {
+            "regulatory": [],
+            "clinical": [],
+            "market": [],
+            "rwe": []
+        }
         
-        return final_results
+        for i, (agent_key, result) in enumerate(zip(self.sub_agents.keys(), results)):
+            domain = agent_key.split('_')[0]
+            
+            if isinstance(result, Exception):
+                print(f"Error in {agent_key} agent: {result}")
+            else:
+                domain_results[domain].extend(result.news_items)
+        
+        # Deduplicate within each domain
+        for domain in domain_results:
+            domain_results[domain] = self._deduplicate_news_items(domain_results[domain])
+        
+        return domain_results
 
-    async def _run_single_agent(self, agent: StateGraph, initial_state: AgentState) -> AgentState:
+    def _get_category_enum(self, domain: str) -> AgentCategory:
+        """Convert domain string to AgentCategory enum"""
+        mapping = {
+            "regulatory": AgentCategory.REGULATORY,
+            "clinical": AgentCategory.CLINICAL,
+            "market": AgentCategory.MARKET_ACCESS,
+            "rwe": AgentCategory.RWE_PUBLIC_HEALTH
+        }
+        return mapping.get(domain, AgentCategory.REGULATORY)
+
+    def _deduplicate_news_items(self, items: List[NewsItem]) -> List[NewsItem]:
+        """Remove duplicate news items based on title similarity and NCT IDs"""
+        unique_items = []
+        seen_titles = set()
+        seen_nct_ids = set()
+        
+        for item in items:
+            # Check for NCT ID duplicates (clinical trials)
+            if item.id.startswith(('nih_', 'ctdata_')):
+                nct_id = item.id.split('_', 1)[1] if '_' in item.id else item.id
+                if nct_id in seen_nct_ids:
+                    continue
+                seen_nct_ids.add(nct_id)
+            
+            # Check for title duplicates
+            title_key = item.title.lower()[:50]
+            if title_key not in seen_titles:
+                seen_titles.add(title_key)
+                unique_items.append(item)
+        
+        # Sort by relevance score
+        unique_items.sort(key=lambda x: x.relevance_score, reverse=True)
+        return unique_items[:10]  # Top 10 per domain
+
+    async def _run_single_agent(self, agent: StateGraph, initial_state: AgentState, agent_key: str = "") -> AgentState:
         """Run a single agent workflow"""
         try:
             result = await agent.ainvoke(initial_state.dict())
             return AgentState(**result)
         except Exception as e:
-            print(f"Agent error: {e}")
+            print(f"Agent error in {agent_key}: {e}")
             initial_state.processing_status = "error"
             initial_state.error_message = str(e)
             return initial_state
 
-    # Query Generation Methods
+    # Factory Methods for Creating Domain-API Specific Functions
+    def _create_query_generator(self, domain: str):
+        """Create a domain-specific query generator"""
+        async def generate_queries(state: AgentState) -> AgentState:
+            user_expertise = state.user_preferences.expertise_areas[0] if state.user_preferences.expertise_areas else "healthcare"
+            selected_categories = state.user_preferences.keywords
+            
+            domain_focus = {
+                "regulatory": "regulatory alerts, FDA approvals, EMA decisions, compliance alerts, drug recalls, policy changes",
+                "clinical": "clinical trial results, Phase III trials, drug development, biomarker studies, treatment efficacy",
+                "market": "payer coverage decisions, HEOR studies, cost-effectiveness, reimbursement, formulary changes",
+                "rwe": "real-world evidence studies, population health, epidemiology, public health policy, outcomes research"
+            }
+            
+            prompt = f"""
+            Generate 4-5 highly specific search queries for {domain} news and updates.
+            
+            User's exact expertise: "{user_expertise}"
+            Selected focus areas: {selected_categories}
+            Regions: {', '.join(state.user_preferences.regions)}
+            
+            Create queries that are precisely tailored to their expertise area. Use domain-specific terminology.
+            Focus on: {domain_focus.get(domain, "healthcare updates")}
+            
+            Return as JSON array of strings. Make each query specific to their expertise.
+            """
+            
+            response = await self.llm.ainvoke([SystemMessage(content=prompt)])
+            try:
+                queries = json.loads(response.content)
+                state.search_queries = queries if isinstance(queries, list) else [response.content]
+            except:
+                # Fallback queries using raw expertise
+                state.search_queries = [
+                    f"{domain} {user_expertise}",
+                    f"{domain} updates {user_expertise}",
+                    f"{domain} news {user_expertise}",
+                    f"{domain} research {user_expertise}"
+                ]
+            
+            return state
+        
+        return generate_queries
+
+    def _create_api_searcher(self, domain: str, api: str):
+        """Create a domain-API specific searcher"""
+        async def search_api(state: AgentState) -> AgentState:
+            if api == "serp":
+                return await self._search_with_serp_api(state, domain)
+            elif api == "nih":
+                return await self._search_with_nih_api(state, domain)
+            elif api == "clinical_data":
+                return await self._search_with_clinical_data_api(state, domain)
+            else:
+                print(f"Unknown API: {api}")
+                state.news_items = []
+                return state
+        
+        return search_api
+
+    def _create_relevance_filter(self, domain: str):
+        """Create a domain-specific relevance filter"""
+        async def filter_relevance(state: AgentState) -> AgentState:
+            domain_focus = {
+                "regulatory": "regulatory compliance and drug approval",
+                "clinical": "clinical trials and drug development", 
+                "market": "market access and payer decisions",
+                "rwe": "real-world evidence and population health"
+            }
+            
+            return await self._filter_relevance_generic(state, domain_focus.get(domain, "healthcare"))
+        
+        return filter_relevance
+
+    # API-Specific Search Methods
+    async def _search_with_serp_api(self, state: AgentState, domain: str) -> AgentState:
+        """Search using SERP API with domain-specific focus"""
+        news_items = []
+        
+        domain_suffixes = {
+            "regulatory": "FDA EMA regulatory approval",
+            "clinical": "clinical trial results",
+            "market": "payer reimbursement coverage",
+            "rwe": "real world evidence outcomes"
+        }
+        
+        suffix = domain_suffixes.get(domain, "healthcare news")
+        
+        for query in state.search_queries:
+            try:
+                serp_results = await self._search_with_serp(f"{query} {suffix}", num_results=12)
+                
+                for item in serp_results:
+                    news_item = NewsItem(
+                        id=f"{domain}_serp_{hash(item['link'])}",
+                        title=item.get('title', ''),
+                        snippet=item.get('snippet', ''),
+                        source=item.get('source', ''),
+                        date=item.get('date', datetime.now().isoformat()),
+                        category=state.category.value,
+                        url=item.get('link', ''),
+                        relevance_score=0.7
+                    )
+                    news_items.append(news_item)
+                    
+            except Exception as e:
+                print(f"Error searching SERP for {domain}: {e}")
+                continue
+        
+        state.news_items = news_items
+        return state
+
+    async def _search_with_nih_api(self, state: AgentState, domain: str) -> AgentState:
+        """Search using NIH API with domain-specific focus"""
+        clinical_items = []
+        
+        for query in state.search_queries:
+            try:
+                url = "https://clinicaltrials.gov/api/v2/studies"
+                params = {
+                    "query.term": query,
+                    "pageSize": 15,
+                    "format": "json"
+                }
+                
+                response = await self.http_client.get(url, params=params)
+                if response.status_code == 200:
+                    data = response.json()
+                    studies = data.get("studies", [])
+                    
+                    for study in studies:
+                        protocol_section = study.get("protocolSection", {})
+                        identification_module = protocol_section.get("identificationModule", {})
+                        description_module = protocol_section.get("descriptionModule", {})
+                        status_module = protocol_section.get("statusModule", {})
+                        
+                        nct_id = identification_module.get("nctId", "")
+                        title = identification_module.get("briefTitle", "")
+                        summary = description_module.get("briefSummary", "")
+                        start_date = status_module.get("startDateStruct", {}).get("date", "")
+                        
+                        news_item = NewsItem(
+                            id=f"nih_{nct_id}",
+                            title=f"{title} ({domain.title()})",
+                            snippet=summary[:300] if summary else "",
+                            source="ClinicalTrials.gov NIH API",
+                            date=start_date,
+                            category=state.category.value,
+                            url=f"https://clinicaltrials.gov/study/{nct_id}",
+                            relevance_score=0.9
+                        )
+                        clinical_items.append(news_item)
+                        
+            except Exception as e:
+                print(f"Error searching NIH for {domain}: {e}")
+                continue
+        
+        state.news_items = clinical_items
+        return state
+
+    async def _search_with_clinical_data_api(self, state: AgentState, domain: str) -> AgentState:
+        """Search using Clinical Data API with domain-specific focus"""
+        clinical_data_items = []
+        
+        for query in state.search_queries:
+            try:
+                url = "https://clinicaltrials.gov/data-api/api"
+                params = {
+                    "expr": query,
+                    "min_rnk": 1,
+                    "max_rnk": 15,
+                    "fmt": "json"
+                }
+                
+                response = await self.http_client.get(url, params=params)
+                if response.status_code == 200:
+                    data = response.json()
+                    studies = data.get("StudyFieldsResponse", {}).get("StudyFields", [])
+                    
+                    for study in studies:
+                        nct_id = study.get("NCTId", [""])[0] if study.get("NCTId") else ""
+                        title = study.get("BriefTitle", [""])[0] if study.get("BriefTitle") else ""
+                        summary = study.get("BriefSummary", [""])[0] if study.get("BriefSummary") else ""
+                        status = study.get("OverallStatus", [""])[0] if study.get("OverallStatus") else ""
+                        start_date = study.get("StartDate", [""])[0] if study.get("StartDate") else ""
+                        
+                        if status in ["Recruiting", "Active, not recruiting", "Completed", "Enrolling by invitation"]:
+                            news_item = NewsItem(
+                                id=f"ctdata_{nct_id}",
+                                title=f"{title} ({status}) - {domain.title()}",
+                                snippet=summary[:300] if summary else f"Clinical trial status: {status}",
+                                source="ClinicalTrials.gov Data API",
+                                date=start_date or datetime.now().isoformat(),
+                                category=state.category.value,
+                                url=f"https://clinicaltrials.gov/study/{nct_id}",
+                                relevance_score=0.85
+                            )
+                            clinical_data_items.append(news_item)
+                        
+            except Exception as e:
+                print(f"Error searching Clinical Data API for {domain}: {e}")
+                continue
+        
+        state.news_items = clinical_data_items
+        return state
+
+    # Legacy Methods (keeping for compatibility)
     async def _generate_regulatory_queries(self, state: AgentState) -> AgentState:
         """Generate search queries for regulatory news"""
         user_expertise = state.user_preferences.expertise_areas[0] if state.user_preferences.expertise_areas else "healthcare"
