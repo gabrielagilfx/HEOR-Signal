@@ -25,7 +25,8 @@ async def initialize_user(
             "success": True,
             "session_id": user.session_id,
             "onboarding_completed": bool(user.onboarding_completed),
-            "selected_categories": list(user.selected_categories) if user.selected_categories else []
+            "selected_categories": list(user.selected_categories) if user.selected_categories else [],
+            "preference_expertise": getattr(user, 'preference_expertise', None)
         }
         
     except Exception as e:
@@ -43,7 +44,8 @@ async def get_user_status(session_id: str, db: Session = Depends(get_db)):
         return {
             "session_id": user.session_id,
             "onboarding_completed": bool(user.onboarding_completed),
-            "selected_categories": list(user.selected_categories) if user.selected_categories else []
+            "selected_categories": list(user.selected_categories) if user.selected_categories else [],
+            "preference_expertise": getattr(user, 'preference_expertise', None)
         }
         
     except Exception as e:

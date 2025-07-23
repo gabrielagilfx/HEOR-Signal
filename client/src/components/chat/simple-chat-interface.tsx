@@ -178,9 +178,13 @@ export function SimpleChatInterface({ sessionId, userStatus }: SimpleChatInterfa
           // 3-second pause then navigate directly to dashboard
           setTimeout(() => {
             console.log('Setting showDashboard to true after 3 seconds');
-            setShowDashboard(true);
-            // Force a user status refresh to get updated preference_expertise
+            // Force a user status refresh first, then set dashboard after a brief delay
             window.dispatchEvent(new CustomEvent('refresh-user-status'));
+            
+            // Give time for status refresh, then show dashboard
+            setTimeout(() => {
+              setShowDashboard(true);
+            }, 500);
           }, 3000);
         }
       }
