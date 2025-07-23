@@ -32,7 +32,7 @@ async def send_message(
     request: ChatRequest,
     db: Session = Depends(get_db)
 ):
-    """Send a message to the chat assistant"""
+    """Send a message to the chat assistant with HEOR expertise validation"""
     try:
         # Get or create user
         user = await user_service.create_or_get_user(db, request.session_id)
@@ -54,12 +54,30 @@ async def send_message(
         db.commit()
         db.refresh(user_message)
         
-        # Send to OpenAI
-        await openai_service.send_message(str(thread.thread_id), request.message)
-        assistant_response = await openai_service.run_assistant(
-            str(user.assistant_id), 
-            str(thread.thread_id)
-        )
+        # Check if user has completed onboarding and needs expertise validation
+        if getattr(user, 'onboarding_completed', False) and not getattr(user, 'preference_expertise', None):
+            # Validate expertise using OpenAI
+            validation_result = await openai_service.validate_heor_expertise(request.message)
+            
+            if validation_result.get("is_valid", False):
+                # Save validated expertise to user table
+                await user_service.update_preference_expertise(
+                    db, str(user.id), request.message
+                )
+                
+                assistant_response = validation_result.get("response", 
+                    "Thank you! I've saved your expertise. How can I help you with your HEOR dashboard today?")
+            else:
+                # Request valid HEOR expertise
+                assistant_response = validation_result.get("response", 
+                    "Please provide your expertise or preference related to Health Economics and Outcomes Research (HEOR) or healthcare.")
+        else:
+            # Normal chat processing
+            await openai_service.send_message(str(thread.thread_id), request.message)
+            assistant_response = await openai_service.run_assistant(
+                str(user.assistant_id), 
+                str(thread.thread_id)
+            )
         
         # Save assistant message
         assistant_message = Message(
@@ -75,7 +93,8 @@ async def send_message(
         return {
             "success": True,
             "message": assistant_response,
-            "message_id": str(assistant_message.id)
+            "message_id": str(assistant_message.id),
+            "expertise_saved": getattr(user, 'preference_expertise', None) is not None
         }
         
     except Exception as e:

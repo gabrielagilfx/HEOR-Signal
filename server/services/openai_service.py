@@ -21,6 +21,18 @@ Your role is to:
 2. Help them select relevant data categories for monitoring
 3. Answer questions about HEOR data sources and methodologies
 4. Provide professional, concise responses suitable for healthcare professionals
+5. Validate user expertise/preferences to ensure they relate to HEOR fields
+
+When validating expertise, look for background in:
+- Health Economics and Outcomes Research (HEOR)
+- Pharmaceutical industry experience
+- Healthcare policy or market access
+- Clinical research or epidemiology
+- Health technology assessment
+- Pharmacoeconomics
+- Real-world evidence studies
+- Regulatory affairs in healthcare
+- Healthcare data analysis
 
 Be conversational but professional, and focus on the practical aspects of HEOR signal monitoring.
 """
@@ -76,7 +88,7 @@ Be conversational but professional, and focus on the practical aspects of HEOR s
 
                 if messages.data:
                     content = messages.data[0].content[0]
-                    if hasattr(content, 'text'):
+                    if hasattr(content, 'text') and hasattr(content.text, 'value'):
                         return content.text.value
                     return str(content)
 
@@ -85,6 +97,70 @@ Be conversational but professional, and focus on the practical aspects of HEOR s
         except Exception as e:
             logger.error(f"Error running assistant: {e}")
             raise
+
+    async def validate_heor_expertise(self, user_response: str) -> Dict[str, Any]:
+        """Validate if user response relates to HEOR expertise"""
+        validation_prompt = f"""
+Please analyze the following user response about their expertise/preference in HEOR:
+
+User Response: "{user_response}"
+
+Determine if this response relates to Health Economics and Outcomes Research (HEOR) or related healthcare fields such as:
+- Health Economics and Outcomes Research (HEOR)
+- Pharmaceutical industry experience
+- Healthcare policy or market access
+- Clinical research or epidemiology
+- Health technology assessment
+- Pharmacoeconomics
+- Real-world evidence studies
+- Regulatory affairs in healthcare
+- Healthcare data analysis
+- Medical affairs
+- Biostatistics in healthcare
+- Health outcomes research
+
+Respond with a JSON object containing:
+1. "is_valid": true if the response relates to HEOR/healthcare, false otherwise
+2. "response": if valid, provide a brief acknowledgment. If invalid, ask them to provide their HEOR-related expertise/preference
+
+Format your response as valid JSON only, no additional text.
+"""
+        
+        try:
+            # Create a temporary thread for validation
+            temp_thread = await self.create_thread()
+            await self.send_message(temp_thread, validation_prompt)
+            
+            # Create temporary assistant for validation
+            validation_assistant = await self.client.beta.assistants.create(
+                name="HEOR Validation Assistant",
+                instructions="You are a validation assistant that analyzes user responses for HEOR relevance. Always respond with valid JSON only.",
+                model="gpt-4o-mini"
+            )
+            
+            response = await self.run_assistant(validation_assistant.id, temp_thread)
+            
+            # Clean up temporary resources
+            await self.client.beta.assistants.delete(validation_assistant.id)
+            
+            # Parse JSON response
+            import json
+            try:
+                result = json.loads(response)
+                return result
+            except json.JSONDecodeError:
+                # Fallback if JSON parsing fails
+                return {
+                    "is_valid": False,
+                    "response": "Please provide your expertise or preference related to Health Economics and Outcomes Research (HEOR) or healthcare."
+                }
+                
+        except Exception as e:
+            logger.error(f"Error validating expertise: {e}")
+            return {
+                "is_valid": False,
+                "response": "Please provide your expertise or preference related to Health Economics and Outcomes Research (HEOR) or healthcare."
+            }
 
     async def get_welcome_message(self, categories: List[str]) -> str:
         """Generate welcome message with category selection"""
