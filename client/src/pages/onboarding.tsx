@@ -78,6 +78,19 @@ export default function Onboarding() {
     };
   }, [sessionId, queryClient, showInitialLoader]);
 
+  // Fallback: Hide loader after user status is loaded (backup mechanism)
+  useEffect(() => {
+    if (userStatus && !isLoadingStatus && showInitialLoader) {
+      // Give a bit more time for messages to potentially load, then hide regardless
+      const fallbackTimer = setTimeout(() => {
+        console.log('Fallback: hiding loader after user status loaded');
+        setShowInitialLoader(false);
+      }, 2000);
+      
+      return () => clearTimeout(fallbackTimer);
+    }
+  }, [userStatus, isLoadingStatus, showInitialLoader]);
+
   // Show loading screen when initializing or when showInitialLoader is true
   if (showInitialLoader || initUserMutation.isPending || isLoadingStatus || !sessionId) {
     return <LoadingScreen message="Initializing your assistant..." />;
