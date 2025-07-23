@@ -276,15 +276,27 @@ class LangGraphNewsAgents:
 
     # Query Generation Methods
     async def _generate_regulatory_queries(self, state: AgentState) -> AgentState:
-        """Generate search queries for regulatory news"""
+        """Generate highly targeted search queries for regulatory news"""
         prompt = f"""
-        Generate 3-5 specific search queries for regulatory alerts and compliance news.
-        User expertise: {', '.join(state.user_preferences.expertise_areas)}
-        Therapeutic areas: {', '.join(state.user_preferences.therapeutic_areas)}
-        Regions: {', '.join(state.user_preferences.regions)}
+        You are a HEOR research specialist. Generate 4-6 HIGHLY SPECIFIC search queries for regulatory news.
         
-        Focus on: FDA approvals, EMA decisions, regulatory guidance, compliance alerts, drug recalls, policy changes.
-        Return as JSON array of strings.
+        USER PROFILE:
+        - Expertise: {', '.join(state.user_preferences.expertise_areas)}
+        - Therapeutic Focus: {', '.join(state.user_preferences.therapeutic_areas)}
+        - Key Interests: {', '.join(state.user_preferences.keywords)}
+        
+        REQUIREMENTS:
+        - Combine therapeutic areas with regulatory terms
+        - Include specific drug classes if relevant to expertise
+        - Focus on actionable regulatory changes
+        - Include cost/reimbursement regulatory aspects
+        
+        EXAMPLES OF GOOD QUERIES:
+        - "FDA approval [therapeutic area] cost effectiveness"
+        - "[expertise] regulatory guidance reimbursement"
+        - "EMA decision [therapeutic area] market access"
+        
+        Return as JSON array of 4-6 specific query strings.
         """
         
         response = await self.llm.ainvoke([SystemMessage(content=prompt)])
@@ -292,25 +304,47 @@ class LangGraphNewsAgents:
             queries = json.loads(response.content)
             state.search_queries = queries if isinstance(queries, list) else [response.content]
         except:
-            # Fallback queries
-            state.search_queries = [
-                f"FDA approval {' '.join(state.user_preferences.therapeutic_areas)}",
-                f"regulatory guidance {' '.join(state.user_preferences.expertise_areas)}",
-                "drug recall alert",
-                "EMA decision pharmaceutical"
-            ]
+            # Enhanced fallback queries with personalization
+            personalized_queries = []
+            for area in state.user_preferences.therapeutic_areas:
+                personalized_queries.extend([
+                    f"FDA approval {area} cost effectiveness",
+                    f"regulatory guidance {area} reimbursement",
+                    f"EMA decision {area} market access"
+                ])
+            
+            # Add expertise-specific queries
+            for expertise in state.user_preferences.expertise_areas:
+                personalized_queries.append(f"{expertise} regulatory policy update")
+            
+            state.search_queries = personalized_queries[:6]
         
         return state
 
     async def _generate_clinical_queries(self, state: AgentState) -> AgentState:
-        """Generate search queries for clinical trial news"""
+        """Generate highly targeted search queries for clinical trial news"""
         prompt = f"""
-        Generate 3-5 specific search queries for clinical trial updates and research news.
-        User expertise: {', '.join(state.user_preferences.expertise_areas)}
-        Therapeutic areas: {', '.join(state.user_preferences.therapeutic_areas)}
+        You are a clinical research expert. Generate 5-7 HIGHLY TARGETED search queries for clinical trial news.
         
-        Focus on: clinical trial results, Phase III trials, drug development, biomarker studies, treatment efficacy.
-        Return as JSON array of strings.
+        USER PROFILE:
+        - Expertise: {', '.join(state.user_preferences.expertise_areas)}
+        - Therapeutic Focus: {', '.join(state.user_preferences.therapeutic_areas)}
+        - Key Interests: {', '.join(state.user_preferences.keywords)}
+        
+        REQUIREMENTS:
+        - Combine specific therapeutic areas with trial phases
+        - Include HEOR-relevant endpoints (cost, QoL, outcomes)
+        - Focus on late-stage trials (Phase II/III) with commercial potential
+        - Include real-world evidence studies
+        - Target breakthrough/fast-track designations
+        
+        EXAMPLES OF TARGETED QUERIES:
+        - "Phase III {therapeutic area} primary endpoint results"
+        - "{therapeutic area} breakthrough therapy designation"
+        - "clinical trial {area} cost effectiveness endpoint"
+        - "real world evidence {area} outcomes study"
+        
+        Return as JSON array of 5-7 specific query strings.
         """
         
         response = await self.llm.ainvoke([SystemMessage(content=prompt)])
@@ -318,26 +352,52 @@ class LangGraphNewsAgents:
             queries = json.loads(response.content)
             state.search_queries = queries if isinstance(queries, list) else [response.content]
         except:
-            # Fallback queries
-            state.search_queries = [
-                f"clinical trial {' '.join(state.user_preferences.therapeutic_areas)}",
-                f"Phase III results {' '.join(state.user_preferences.expertise_areas)}",
-                "drug development breakthrough",
-                "biomarker study results"
-            ]
+            # Enhanced fallback queries with personalization
+            personalized_queries = []
+            for area in state.user_preferences.therapeutic_areas:
+                personalized_queries.extend([
+                    f"Phase III {area} primary endpoint results",
+                    f"{area} breakthrough therapy designation FDA",
+                    f"clinical trial {area} cost effectiveness",
+                    f"real world evidence {area} outcomes"
+                ])
+            
+            # Add expertise-specific clinical queries
+            for expertise in state.user_preferences.expertise_areas:
+                if "economics" in expertise.lower():
+                    personalized_queries.append(f"clinical trial {expertise} economic endpoint")
+                else:
+                    personalized_queries.append(f"{expertise} clinical trial results")
+            
+            state.search_queries = personalized_queries[:7]
         
         return state
 
     async def _generate_market_queries(self, state: AgentState) -> AgentState:
-        """Generate search queries for market access news"""
+        """Generate highly targeted search queries for market access news"""
         prompt = f"""
-        Generate 3-5 specific search queries for market access and payer news.
-        User expertise: {', '.join(state.user_preferences.expertise_areas)}
-        Therapeutic areas: {', '.join(state.user_preferences.therapeutic_areas)}
-        Regions: {', '.join(state.user_preferences.regions)}
+        You are a market access specialist. Generate 5-7 HIGHLY SPECIFIC search queries for market access and payer news.
         
-        Focus on: payer coverage decisions, HEOR studies, cost-effectiveness, reimbursement, formulary changes.
-        Return as JSON array of strings.
+        USER PROFILE:
+        - Expertise: {', '.join(state.user_preferences.expertise_areas)}
+        - Therapeutic Focus: {', '.join(state.user_preferences.therapeutic_areas)}
+        - Key Interests: {', '.join(state.user_preferences.keywords)}
+        - Regions: {', '.join(state.user_preferences.regions)}
+        
+        REQUIREMENTS:
+        - Focus on specific payer decisions in user's therapeutic areas
+        - Include ICER reviews and HTA assessments
+        - Target formulary changes and coverage policies
+        - Include budget impact and cost-effectiveness studies
+        - Focus on actionable market access changes
+        
+        EXAMPLES OF TARGETED QUERIES:
+        - "ICER review {therapeutic area} cost effectiveness"
+        - "{therapeutic area} formulary coverage decision 2024"
+        - "Medicare coverage {area} reimbursement policy"
+        - "payer access {area} budget impact model"
+        
+        Return as JSON array of 5-7 specific query strings.
         """
         
         response = await self.llm.ainvoke([SystemMessage(content=prompt)])
@@ -345,25 +405,51 @@ class LangGraphNewsAgents:
             queries = json.loads(response.content)
             state.search_queries = queries if isinstance(queries, list) else [response.content]
         except:
-            # Fallback queries
-            state.search_queries = [
-                f"payer coverage {' '.join(state.user_preferences.therapeutic_areas)}",
-                f"HEOR study {' '.join(state.user_preferences.expertise_areas)}",
-                "formulary coverage decision",
-                "cost effectiveness analysis"
-            ]
+            # Enhanced fallback queries with personalization
+            personalized_queries = []
+            for area in state.user_preferences.therapeutic_areas:
+                personalized_queries.extend([
+                    f"ICER review {area} cost effectiveness 2024",
+                    f"{area} formulary coverage decision",
+                    f"Medicare reimbursement {area} policy",
+                    f"payer access {area} budget impact"
+                ])
+            
+            # Add expertise-specific market access queries
+            for expertise in state.user_preferences.expertise_areas:
+                personalized_queries.extend([
+                    f"{expertise} market access strategy",
+                    f"HEOR study {expertise} outcomes"
+                ])
+            
+            state.search_queries = personalized_queries[:7]
         
         return state
 
     async def _generate_rwe_queries(self, state: AgentState) -> AgentState:
-        """Generate search queries for RWE and public health news"""
+        """Generate highly targeted search queries for RWE and public health news"""
         prompt = f"""
-        Generate 3-5 specific search queries for real-world evidence and public health news.
-        User expertise: {', '.join(state.user_preferences.expertise_areas)}
-        Therapeutic areas: {', '.join(state.user_preferences.therapeutic_areas)}
+        You are a real-world evidence researcher. Generate 5-7 HIGHLY TARGETED search queries for RWE and public health news.
         
-        Focus on: real-world evidence studies, population health, epidemiology, public health policy, outcomes research.
-        Return as JSON array of strings.
+        USER PROFILE:
+        - Expertise: {', '.join(state.user_preferences.expertise_areas)}
+        - Therapeutic Focus: {', '.join(state.user_preferences.therapeutic_areas)}
+        - Key Interests: {', '.join(state.user_preferences.keywords)}
+        
+        REQUIREMENTS:
+        - Focus on RWE studies with commercial/policy implications
+        - Include comparative effectiveness research (CER)
+        - Target patient-reported outcomes (PROs) and QoL studies
+        - Include health economics outcomes research
+        - Focus on post-market surveillance and safety studies
+        
+        EXAMPLES OF TARGETED QUERIES:
+        - "real world evidence {therapeutic area} comparative effectiveness"
+        - "{area} patient reported outcomes study 2024"
+        - "post market surveillance {area} safety outcomes"
+        - "health economics {area} real world data"
+        
+        Return as JSON array of 5-7 specific query strings.
         """
         
         response = await self.llm.ainvoke([SystemMessage(content=prompt)])
@@ -371,13 +457,24 @@ class LangGraphNewsAgents:
             queries = json.loads(response.content)
             state.search_queries = queries if isinstance(queries, list) else [response.content]
         except:
-            # Fallback queries
-            state.search_queries = [
-                f"real world evidence {' '.join(state.user_preferences.therapeutic_areas)}",
-                f"population health {' '.join(state.user_preferences.expertise_areas)}",
-                "epidemiology study results",
-                "public health policy update"
-            ]
+            # Enhanced fallback queries with personalization
+            personalized_queries = []
+            for area in state.user_preferences.therapeutic_areas:
+                personalized_queries.extend([
+                    f"real world evidence {area} comparative effectiveness",
+                    f"{area} patient reported outcomes study",
+                    f"post market surveillance {area} safety",
+                    f"health economics {area} real world data"
+                ])
+            
+            # Add expertise-specific RWE queries
+            for expertise in state.user_preferences.expertise_areas:
+                personalized_queries.extend([
+                    f"{expertise} real world outcomes research",
+                    f"population health {expertise} study"
+                ])
+            
+            state.search_queries = personalized_queries[:7]
         
         return state
 
@@ -598,24 +695,47 @@ class LangGraphNewsAgents:
         return await self._filter_relevance_generic(state, "real-world evidence and population health")
 
     async def _filter_relevance_generic(self, state: AgentState, domain_focus: str) -> AgentState:
-        """Generic relevance filtering using LLM"""
+        """Enhanced personalized relevance filtering using aggressive LLM analysis"""
         if not state.news_items:
             return state
         
-        # Batch process items for efficiency
+        # First pass: Quick keyword-based filtering
+        pre_filtered_items = await self._pre_filter_by_keywords(state.news_items, state.user_preferences)
+        
+        # Second pass: Deep LLM analysis for personalization
         filtered_items = []
         
-        for item in state.news_items[:20]:  # Limit to top 20 for performance
+        for item in pre_filtered_items[:25]:  # Increased limit for better selection
             try:
+                # Enhanced personalized prompt with specific criteria
                 prompt = f"""
-                Rate the relevance of this news item for a HEOR professional interested in {domain_focus}.
-                User expertise: {', '.join(state.user_preferences.expertise_areas)}
-                Therapeutic areas: {', '.join(state.user_preferences.therapeutic_areas)}
-                
+                You are an expert HEOR analyst. Analyze this news item for relevance to a professional with specific expertise.
+
+                USER PROFILE:
+                - Primary Expertise: {', '.join(state.user_preferences.expertise_areas)}
+                - Therapeutic Focus: {', '.join(state.user_preferences.therapeutic_areas)}
+                - Interest Keywords: {', '.join(state.user_preferences.keywords)}
+                - Domain: {domain_focus}
+
+                NEWS ITEM:
                 Title: {item.title}
-                Snippet: {item.snippet}
-                
-                Return only a number between 0.0 and 1.0 representing relevance score.
+                Content: {item.snippet}
+                Source: {item.source}
+
+                SCORING CRITERIA (Rate 0.0-1.0):
+                - Direct relevance to user's expertise area (40%)
+                - Therapeutic area alignment (30%)
+                - Actionable insights for HEOR work (20%)
+                - Recency and impact potential (10%)
+
+                PERSONALIZATION FACTORS:
+                - Does this directly impact their therapeutic areas?
+                - Would this news affect their daily HEOR work?
+                - Is this something they would discuss with colleagues?
+                - Does it mention specific drugs/treatments in their focus area?
+
+                Be AGGRESSIVE in filtering - only return high scores (0.7+) for truly relevant content.
+                Return ONLY a number between 0.0 and 1.0.
                 """
                 
                 response = await self.llm.ainvoke([SystemMessage(content=prompt)])
@@ -623,21 +743,119 @@ class LangGraphNewsAgents:
                     score = float(response.content.strip())
                     item.relevance_score = max(0.0, min(1.0, score))
                 except:
-                    item.relevance_score = 0.5  # Default score if parsing fails
+                    item.relevance_score = 0.3  # Lower default for failed parsing
                 
-                # Only include items above threshold
-                if item.relevance_score >= 0.4:
+                # Apply additional personalization boost
+                boosted_score = await self._apply_personalization_boost(item, state.user_preferences)
+                item.relevance_score = min(1.0, boosted_score)
+                
+                # Much higher threshold for inclusion (more aggressive filtering)
+                if item.relevance_score >= 0.65:
                     filtered_items.append(item)
                     
             except Exception as e:
                 print(f"Error filtering item: {e}")
                 continue
         
-        # Sort by relevance score and recency
-        filtered_items.sort(key=lambda x: x.relevance_score, reverse=True)
-        state.news_items = filtered_items[:10]  # Top 10 most relevant
+        # Enhanced sorting with multiple factors
+        filtered_items.sort(key=lambda x: (x.relevance_score, self._calculate_recency_score(x)), reverse=True)
+        
+        # Return top 8 most relevant (reduced for higher quality)
+        state.news_items = filtered_items[:8]
         
         return state
+
+    async def _pre_filter_by_keywords(self, news_items: List[NewsItem], preferences: UserPreferences) -> List[NewsItem]:
+        """Quick keyword-based pre-filtering to reduce LLM calls"""
+        if not news_items:
+            return news_items
+        
+        # Create comprehensive keyword sets
+        all_keywords = set()
+        for keyword in preferences.keywords:
+            all_keywords.add(keyword.lower())
+            # Add partial matches
+            all_keywords.update(keyword.lower().split())
+        
+        for area in preferences.expertise_areas + preferences.therapeutic_areas:
+            all_keywords.add(area.lower())
+            all_keywords.update(area.lower().split())
+        
+        # Filter items that contain relevant keywords
+        filtered_items = []
+        for item in news_items:
+            text_to_search = f"{item.title} {item.snippet}".lower()
+            
+            # Calculate keyword match score
+            matches = sum(1 for keyword in all_keywords if keyword in text_to_search)
+            keyword_score = min(matches / 3.0, 1.0)  # Normalize to 0-1
+            
+            # Include items with decent keyword matches or from trusted sources
+            if keyword_score > 0.1 or item.source in ["ClinicalTrials.gov", "FDA", "EMA"]:
+                item.relevance_score = keyword_score * 0.5  # Initial score
+                filtered_items.append(item)
+        
+        return filtered_items
+
+    async def _apply_personalization_boost(self, item: NewsItem, preferences: UserPreferences) -> float:
+        """Apply personalization boost based on specific user preferences"""
+        base_score = item.relevance_score
+        boost = 0.0
+        
+        text_content = f"{item.title} {item.snippet}".lower()
+        
+        # Boost for exact expertise matches
+        for expertise in preferences.expertise_areas:
+            if expertise.lower() in text_content:
+                boost += 0.15
+        
+        # Boost for therapeutic area matches
+        for area in preferences.therapeutic_areas:
+            if area.lower() in text_content:
+                boost += 0.12
+        
+        # Boost for high-value keywords
+        high_value_keywords = {
+            "fda approval": 0.2,
+            "clinical trial results": 0.18,
+            "breakthrough therapy": 0.15,
+            "cost effectiveness": 0.15,
+            "market access": 0.12,
+            "reimbursement": 0.12,
+            "heor": 0.1,
+            "real world evidence": 0.1
+        }
+        
+        for keyword, boost_value in high_value_keywords.items():
+            if keyword in text_content:
+                boost += boost_value
+        
+        # Boost for trusted sources
+        trusted_sources = {
+            "ClinicalTrials.gov": 0.1,
+            "FDA": 0.15,
+            "EMA": 0.12,
+            "NEJM": 0.1,
+            "The Lancet": 0.1
+        }
+        
+        for source, boost_value in trusted_sources.items():
+            if source.lower() in item.source.lower():
+                boost += boost_value
+        
+        return base_score + boost
+
+    def _calculate_recency_score(self, item: NewsItem) -> float:
+        """Calculate recency score for sorting"""
+        try:
+            # Try to parse the date and give recent items higher scores
+            from datetime import datetime
+            if item.date:
+                # Simple recency boost - more recent = higher score
+                return 0.1  # Small boost for recent items
+            return 0.0
+        except:
+            return 0.0
 
     async def _finalize_results(self, state: AgentState) -> AgentState:
         """Finalize the agent results"""

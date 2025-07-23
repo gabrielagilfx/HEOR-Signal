@@ -59,6 +59,135 @@ This document outlines the major improvements made to the LangGraph news agents 
 - Updated API endpoint documentation
 - Added new usage examples
 
+## 🎯 Aggressive Personalization Enhancements
+
+### Enhanced Relevance Filtering
+
+The system now uses a **two-stage aggressive filtering process**:
+
+#### Stage 1: Keyword Pre-filtering
+- Creates comprehensive keyword sets from user expertise and therapeutic areas
+- Calculates keyword match scores for quick filtering
+- Prioritizes trusted sources (ClinicalTrials.gov, FDA, EMA)
+
+#### Stage 2: Deep LLM Analysis
+- **Much higher relevance threshold**: 0.65 (vs previous 0.4)
+- **Personalized scoring criteria**:
+  - Direct relevance to user's expertise area (40%)
+  - Therapeutic area alignment (30%)
+  - Actionable insights for HEOR work (20%)
+  - Recency and impact potential (10%)
+
+#### Personalization Boost System
+- **Expertise matches**: +0.15 boost
+- **Therapeutic area matches**: +0.12 boost
+- **High-value keywords**: Up to +0.2 boost
+  - "FDA approval": +0.2
+  - "clinical trial results": +0.18
+  - "breakthrough therapy": +0.15
+  - "cost effectiveness": +0.15
+- **Trusted sources**: Up to +0.15 boost
+
+### Enhanced Query Generation
+
+All agents now generate **5-7 highly targeted queries** instead of 3-5 generic ones:
+
+#### Regulatory Agent Queries
+```python
+# Before (Generic)
+"FDA approval oncology"
+"regulatory guidance"
+
+# After (Personalized)
+"FDA approval oncology cost effectiveness"
+"regulatory guidance oncology reimbursement" 
+"EMA decision oncology market access"
+```
+
+#### Clinical Agent Queries
+```python
+# Before (Generic)
+"clinical trial oncology"
+"Phase III results"
+
+# After (Personalized)
+"Phase III oncology primary endpoint results"
+"oncology breakthrough therapy designation FDA"
+"clinical trial oncology cost effectiveness"
+"real world evidence oncology outcomes"
+```
+
+#### Market Access Agent Queries
+```python
+# Before (Generic)
+"payer coverage oncology"
+"HEOR study"
+
+# After (Personalized)
+"ICER review oncology cost effectiveness 2024"
+"oncology formulary coverage decision"
+"Medicare reimbursement oncology policy"
+"payer access oncology budget impact"
+```
+
+#### RWE Agent Queries
+```python
+# Before (Generic)
+"real world evidence oncology"
+"population health"
+
+# After (Personalized)
+"real world evidence oncology comparative effectiveness"
+"oncology patient reported outcomes study"
+"post market surveillance oncology safety"
+"health economics oncology real world data"
+```
+
+### Results Quality Improvements
+
+- **Reduced quantity, increased quality**: Top 8 items (vs previous 10)
+- **Higher relevance threshold**: 0.65 minimum score
+- **Better targeting**: Queries combine expertise + therapeutic areas + HEOR terms
+- **Enhanced sorting**: Multi-factor ranking (relevance + recency + source trust)
+
+## 🔍 Personalization Examples
+
+### Example User: Oncology Health Economist
+
+**Database Profile**:
+- `preference_expertise`: "health economics"
+- `selected_categories`: ["clinical", "market"]
+- `therapeutic_areas`: ["oncology", "cancer"]
+
+**Generated Queries**:
+- "Phase III oncology primary endpoint results"
+- "clinical trial oncology cost effectiveness"
+- "ICER review oncology cost effectiveness 2024"
+- "Medicare reimbursement oncology policy"
+
+**Filtering Boosts**:
+- News mentioning "oncology" gets +0.12 boost
+- News mentioning "cost effectiveness" gets +0.15 boost
+- News from "ClinicalTrials.gov" gets +0.1 boost
+- Only news scoring 0.65+ after boosts is included
+
+### Example User: Cardiology Market Access
+
+**Database Profile**:
+- `preference_expertise`: "market access"
+- `selected_categories`: ["regulatory", "market"]
+- `therapeutic_areas`: ["cardiology", "cardiovascular"]
+
+**Generated Queries**:
+- "FDA approval cardiology cost effectiveness"
+- "regulatory guidance cardiology reimbursement"
+- "ICER review cardiology cost effectiveness 2024"
+- "cardiology formulary coverage decision"
+
+**Result**: Highly targeted news about cardiovascular market access decisions, regulatory approvals with reimbursement implications, and HEOR studies specific to cardiology.
+
+---
+
 ## 🚀 New API Endpoints
 
 ### Personalized News (New)
