@@ -1,17 +1,24 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { MessageBubble } from "./message-bubble";
 import { TypingIndicator } from "./typing-indicator";
 import { CategorySelection } from "./category-selection";
 import { LoadingScreen } from "@/components/ui/loading-screen";
+import { HEORDashboard } from "@/components/dashboard/heor-dashboard";
 import { apiRequest } from "@/lib/queryClient";
 import type { ChatMessage } from "@/types/chat";
 
+interface UserStatus {
+  session_id: string;
+  onboarding_completed: boolean;
+  selected_categories: string[];
+  preference_expertise?: string;
+}
+
 interface SimpleChatInterfaceProps {
   sessionId: string;
-  onboardingCompleted: boolean;
+  userStatus?: UserStatus;
 }
 
 interface ApiMessage {
@@ -26,7 +33,11 @@ interface MessagesResponse {
   messages: ApiMessage[];
 }
 
-export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleChatInterfaceProps) {
+export function SimpleChatInterface({ sessionId, userStatus }: SimpleChatInterfaceProps) {
+  const onboardingCompleted = userStatus?.onboarding_completed ?? false;
+  const hasPreferenceExpertise = !!(userStatus?.preference_expertise);
+  const canShowDashboard = onboardingCompleted && hasPreferenceExpertise;
+  
   const [inputMessage, setInputMessage] = useState("");
   const [showCategorySelection, setShowCategorySelection] = useState(!onboardingCompleted);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -35,14 +46,25 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
   const [isSending, setIsSending] = useState(false);
   const [isSelectingCategories, setIsSelectingCategories] = useState(false);
   const [showCategoryLoader, setShowCategoryLoader] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(canShowDashboard);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(userStatus?.selected_categories || []);
+  const [isNavigatingToDashboard, setIsNavigatingToDashboard] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Update category selection state when onboardingCompleted changes
+
+
+  // Update category selection state when userStatus changes  
   useEffect(() => {
     setShowCategorySelection(!onboardingCompleted);
-  }, [onboardingCompleted]);
+    // Only set dashboard if we're not in a timer-controlled state
+    // (Don't override dashboard state set by the 3-second timer)
+    if (!showDashboard) {
+      setShowDashboard(canShowDashboard);
+    }
+    setSelectedCategories(userStatus?.selected_categories || []);
+  }, [onboardingCompleted, canShowDashboard, userStatus?.selected_categories, showDashboard]);
 
   // Load messages on mount and when sessionId changes
   useEffect(() => {
@@ -111,18 +133,19 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
 
     const userMessage = inputMessage.trim();
     
+    // Create user message outside try block for proper scope
+    const newUserMessage: ChatMessage = {
+      id: `temp-user-${Date.now()}`,
+      role: 'user',
+      content: userMessage,
+      timestamp: new Date()
+    };
+    
     try {
       setIsSending(true);
       setIsTyping(true);
       
       // Immediately add user message to chat for smooth UX
-      const newUserMessage: ChatMessage = {
-        id: `temp-user-${Date.now()}`,
-        role: 'user',
-        content: userMessage,
-        timestamp: new Date()
-      };
-      
       setMessages(prev => [...prev, newUserMessage]);
       setInputMessage("");
       if (textareaRef.current) {
@@ -147,6 +170,22 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
         
         // Add assistant response to existing messages (user message already added)
         setMessages(prev => [...prev, assistantMessage]);
+        
+        // Check if this response indicates the dashboard should be shown
+        if (result.show_dashboard) {
+          console.log('Dashboard navigation triggered after expertise validation');
+          // 3-second pause then navigate directly to dashboard
+          setTimeout(() => {
+            console.log('Setting showDashboard to true after 3 seconds');
+            // Force a user status refresh first, then set dashboard after a brief delay
+            window.dispatchEvent(new CustomEvent('refresh-user-status'));
+            
+            // Give time for status refresh, then show dashboard
+            setTimeout(() => {
+              setShowDashboard(true);
+            }, 500);
+          }, 3000);
+        }
       }
     } catch (error) {
       console.error('Error sending message:', error);
@@ -184,6 +223,7 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
       const result = await response.json();
       
       if (result.success) {
+        setSelectedCategories(categories);
         setShowCategorySelection(false);
         
         // Add the confirmation message smoothly instead of reloading all messages
@@ -196,6 +236,9 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
           };
           setMessages(prev => [...prev, confirmationMessage]);
         }
+        
+        // Don't navigate to dashboard yet - need to collect expertise preference first
+        // Just acknowledge category selection for now
         
         window.dispatchEvent(new CustomEvent('onboarding-completed'));
       }
@@ -233,8 +276,59 @@ To get started, please select the data categories you'd like to monitor. You can
 
 
 
+  // Show dashboard loading screen during transition
+  if (isNavigatingToDashboard) {
+    return <LoadingScreen message="Setting up your HEOR dashboard..." />;
+  }
+
+  // Show dashboard only if onboarding is completed AND preference_expertise is set
+  console.log('Dashboard render check:', { 
+    showDashboard, 
+    canShowDashboard, 
+    onboardingCompleted, 
+    hasPreferenceExpertise,
+    userStatus: userStatus?.preference_expertise 
+  });
+  
+  if (showDashboard && canShowDashboard) {
+    console.log('Rendering HEOR Dashboard with categories:', selectedCategories);
+    return <HEORDashboard selectedCategories={selectedCategories} sessionId={sessionId} />;
+  }
+
   return (
-    <div className="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-gray-900">
+    <div className="flex-1 flex flex-col bg-gray-50 dark:bg-gray-900">
+      {/* Header inside the chat interface */}
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                <i className="fas fa-chart-line text-white"></i>
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">HEOR Signal</h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Onboarding Assistant
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <Button 
+                onClick={() => window.location.reload()}
+                variant="outline"
+                size="sm"
+                className="hover:bg-blue-50 dark:hover:bg-blue-900/20"
+              >
+                <i className="fas fa-plus mr-2"></i>
+                New Session
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+      
+      <div className="flex-1 overflow-y-auto p-6">
       <div className="max-w-4xl mx-auto">
         {/* Only show loading text if this is NOT the initial load (messages are empty) */}
         {isLoading && messages.length > 0 ? (
@@ -324,7 +418,7 @@ To get started, please select the data categories you'd like to monitor. You can
                   </div>
                   
                   {/* Show category selection after welcome message */}
-                  {message.id === 'welcome' && showCategorySelection && !onboardingCompleted && (
+                  {message.id === 'welcome' && showCategorySelection && !canShowDashboard && (
                     <div className="mt-6 ml-11">
                       <CategorySelection
                         onConfirm={handleCategorySelection}
@@ -335,8 +429,8 @@ To get started, please select the data categories you'd like to monitor. You can
                 </div>
               ))}
               
-              {/* Show category selection if no messages yet but onboarding not completed */}
-              {allMessages.length === 0 && showCategorySelection && !onboardingCompleted && (
+              {/* Show category selection if no messages yet but dashboard cannot be shown */}
+              {allMessages.length === 0 && showCategorySelection && !canShowDashboard && (
                 <div className="mt-6 ml-11">
                   <CategorySelection
                     onConfirm={handleCategorySelection}
@@ -367,8 +461,8 @@ To get started, please select the data categories you'd like to monitor. You can
           </div>
         )}
         
-        {/* Input Area at Bottom */}
-        {!showCategorySelection && (
+        {/* Input Area at Bottom - only show if categories selected but no dashboard yet */}
+        {!showCategorySelection && !canShowDashboard && (
           <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-4">
             <div className="flex items-start space-x-3">
               <div className="flex-1">
@@ -407,6 +501,7 @@ To get started, please select the data categories you'd like to monitor. You can
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 }

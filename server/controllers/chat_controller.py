@@ -54,6 +54,9 @@ async def send_message(
         db.commit()
         db.refresh(user_message)
         
+        # Initialize validation result
+        validation_result = None
+        
         # Check if user has completed onboarding and needs expertise validation
         if getattr(user, 'onboarding_completed', False) and not getattr(user, 'preference_expertise', None):
             # Validate expertise using OpenAI
@@ -65,8 +68,7 @@ async def send_message(
                     db, str(user.id), request.message
                 )
                 
-                assistant_response = validation_result.get("response", 
-                    "Thank you! I've saved your expertise. How can I help you with your HEOR dashboard today?")
+                assistant_response = "Perfect! I've validated and saved your expertise. Setting up your personalized HEOR dashboard now..."
             else:
                 # Request valid HEOR expertise
                 assistant_response = validation_result.get("response", 
@@ -90,11 +92,20 @@ async def send_message(
         db.commit()
         db.refresh(assistant_message)
         
+        # Check if expertise was just saved in this request
+        expertise_just_saved = (
+            validation_result is not None and
+            validation_result.get("is_valid", False) and
+            getattr(user, 'onboarding_completed', False) and 
+            getattr(user, 'preference_expertise', None) is not None
+        )
+        
         return {
             "success": True,
             "message": assistant_response,
             "message_id": str(assistant_message.id),
-            "expertise_saved": getattr(user, 'preference_expertise', None) is not None
+            "expertise_saved": getattr(user, 'preference_expertise', None) is not None,
+            "show_dashboard": expertise_just_saved
         }
         
     except Exception as e:

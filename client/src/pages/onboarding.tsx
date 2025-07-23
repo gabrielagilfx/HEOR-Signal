@@ -10,12 +10,14 @@ interface UserStatus {
   session_id: string;
   onboarding_completed: boolean;
   selected_categories: string[];
+  preference_expertise?: string;
 }
 
 export default function Onboarding() {
   const [sessionId, setSessionId] = useState<string>("");
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [showInitialLoader, setShowInitialLoader] = useState<boolean>(true);
+  const [retryCount, setRetryCount] = useState<number>(0);
   const queryClient = useQueryClient();
 
   // Initialize user session
@@ -27,14 +29,19 @@ export default function Onboarding() {
       console.log('User session initialized:', data);
       return data as UserStatus;
     },
+    retry: (failureCount, error) => {
+      setRetryCount(failureCount);
+      return failureCount < 3; // Max 3 attempts
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
     onSuccess: (data) => {
       console.log('Setting session ID:', data.session_id);
       setSessionId(data.session_id);
       setIsInitialized(true);
-      // Don't hide the loader yet - wait for messages to load
+      setRetryCount(0); // Reset retry count on success
     },
     onError: (error) => {
-      console.error('Failed to initialize user:', error);
+      console.error('Failed to initialize user after retries:', error);
       setIsInitialized(true); // Still mark as initialized to prevent retry loop
       setTimeout(() => setShowInitialLoader(false), 1000);
     },
@@ -62,6 +69,10 @@ export default function Onboarding() {
       queryClient.invalidateQueries({ queryKey: ['/api/user/status', sessionId] });
     };
 
+    const handleRefreshUserStatus = () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/user/status', sessionId] });
+    };
+
     const handleMessagesLoaded = () => {
       // Hide loader once messages are loaded (only on initial load)
       if (showInitialLoader) {
@@ -70,10 +81,12 @@ export default function Onboarding() {
     };
     
     window.addEventListener('onboarding-completed', handleOnboardingCompleted);
+    window.addEventListener('refresh-user-status', handleRefreshUserStatus);
     window.addEventListener('messages-loaded', handleMessagesLoaded);
     
     return () => {
       window.removeEventListener('onboarding-completed', handleOnboardingCompleted);
+      window.removeEventListener('refresh-user-status', handleRefreshUserStatus);
       window.removeEventListener('messages-loaded', handleMessagesLoaded);
     };
   }, [sessionId, queryClient, showInitialLoader]);
@@ -93,14 +106,16 @@ export default function Onboarding() {
 
   // Show loading screen when initializing or when showInitialLoader is true
   if (showInitialLoader || initUserMutation.isPending || isLoadingStatus || !sessionId) {
-    return <LoadingScreen message="Initializing your assistant..." />;
+    const loadingMessage = retryCount > 0 
+      ? `Retrying connection... (attempt ${retryCount + 1}/3)`
+      : "Initializing your assistant...";
+    return <LoadingScreen message={loadingMessage} />;
   }
 
   if (initUserMutation.error) {
     console.error('Init mutation error:', initUserMutation.error);
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <Header />
         <div className="flex-1 flex items-center justify-center">
           <Card className="w-full max-w-md">
             <CardContent className="p-6 text-center">
@@ -126,37 +141,15 @@ export default function Onboarding() {
     );
   }
 
+  // Check if dashboard should be shown (both onboarding completed and expertise set)
+  const shouldShowDashboard = userStatus?.onboarding_completed && userStatus?.preference_expertise;
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden">
-      <Header />
       <SimpleChatInterface 
         sessionId={sessionId} 
-        onboardingCompleted={(userStatus as any)?.onboarding_completed ?? false}
+        userStatus={userStatus}
       />
     </div>
-  );
-}
-
-function Header() {
-  return (
-    <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex-shrink-0">
-      <div className="flex items-center justify-between max-w-6xl mx-auto">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <i className="fas fa-chart-line text-white text-sm"></i>
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">HEOR Signal</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Onboarding Assistant
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
-          <i className="fas fa-shield-alt text-gray-400"></i>
-          <span>Secure Session</span>
-        </div>
-      </div>
-    </header>
   );
 }
