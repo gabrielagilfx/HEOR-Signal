@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { MessageBubble } from "./message-bubble";
 import { TypingIndicator } from "./typing-indicator";
 import { CategorySelection } from "./category-selection";
+import { LoadingScreen } from "@/components/ui/loading-screen";
 import { apiRequest } from "@/lib/queryClient";
 import type { ChatMessage } from "@/types/chat";
 
@@ -33,6 +34,7 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
   const [isTyping, setIsTyping] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isSelectingCategories, setIsSelectingCategories] = useState(false);
+  const [showCategoryLoader, setShowCategoryLoader] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -139,6 +141,7 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
   const handleCategorySelection = async (categories: string[]) => {
     try {
       setIsSelectingCategories(true);
+      setShowCategoryLoader(true);
       
       const response = await apiRequest('POST', '/api/chat/select-categories', {
         categories,
@@ -148,14 +151,19 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
       const result = await response.json();
       
       if (result.success) {
-        setShowCategorySelection(false);
-        // Reload messages to get the confirmation message
-        await loadMessages();
-        // Trigger parent component to refetch user status
-        window.dispatchEvent(new CustomEvent('onboarding-completed'));
+        // Show loader for a bit to indicate processing
+        setTimeout(async () => {
+          setShowCategorySelection(false);
+          setShowCategoryLoader(false);
+          // Reload messages to get the confirmation message
+          await loadMessages();
+          // Trigger parent component to refetch user status
+          window.dispatchEvent(new CustomEvent('onboarding-completed'));
+        }, 1500);
       }
     } catch (error) {
       console.error('Error selecting categories:', error);
+      setShowCategoryLoader(false);
     } finally {
       setIsSelectingCategories(false);
     }
@@ -186,6 +194,11 @@ To get started, please select the data categories you'd like to monitor. You can
         allMessages.push(message);
       }
     }
+  }
+
+  // Show category selection loader
+  if (showCategoryLoader) {
+    return <LoadingScreen message="Setting up your personalized dashboard..." />;
   }
 
   return (

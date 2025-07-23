@@ -4,6 +4,7 @@ import { SimpleChatInterface } from "@/components/chat/simple-chat-interface";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LoadingScreen } from "@/components/ui/loading-screen";
 
 interface UserStatus {
   session_id: string;
@@ -14,6 +15,7 @@ interface UserStatus {
 export default function Onboarding() {
   const [sessionId, setSessionId] = useState<string>("");
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
+  const [showInitialLoader, setShowInitialLoader] = useState<boolean>(true);
   const queryClient = useQueryClient();
 
   // Initialize user session
@@ -29,10 +31,13 @@ export default function Onboarding() {
       console.log('Setting session ID:', data.session_id);
       setSessionId(data.session_id);
       setIsInitialized(true);
+      // Hide initial loader after a brief delay to show completion
+      setTimeout(() => setShowInitialLoader(false), 1500);
     },
     onError: (error) => {
       console.error('Failed to initialize user:', error);
       setIsInitialized(true); // Still mark as initialized to prevent retry loop
+      setTimeout(() => setShowInitialLoader(false), 1000);
     },
   });
 
@@ -62,21 +67,9 @@ export default function Onboarding() {
     return () => window.removeEventListener('onboarding-completed', handleOnboardingCompleted);
   }, [sessionId, queryClient]);
 
-  if (initUserMutation.isPending || isLoadingStatus || !sessionId) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <Header />
-        <div className="flex-1 flex items-center justify-center">
-          <Card className="w-full max-w-md">
-            <CardContent className="p-6 space-y-4">
-              <Skeleton className="h-8 w-3/4" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-2/3" />
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
+  // Show loading screen when initializing or when showInitialLoader is true
+  if (showInitialLoader || initUserMutation.isPending || isLoadingStatus || !sessionId) {
+    return <LoadingScreen message="Initializing your assistant..." />;
   }
 
   if (initUserMutation.error) {
