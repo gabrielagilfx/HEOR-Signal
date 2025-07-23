@@ -131,6 +131,7 @@ class LangGraphNewsAgents:
         
         workflow.add_node("generate_queries", self._generate_clinical_queries)
         workflow.add_node("search_nih", self._search_nih_clinical)
+        workflow.add_node("search_clinical_data_api", self._search_clinical_data_api)
         workflow.add_node("search_general", self._search_clinical_news)
         workflow.add_node("merge_results", self._merge_clinical_results)
         workflow.add_node("filter_relevance", self._filter_clinical_relevance)
@@ -138,8 +139,10 @@ class LangGraphNewsAgents:
         
         workflow.set_entry_point("generate_queries")
         workflow.add_edge("generate_queries", "search_nih")
+        workflow.add_edge("generate_queries", "search_clinical_data_api")
         workflow.add_edge("generate_queries", "search_general")
         workflow.add_edge("search_nih", "merge_results")
+        workflow.add_edge("search_clinical_data_api", "merge_results")
         workflow.add_edge("search_general", "merge_results")
         workflow.add_edge("merge_results", "filter_relevance")
         workflow.add_edge("filter_relevance", "finalize")
@@ -436,6 +439,58 @@ class LangGraphNewsAgents:
         state.news_items = clinical_items
         return state
 
+    async def _search_clinical_data_api(self, state: AgentState) -> AgentState:
+        """Search ClinicalTrials.gov Data API for clinical trial information"""
+        clinical_data_items = []
+        
+        for query in state.search_queries:
+            try:
+                # Use the ClinicalTrials.gov Data API
+                url = "https://clinicaltrials.gov/data-api/api"
+                params = {
+                    "expr": query,
+                    "min_rnk": 1,
+                    "max_rnk": 20,
+                    "fmt": "json"
+                }
+                
+                response = await self.http_client.get(url, params=params)
+                if response.status_code == 200:
+                    data = response.json()
+                    studies = data.get("StudyFieldsResponse", {}).get("StudyFields", [])
+                    
+                    for study in studies:
+                        nct_id = study.get("NCTId", [""])[0] if study.get("NCTId") else ""
+                        title = study.get("BriefTitle", [""])[0] if study.get("BriefTitle") else ""
+                        summary = study.get("BriefSummary", [""])[0] if study.get("BriefSummary") else ""
+                        status = study.get("OverallStatus", [""])[0] if study.get("OverallStatus") else ""
+                        start_date = study.get("StartDate", [""])[0] if study.get("StartDate") else ""
+                        
+                        # Only include active or recently completed studies
+                        if status in ["Recruiting", "Active, not recruiting", "Completed", "Enrolling by invitation"]:
+                            news_item = NewsItem(
+                                id=f"ctdata_{nct_id}",
+                                title=f"{title} ({status})",
+                                snippet=summary[:300] if summary else f"Clinical trial status: {status}",
+                                source="ClinicalTrials.gov Data API",
+                                date=start_date or datetime.now().isoformat(),
+                                category=state.category.value,
+                                url=f"https://clinicaltrials.gov/study/{nct_id}",
+                                relevance_score=0.85
+                            )
+                            clinical_data_items.append(news_item)
+                        
+            except Exception as e:
+                print(f"Error searching Clinical Data API: {e}")
+                continue
+        
+        # Add to existing news items
+        if not hasattr(state, 'news_items'):
+            state.news_items = []
+        state.news_items.extend(clinical_data_items)
+        
+        return state
+
     async def _search_clinical_news(self, state: AgentState) -> AgentState:
         """Search general news sources for clinical updates"""
         general_items = []
@@ -465,20 +520,29 @@ class LangGraphNewsAgents:
                 print(f"Error searching clinical news: {e}")
                 continue
         
-        # Merge with existing NIH results
-        if hasattr(state, '_temp_clinical_items'):
-            state.news_items.extend(state._temp_clinical_items)
+        # Add to existing news items
+        if not hasattr(state, 'news_items'):
+            state.news_items = []
         state.news_items.extend(general_items)
         
         return state
 
     async def _merge_clinical_results(self, state: AgentState) -> AgentState:
-        """Merge NIH and general clinical news results"""
-        # Remove duplicates based on title similarity
+        """Merge NIH, Clinical Data API, and general clinical news results"""
+        # Remove duplicates based on title similarity and NCT ID
         unique_items = []
         seen_titles = set()
+        seen_nct_ids = set()
         
         for item in state.news_items:
+            # Check for NCT ID duplicates (clinical trials)
+            if item.id.startswith(('nih_', 'ctdata_')):
+                nct_id = item.id.split('_', 1)[1] if '_' in item.id else item.id
+                if nct_id in seen_nct_ids:
+                    continue
+                seen_nct_ids.add(nct_id)
+            
+            # Check for title duplicates
             title_key = item.title.lower()[:50]  # Use first 50 chars for deduplication
             if title_key not in seen_titles:
                 seen_titles.add(title_key)
