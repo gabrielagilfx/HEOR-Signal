@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the comprehensive LangGraph system implemented for the HEOR Signal platform. The system consists of four parallel agents that retrieve and analyze the latest news based on user preferences and expertise areas.
+This document describes the comprehensive LangGraph system implemented for the HEOR Signal platform. The system consists of four parallel agents that retrieve and analyze the latest news based on user preferences and expertise areas stored in the database. The system now features **personalized news delivery** that automatically adapts to each user's expertise and preferences.
 
 ## Architecture
 
@@ -10,19 +10,52 @@ This document describes the comprehensive LangGraph system implemented for the H
 
 1. **LangGraph Agents System** (`server/services/langgraph_agents.py`)
    - Four specialized agents running in parallel
-   - User preference-based query generation
-   - Multi-source news aggregation
+   - **Database-integrated user preference system**
+   - Multi-source news aggregation with fixed NIH API integration
    - Relevance scoring and filtering
 
 2. **FastAPI Integration** (`server/controllers/news_controller.py`)
-   - RESTful API endpoints
+   - RESTful API endpoints with personalized news support
    - Background task processing
    - Real-time status updates
 
 3. **React Frontend Integration** (`client/src/hooks/useNewsAgents.ts`)
    - Custom React hook for API integration
+   - Personalized news fetching
    - State management for loading and error states
-   - Real-time updates
+
+## Personalization System
+
+### Database Integration
+
+The system now automatically fetches user preferences from the database based on the user's session ID. This includes:
+
+- **Expertise Areas**: Extracted from `preference_expertise` field
+- **Therapeutic Areas**: Mapped from user expertise
+- **Selected Categories**: From user's `selected_categories` field
+- **Keywords**: Automatically generated based on expertise and categories
+
+### User Preference Mapping
+
+The system intelligently maps user expertise to relevant search parameters:
+
+```python
+expertise_mapping = {
+    "oncology": {
+        "therapeutic_areas": ["oncology", "cancer", "hematology"],
+        "keywords": ["cancer treatment", "oncology drugs", "tumor", "chemotherapy"]
+    },
+    "cardiology": {
+        "therapeutic_areas": ["cardiology", "cardiovascular"],
+        "keywords": ["heart disease", "cardiovascular", "cardiac"]
+    },
+    "health economics": {
+        "therapeutic_areas": ["general medicine"],
+        "keywords": ["cost effectiveness", "health economics", "HEOR"]
+    }
+    # ... more mappings
+}
+```
 
 ## Four Parallel Agents
 
@@ -30,7 +63,6 @@ This document describes the comprehensive LangGraph system implemented for the H
 **Purpose**: Monitor regulatory alerts, FDA approvals, EMA decisions, and compliance news
 
 **Data Sources**:
-- NIH API for clinical trial updates
 - SERP API for regulatory news
 - RSS feeds from regulatory bodies
 
@@ -45,16 +77,15 @@ This document describes the comprehensive LangGraph system implemented for the H
 **Purpose**: Track clinical research, trial results, and medical breakthroughs
 
 **Data Sources**:
-- NIH API for clinical trials
+- **Fixed NIH API v2** for clinical trials
 - Medical journal RSS feeds
 - Conference abstract databases
 
-**Specialization**:
-- Clinical trial results
-- New treatment protocols
-- Medical device approvals
-- Biomarker discoveries
-- Treatment efficacy studies
+**NIH API Integration (FIXED)**:
+- Now uses the correct ClinicalTrials.gov API v2 endpoint
+- Endpoint: `https://clinicaltrials.gov/api/v2/studies`
+- Improved data parsing and error handling
+- Better integration with user preferences
 
 ### 3. Market Access Agent (`AgentCategory.MARKET_ACCESS`)
 **Purpose**: Monitor payer decisions, reimbursement policies, and market access news
@@ -86,87 +117,35 @@ This document describes the comprehensive LangGraph system implemented for the H
 - Post-market surveillance data
 - Comparative effectiveness research
 
-## User Preference System
+## API Integration Updates
 
-### UserPreferences Structure
-```python
-@dataclass
-class UserPreferences:
-    expertise_areas: List[str]        # e.g., ["health economics", "market access"]
-    therapeutic_areas: List[str]      # e.g., ["oncology", "cardiology"]
-    regions: List[str]               # e.g., ["US", "EU", "Asia"]
-    keywords: List[str]              # e.g., ["FDA approval", "drug pricing"]
-    news_recency_days: int = 7       # Default: last 7 days
-```
-
-### Query Generation
-Each agent generates specialized search queries based on:
-- User's expertise areas
-- Relevant therapeutic areas
-- Geographic regions of interest
-- Custom keywords
-- Recency requirements
-
-## API Integration
-
-### NIH API Integration
+### NIH API Integration (FIXED)
+- **New Endpoint**: `https://clinicaltrials.gov/api/v2/studies`
 - **API Key**: `3b04360966005dfdf1f14d28ef9a17961908`
 - **Purpose**: Clinical trial data and research updates
-- **Endpoints**: Clinical trials, research papers, grant information
+- **Improvements**: 
+  - Updated to use ClinicalTrials.gov API v2
+  - Better error handling and data parsing
+  - Improved relevance scoring
 
 ### SERP API Integration
 - **API Key**: `6a4387c40c2ca137f3cd364618e4e3eefd35d9a508f1c7093bb6edf0e951e764`
 - **Purpose**: Google News search for regulatory and market news
 - **Features**: Real-time news, filtering, relevance scoring
 
-## Parallel Execution
-
-### Workflow
-1. **Initialization**: All four agents start simultaneously
-2. **Query Generation**: Each agent generates specialized search queries
-3. **Parallel Search**: Agents search their respective data sources concurrently
-4. **Data Processing**: Results are filtered and scored for relevance
-5. **Aggregation**: All results are combined with metadata
-
-### Performance Benefits
-- **Speed**: 4x faster than sequential execution
-- **Efficiency**: Optimal resource utilization
-- **Scalability**: Easy to add more agents
-- **Reliability**: Isolated failure handling
-
-## News Item Structure
-
-```python
-@dataclass
-class NewsItem:
-    id: str                    # Unique identifier
-    title: str                 # News headline
-    snippet: str               # Brief description
-    source: str                # Publication source
-    date: str                  # Publication date
-    category: str              # Agent category
-    url: str                   # Source URL
-    relevance_score: float     # 0.0 - 1.0 relevance
-    is_new: bool = True        # New vs. seen before
-```
-
 ## API Endpoints
 
-### Main News Endpoint
+### New Personalized News Endpoint
 ```http
-POST /api/news/fetch
+POST /api/news/fetch-personalized
 Content-Type: application/json
 
 {
-  "expertise_areas": ["health economics", "market access"],
-  "therapeutic_areas": ["oncology", "cardiology"],
-  "regions": ["US", "EU"],
-  "keywords": ["FDA approval", "drug pricing"],
-  "news_recency_days": 7
+  "session_id": "user-session-id"
 }
 ```
 
-### Response Format
+**Response Format**:
 ```json
 {
   "regulatory": [NewsItem...],
@@ -178,33 +157,39 @@ Content-Type: application/json
 }
 ```
 
+### Legacy Endpoint (Maintained for Backward Compatibility)
+```http
+POST /api/news/fetch-parallel
+Content-Type: application/json
+
+{
+  "expertise_areas": ["health economics", "market access"],
+  "therapeutic_areas": ["oncology", "cardiology"],
+  "regions": ["US", "EU"],
+  "keywords": ["FDA approval", "drug pricing"],
+  "news_recency_days": 7
+}
+```
+
 ### Category-Specific Endpoints
-- `POST /api/news/regulatory` - Regulatory news only
-- `POST /api/news/clinical` - Clinical research only
-- `POST /api/news/market` - Market access only
-- `POST /api/news/rwe` - Real-world evidence only
+- `POST /api/news/fetch-category/{category}` - Single category news
 
 ### Utility Endpoints
 - `GET /api/news/test-apis` - Test API connectivity
-- `POST /api/news/preferences` - Save user preferences
+- `GET /api/news/health` - Health check
 
 ## Frontend Integration
 
-### React Hook Usage
+### Updated React Hook Usage
 ```typescript
 import { useNewsAgents } from '@/hooks/useNewsAgents';
 
-function Dashboard() {
-  const { newsData, loading, error, fetchNews } = useNewsAgents();
+function Dashboard({ sessionId }: { sessionId: string }) {
+  const { newsData, loading, error, fetchPersonalizedNews } = useNewsAgents();
   
   const handleFetchNews = async () => {
-    await fetchNews({
-      expertise_areas: ["health economics"],
-      therapeutic_areas: ["oncology"],
-      regions: ["US"],
-      keywords: ["FDA approval"],
-      news_recency_days: 7
-    });
+    // Automatically uses user preferences from database
+    await fetchPersonalizedNews(sessionId);
   };
   
   return (
@@ -218,12 +203,32 @@ function Dashboard() {
 ```
 
 ### Dashboard Integration
-The dashboard automatically:
-- Fetches news when categories are selected
-- Displays real-time loading states
-- Shows error messages with retry options
-- Updates news counters and indicators
+The dashboard now automatically:
+- Fetches personalized news based on database preferences
+- Shows personalization status indicator
+- Updates when user preferences change
 - Provides relevance-based sorting
+- No longer requires manual preference input
+
+## Key Improvements
+
+### 1. Personalization
+- **Automatic preference detection** from database
+- **Intelligent keyword mapping** based on expertise
+- **Dynamic therapeutic area assignment**
+- **Category-based enhancement** of search terms
+
+### 2. NIH API Fix
+- **Updated to API v2** with correct endpoints
+- **Improved data parsing** for better accuracy
+- **Enhanced error handling** for reliability
+- **Better integration** with user preferences
+
+### 3. User Experience
+- **Seamless personalization** without manual input
+- **Real-time preference adaptation**
+- **Clear personalization indicators**
+- **Backward compatibility** maintained
 
 ## Configuration
 
@@ -236,93 +241,42 @@ OPENAI_API_KEY=your-openai-api-key
 NIH_API_KEY=3b04360966005dfdf1f14d28ef9a17961908
 SERP_API_KEY=6a4387c40c2ca137f3cd364618e4e3eefd35d9a508f1c7093bb6edf0e951e764
 
-# Server Configuration
+# Database
 DATABASE_URL=postgresql://localhost/heor_signal
+
+# Server Configuration
 SECRET_KEY=your-secret-key
 ENVIRONMENT=development
 PORT=8000
 ```
 
-## Error Handling
-
-### Agent-Level Error Handling
-- Individual agent failures don't affect others
-- Graceful degradation with partial results
-- Detailed error logging and reporting
-- Automatic retry mechanisms
-
-### API-Level Error Handling
-- Rate limiting protection
-- API key validation
-- Timeout management
-- Fallback data sources
-
 ## Performance Monitoring
 
-### Metrics Tracked
+### Enhanced Metrics
 - Individual agent execution time
-- Total parallel processing time
-- API response times
-- Success/failure rates
-- News item relevance scores
-
-### Optimization Features
-- Intelligent query caching
-- Result deduplication
-- Relevance-based filtering
-- Configurable timeout limits
+- Database query performance
+- User preference mapping accuracy
+- NIH API v2 response times
+- Personalization effectiveness
 
 ## Future Enhancements
 
 ### Planned Features
-1. **Machine Learning Integration**
+1. **Enhanced Personalization**
+   - Learning from user interactions
+   - Preference refinement over time
+   - Cross-user similarity matching
+
+2. **Advanced NIH Integration**
+   - Additional NIH databases
+   - Real-time trial status updates
+   - Enhanced clinical data parsing
+
+3. **Machine Learning Integration**
    - Personalized relevance scoring
    - User behavior learning
    - Predictive news recommendations
 
-2. **Additional Data Sources**
-   - More medical databases
-   - International regulatory bodies
-   - Social media sentiment analysis
-
-3. **Advanced Analytics**
-   - Trend analysis
-   - Impact scoring
-   - Competitive intelligence
-
-4. **Real-time Updates**
-   - WebSocket integration
-   - Push notifications
-   - Live news feeds
-
-## Testing
-
-The system includes comprehensive test coverage:
-- Unit tests for individual agents
-- Integration tests for API endpoints
-- End-to-end tests for the full workflow
-- Performance benchmarks
-
-## Deployment
-
-### Development
-```bash
-# Install dependencies
-uv sync
-
-# Start development server
-cd server && python main.py
-
-# Start frontend
-npm run dev
-```
-
-### Production
-- Docker containerization
-- Environment-specific configurations
-- Health check endpoints
-- Monitoring and logging integration
-
 ---
 
-This LangGraph implementation provides a robust, scalable, and efficient news intelligence system that can process multiple data sources in parallel while maintaining high relevance and user personalization.
+This updated LangGraph implementation provides a robust, personalized, and efficient news intelligence system that automatically adapts to user preferences while maintaining high reliability through the fixed NIH API integration.

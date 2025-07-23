@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 from enum import Enum
+from sqlalchemy.orm import Session
 
 from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import ToolNode
@@ -15,6 +16,7 @@ from langchain_community.tools import DuckDuckGoSearchRun
 from pydantic import BaseModel
 
 from config import settings
+from database import get_db, User
 
 
 class AgentCategory(Enum):
@@ -71,6 +73,97 @@ class LangGraphNewsAgents:
             AgentCategory.MARKET_ACCESS: self._create_market_access_agent(),
             AgentCategory.RWE_PUBLIC_HEALTH: self._create_rwe_agent()
         }
+
+    def _get_user_preferences_from_db(self, session_id: str, db: Session) -> UserPreferences:
+        """Fetch user preferences from database and convert to UserPreferences object"""
+        user = db.query(User).filter(User.session_id == session_id).first()
+        
+        if not user:
+            # Return default preferences if user not found
+            return UserPreferences(
+                expertise_areas=["health economics", "market access"],
+                therapeutic_areas=["oncology", "cardiology"],
+                regions=["US", "EU"],
+                keywords=["FDA approval", "clinical trial"],
+                news_recency_days=7
+            )
+        
+        # Parse user preferences from database fields
+        expertise_areas = []
+        therapeutic_areas = []
+        regions = ["US"]  # Default region
+        keywords = []
+        
+        # Extract expertise from preference_expertise field
+        if user.preference_expertise:
+            expertise_areas = [user.preference_expertise.lower()]
+            
+            # Map expertise to therapeutic areas and keywords
+            expertise_mapping = {
+                "oncology": {
+                    "therapeutic_areas": ["oncology", "cancer", "hematology"],
+                    "keywords": ["cancer treatment", "oncology drugs", "tumor", "chemotherapy"]
+                },
+                "cardiology": {
+                    "therapeutic_areas": ["cardiology", "cardiovascular"],
+                    "keywords": ["heart disease", "cardiovascular", "cardiac"]
+                },
+                "neurology": {
+                    "therapeutic_areas": ["neurology", "neurological"],
+                    "keywords": ["neurological disorders", "brain", "alzheimer"]
+                },
+                "diabetes": {
+                    "therapeutic_areas": ["endocrinology", "diabetes"],
+                    "keywords": ["diabetes", "insulin", "glucose"]
+                },
+                "health economics": {
+                    "therapeutic_areas": ["general medicine"],
+                    "keywords": ["cost effectiveness", "health economics", "HEOR"]
+                },
+                "market access": {
+                    "therapeutic_areas": ["general medicine"],
+                    "keywords": ["market access", "reimbursement", "payer"]
+                }
+            }
+            
+            # Get mapped areas based on expertise
+            for key, mapping in expertise_mapping.items():
+                if key in user.preference_expertise.lower():
+                    therapeutic_areas.extend(mapping["therapeutic_areas"])
+                    keywords.extend(mapping["keywords"])
+        
+        # Use selected categories to enhance preferences
+        if user.selected_categories:
+            for category in user.selected_categories:
+                if category == "clinical":
+                    keywords.extend(["clinical trial", "Phase III", "drug development"])
+                elif category == "regulatory":
+                    keywords.extend(["FDA approval", "regulatory", "compliance"])
+                elif category == "market":
+                    keywords.extend(["market access", "payer coverage", "reimbursement"])
+                elif category == "rwe":
+                    keywords.extend(["real world evidence", "population health"])
+        
+        # Remove duplicates and set defaults if empty
+        expertise_areas = list(set(expertise_areas)) or ["health economics"]
+        therapeutic_areas = list(set(therapeutic_areas)) or ["general medicine"]
+        keywords = list(set(keywords)) or ["healthcare", "medical"]
+        
+        return UserPreferences(
+            expertise_areas=expertise_areas,
+            therapeutic_areas=therapeutic_areas,
+            regions=regions,
+            keywords=keywords,
+            news_recency_days=7
+        )
+
+    async def run_parallel_agents_for_user(self, session_id: str, db: Session) -> Dict[str, List[NewsItem]]:
+        """Run all four agents in parallel using user preferences from database"""
+        # Get user preferences from database
+        user_preferences = self._get_user_preferences_from_db(session_id, db)
+        
+        # Run agents with fetched preferences
+        return await self.run_parallel_agents(user_preferences)
 
     def _create_regulatory_agent(self) -> StateGraph:
         """Create agent for regulatory alerts and compliance news"""
@@ -323,41 +416,49 @@ class LangGraphNewsAgents:
         return state
 
     async def _search_nih_clinical(self, state: AgentState) -> AgentState:
-        """Search NIH databases for clinical trial information"""
+        """Search NIH databases for clinical trial information using updated API v2"""
         clinical_items = []
         
         for query in state.search_queries:
             try:
-                # Search ClinicalTrials.gov API
-                url = "https://clinicaltrials.gov/api/query/study_fields"
+                # Use the new ClinicalTrials.gov API v2 REST endpoint
+                url = "https://clinicaltrials.gov/api/v2/studies"
                 params = {
-                    "expr": query,
-                    "fields": "NCTId,BriefTitle,BriefSummary,StartDate,CompletionDate,Phase,Condition",
-                    "min_rnk": 1,
-                    "max_rnk": 20,
-                    "fmt": "json"
+                    "query.term": query,
+                    "pageSize": 20,
+                    "format": "json"
                 }
                 
                 response = await self.http_client.get(url, params=params)
                 if response.status_code == 200:
                     data = response.json()
-                    studies = data.get("StudyFieldsResponse", {}).get("StudyFields", [])
+                    studies = data.get("studies", [])
                     
                     for study in studies:
+                        protocol_section = study.get("protocolSection", {})
+                        identification_module = protocol_section.get("identificationModule", {})
+                        description_module = protocol_section.get("descriptionModule", {})
+                        status_module = protocol_section.get("statusModule", {})
+                        
+                        nct_id = identification_module.get("nctId", "")
+                        title = identification_module.get("briefTitle", "")
+                        summary = description_module.get("briefSummary", "")
+                        start_date = status_module.get("startDateStruct", {}).get("date", "")
+                        
                         news_item = NewsItem(
-                            id=f"nih_{study.get('NCTId', [''])[0]}",
-                            title=study.get('BriefTitle', [''])[0],
-                            snippet=study.get('BriefSummary', [''])[0][:300],
+                            id=f"nih_{nct_id}",
+                            title=title,
+                            snippet=summary[:300] if summary else "",
                             source="ClinicalTrials.gov",
-                            date=study.get('StartDate', [''])[0],
+                            date=start_date,
                             category=state.category.value,
-                            url=f"https://clinicaltrials.gov/ct2/show/{study.get('NCTId', [''])[0]}",
+                            url=f"https://clinicaltrials.gov/study/{nct_id}",
                             relevance_score=0.9
                         )
                         clinical_items.append(news_item)
                         
             except Exception as e:
-                print(f"Error searching NIH clinical: {e}")
+                print(f"Error searching NIH clinical (API v2): {e}")
                 continue
         
         # Store in temporary attribute for merging
