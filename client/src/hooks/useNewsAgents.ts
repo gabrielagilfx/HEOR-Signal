@@ -20,7 +20,7 @@ export interface NewsItem {
   is_new: boolean;
 }
 
-export interface NewsAggregateResponse {
+export interface NewsData {
   regulatory: NewsItem[];
   clinical: NewsItem[];
   market: NewsItem[];
@@ -30,24 +30,23 @@ export interface NewsAggregateResponse {
 }
 
 export interface UseNewsAgentsReturn {
-  newsData: NewsAggregateResponse | null;
+  newsData: NewsData | null;
   loading: boolean;
   error: string | null;
   fetchNews: (preferences: UserPreferences) => Promise<void>;
+  fetchPersonalizedNews: (sessionId: string) => Promise<void>;
   fetchCategoryNews: (category: string, preferences: UserPreferences) => Promise<NewsItem[]>;
-  testApis: () => Promise<{ serp_api: string; nih_api: string }>;
-  clearError: () => void;
 }
 
 export const useNewsAgents = (): UseNewsAgentsReturn => {
-  const [newsData, setNewsData] = useState<NewsAggregateResponse | null>(null);
+  const [newsData, setNewsData] = useState<NewsData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchNews = useCallback(async (preferences: UserPreferences) => {
     setLoading(true);
     setError(null);
-
+    
     try {
       const response = await fetch('/api/news/fetch-parallel', {
         method: 'POST',
@@ -58,16 +57,39 @@ export const useNewsAgents = (): UseNewsAgentsReturn => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data: NewsAggregateResponse = await response.json();
+      const data = await response.json();
       setNewsData(data);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch news';
-      setError(errorMessage);
-      console.error('Error fetching news:', err);
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchPersonalizedNews = useCallback(async (sessionId: string) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch('/api/news/fetch-personalized', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ session_id: sessionId }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setNewsData(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
     }
@@ -77,9 +99,6 @@ export const useNewsAgents = (): UseNewsAgentsReturn => {
     category: string, 
     preferences: UserPreferences
   ): Promise<NewsItem[]> => {
-    setLoading(true);
-    setError(null);
-
     try {
       const response = await fetch(`/api/news/fetch-category/${category}`, {
         method: 'POST',
@@ -90,46 +109,15 @@ export const useNewsAgents = (): UseNewsAgentsReturn => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data.news_items;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch category news';
-      setError(errorMessage);
-      console.error('Error fetching category news:', err);
-      return [];
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const testApis = useCallback(async () => {
-    try {
-      const response = await fetch('/api/news/test-apis');
-      
-      if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
-      return {
-        serp_api: data.serp_api,
-        nih_api: data.nih_api
-      };
+      return data.news_items || [];
     } catch (err) {
-      console.error('Error testing APIs:', err);
-      return {
-        serp_api: 'error',
-        nih_api: 'error'
-      };
+      console.error(`Error fetching ${category} news:`, err);
+      return [];
     }
-  }, []);
-
-  const clearError = useCallback(() => {
-    setError(null);
   }, []);
 
   return {
@@ -137,8 +125,7 @@ export const useNewsAgents = (): UseNewsAgentsReturn => {
     loading,
     error,
     fetchNews,
+    fetchPersonalizedNews,
     fetchCategoryNews,
-    testApis,
-    clearError,
   };
 };

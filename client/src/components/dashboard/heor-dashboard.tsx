@@ -171,43 +171,19 @@ const MOCK_NEWS: Record<string, NewsItem[]> = {
 };
 
 export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps) {
-  const { newsData, loading, error, fetchNews, testApis, clearError } = useNewsAgents();
+  const { newsData, loading, error, fetchPersonalizedNews } = useNewsAgents();
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
-  const [apiStatus, setApiStatus] = useState<{ serp_api: string; nih_api: string } | null>(null);
-
-  // Convert selectedCategories to user preferences
-  const getUserPreferences = (): UserPreferences => {
-    return {
-      expertise_areas: ["HEOR", "Market Access", "Health Economics"],
-      therapeutic_areas: selectedCategories.includes("clinical") ? ["Oncology", "Cardiology", "Diabetes"] : [],
-      regions: ["United States", "Europe"],
-      keywords: selectedCategories.flatMap(cat => {
-        switch(cat) {
-          case "regulatory": return ["FDA approval", "regulatory guidance", "drug recall"];
-          case "clinical": return ["clinical trial", "Phase III", "biomarker"];
-          case "market": return ["payer coverage", "HEOR study", "reimbursement"];
-          case "rwe": return ["real world evidence", "population health", "outcomes research"];
-          default: return [];
-        }
-      }),
-      news_recency_days: 7
-    };
-  };
 
   useEffect(() => {
-    if (selectedCategories.length > 0) {
-      const preferences = getUserPreferences();
-      fetchNews(preferences);
-      
-      // Test API connectivity
-      testApis().then(setApiStatus);
+    if (selectedCategories.length > 0 && sessionId) {
+      // Use personalized news endpoint that fetches user preferences from database
+      fetchPersonalizedNews(sessionId);
     }
-  }, [selectedCategories, fetchNews, testApis]);
+  }, [selectedCategories, sessionId, fetchPersonalizedNews]);
 
   const handleRefresh = async () => {
-    if (selectedCategories.length > 0) {
-      const preferences = getUserPreferences();
-      await fetchNews(preferences);
+    if (selectedCategories.length > 0 && sessionId) {
+      await fetchPersonalizedNews(sessionId);
       setLastUpdated(new Date());
     }
   };
@@ -288,22 +264,15 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
           </Alert>
         )}
 
-        {/* API Status */}
-        {apiStatus && (
-          <Alert className="mb-6 border-blue-200 bg-blue-50 dark:bg-blue-950">
-            <AlertDescription className="text-blue-700 dark:text-blue-300">
-              <div className="flex items-center space-x-4">
-                <span>API Status:</span>
-                <span className={`px-2 py-1 rounded text-xs ${apiStatus.serp_api === 'connected' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                  SERP: {apiStatus.serp_api}
-                </span>
-                <span className={`px-2 py-1 rounded text-xs ${apiStatus.nih_api === 'connected' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                  NIH: {apiStatus.nih_api}
-                </span>
-              </div>
-            </AlertDescription>
-          </Alert>
-        )}
+        {/* Personalization Status */}
+        <Alert className="mb-6 border-green-200 bg-green-50 dark:bg-green-950">
+          <AlertDescription className="text-green-700 dark:text-green-300">
+            <div className="flex items-center space-x-2">
+              <i className="fas fa-user-check text-green-600"></i>
+              <span>Showing personalized news based on your expertise and selected categories</span>
+            </div>
+          </AlertDescription>
+        </Alert>
         {/* Dashboard Stats */}
         <div className="mb-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
