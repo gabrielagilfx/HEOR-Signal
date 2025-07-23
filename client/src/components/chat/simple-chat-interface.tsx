@@ -109,27 +109,49 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
       return;
     }
 
+    const userMessage = inputMessage.trim();
+    
     try {
       setIsSending(true);
       setIsTyping(true);
       
+      // Immediately add user message to chat for smooth UX
+      const newUserMessage: ChatMessage = {
+        id: `temp-user-${Date.now()}`,
+        role: 'user',
+        content: userMessage,
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, newUserMessage]);
+      setInputMessage("");
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto';
+      }
+      
       const response = await apiRequest('POST', '/api/chat/send', {
-        message: inputMessage.trim(),
+        message: userMessage,
         session_id: sessionId,
       });
       
       const result = await response.json();
       
       if (result.success) {
-        setInputMessage("");
-        if (textareaRef.current) {
-          textareaRef.current.style.height = 'auto';
-        }
-        // Reload messages to get the latest conversation
-        await loadMessages();
+        // Add assistant response smoothly to existing messages
+        const assistantMessage: ChatMessage = {
+          id: result.message_id || `temp-assistant-${Date.now()}`,
+          role: 'assistant',
+          content: result.message,
+          timestamp: new Date()
+        };
+        
+        // Add assistant response to existing messages (user message already added)
+        setMessages(prev => [...prev, assistantMessage]);
       }
     } catch (error) {
       console.error('Error sending message:', error);
+      // Remove the temporary user message on error
+      setMessages(prev => prev.filter(msg => msg.id !== newUserMessage.id));
     } finally {
       setIsSending(false);
       setIsTyping(false);
@@ -163,7 +185,18 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
       
       if (result.success) {
         setShowCategorySelection(false);
-        await loadMessages();
+        
+        // Add the confirmation message smoothly instead of reloading all messages
+        if (result.message) {
+          const confirmationMessage: ChatMessage = {
+            id: `category-confirmation-${Date.now()}`,
+            role: 'assistant',
+            content: result.message,
+            timestamp: new Date()
+          };
+          setMessages(prev => [...prev, confirmationMessage]);
+        }
+        
         window.dispatchEvent(new CustomEvent('onboarding-completed'));
       }
     } catch (error) {
