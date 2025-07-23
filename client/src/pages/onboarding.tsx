@@ -111,7 +111,6 @@ export default function Onboarding() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col overflow-hidden">
-      <Header />
       <SimpleChatInterface 
         sessionId={sessionId} 
         onboardingCompleted={userStatus?.onboarding_completed ?? false}

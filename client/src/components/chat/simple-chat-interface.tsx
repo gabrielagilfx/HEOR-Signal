@@ -189,76 +189,188 @@ To get started, please select the data categories you'd like to monitor. You can
   }
 
   return (
-    <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 min-h-0">
-      {/* Chat Messages */}
-      <div className="flex-1 overflow-y-auto mb-6 space-y-4" style={{ minHeight: 0 }}>
-        {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="text-muted-foreground">Loading messages...</div>
+    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
+      {/* Header */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex-shrink-0">
+        <div className="flex items-center justify-between max-w-4xl mx-auto">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <i className="fas fa-robot text-white text-sm"></i>
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">HEOR Signal</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Onboarding Assistant</p>
+            </div>
           </div>
-        ) : (
-          <>
-            {allMessages.map((message, index) => (
-              <div key={`${message.id}-${index}`}>
-                <MessageBubble message={message} />
-                
-                {/* Show category selection after welcome message */}
-                {message.id === 'welcome' && showCategorySelection && !onboardingCompleted && (
-                  <div className="mt-4">
-                    <CategorySelection
-                      onConfirm={handleCategorySelection}
-                      isLoading={isSelectingCategories}
-                    />
-                  </div>
-                )}
-              </div>
-            ))}
-            
-            {isTyping && <TypingIndicator />}
-            <div ref={messagesEndRef} />
-          </>
-        )}
+          <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+            <i className="fas fa-shield-alt text-green-500"></i>
+            <span>Secure Session</span>
+          </div>
+        </div>
       </div>
 
-
-      {/* Chat Input - Hidden during category selection */}
-      {!showCategorySelection && (
-        <Card className="border border-border shadow-sm p-4 flex-shrink-0">
-          <div className="flex items-end space-x-3">
-            <div className="flex-1">
-              <Textarea
-                ref={textareaRef}
-                value={inputMessage}
-                onChange={(e) => {
-                  setInputMessage(e.target.value);
-                  autoResize();
-                }}
-                onKeyDown={handleKeyDown}
-                placeholder="Ask me anything about your dashboard setup or HEOR data sources..."
-                className="resize-none border-0 focus-visible:ring-0 placeholder:text-muted-foreground text-foreground bg-transparent max-h-24 leading-relaxed"
-                rows={1}
-              />
+      {/* Chat Messages Area */}
+      <div className="flex-1 overflow-y-auto px-6 py-6">
+        <div className="max-w-4xl mx-auto">
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <div className="text-gray-500 dark:text-gray-400">Loading conversation...</div>
             </div>
-            <Button
-              size="sm"
-              onClick={handleSendMessage}
-              disabled={!inputMessage.trim() || isSending}
-              className="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground"
-            >
-              {isSending ? (
+          ) : (
+            <div className="space-y-4">
+              {/* Always show initial welcome messages */}
+              {allMessages.length === 0 && (
                 <>
-                  <i className="fas fa-spinner fa-spin mr-2"></i>
-                  Sending
-                </>
-              ) : (
-                <>
-                  <i className="fas fa-paper-plane mr-2"></i>
-                  Send
+                  <div className="flex items-start space-x-3">
+                    <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center flex-shrink-0">
+                      <i className="fas fa-robot text-blue-600 dark:text-blue-400 text-sm"></i>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">HEOR Assistant</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">Personalizing your dashboard experience</span>
+                      </div>
+                      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+                        <p className="text-gray-700 dark:text-gray-300 mb-0">
+                          Welcome to <strong>HEOR Signal!</strong> I'm here to help you set up your personalized dashboard for health economics and outcomes research insights.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-3">
+                    <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center flex-shrink-0">
+                      <i className="fas fa-robot text-blue-600 dark:text-blue-400 text-sm"></i>
+                    </div>
+                    <div className="flex-1">
+                      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+                        <p className="text-gray-700 dark:text-gray-300 mb-0">
+                          To get started, please select the data categories you'd like to monitor on your dashboard. You can always modify these preferences later:
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </>
               )}
-            </Button>
+              
+              {/* Display actual chat messages */}
+              {allMessages.map((message, index) => (
+                <div key={`${message.id}-${index}`}>
+                  <div className={`flex items-start space-x-3 ${message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      message.role === 'user' 
+                        ? 'bg-gray-200 dark:bg-gray-600' 
+                        : 'bg-blue-100 dark:bg-blue-900'
+                    }`}>
+                      <i className={`text-sm ${
+                        message.role === 'user' 
+                          ? 'fas fa-user text-gray-600 dark:text-gray-300' 
+                          : 'fas fa-robot text-blue-600 dark:text-blue-400'
+                      }`}></i>
+                    </div>
+                    <div className="flex-1">
+                      {message.role === 'assistant' && (
+                        <div className="flex items-center space-x-2 mb-1">
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">HEOR Assistant</span>
+                        </div>
+                      )}
+                      <div className={`rounded-lg border p-4 shadow-sm ${
+                        message.role === 'user'
+                          ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 ml-8'
+                          : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+                      }`}>
+                        <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap mb-0">{message.content}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Show category selection after welcome message */}
+                  {message.id === 'welcome' && showCategorySelection && !onboardingCompleted && (
+                    <div className="mt-4 ml-11">
+                      <CategorySelection
+                        onConfirm={handleCategorySelection}
+                        isLoading={isSelectingCategories}
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
+              
+              {/* Show category selection if no messages yet but onboarding not completed */}
+              {allMessages.length === 0 && showCategorySelection && !onboardingCompleted && (
+                <div className="mt-4 ml-11">
+                  <CategorySelection
+                    onConfirm={handleCategorySelection}
+                    isLoading={isSelectingCategories}
+                  />
+                </div>
+              )}
+              
+              {isTyping && (
+                <div className="flex items-start space-x-3">
+                  <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center flex-shrink-0">
+                    <i className="fas fa-robot text-blue-600 dark:text-blue-400 text-sm"></i>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">HEOR Assistant</span>
+                    </div>
+                    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+                      <div className="flex space-x-1">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {/* Input Area */}
+      {!showCategorySelection && (
+        <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-6 py-4 flex-shrink-0">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-end space-x-3">
+              <div className="flex-1">
+                <Textarea
+                  ref={textareaRef}
+                  value={inputMessage}
+                  onChange={(e) => {
+                    setInputMessage(e.target.value);
+                    autoResize();
+                  }}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Type a message or question about your preferences..."
+                  className="w-full min-h-[44px] max-h-[120px] resize-none border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={isSending}
+                />
+                <div className="flex items-center justify-between mt-2 text-xs text-gray-500 dark:text-gray-400">
+                  <span>Press Enter to send, Shift+Enter for new line</span>
+                  <div className="flex items-center space-x-1">
+                    <i className="fas fa-shield-alt text-green-500"></i>
+                    <span>Secure & Private</span>
+                  </div>
+                </div>
+              </div>
+              <Button 
+                onClick={handleSendMessage}
+                disabled={!inputMessage.trim() || isSending}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex-shrink-0"
+              >
+                {isSending ? (
+                  <i className="fas fa-spinner fa-spin"></i>
+                ) : (
+                  <i className="fas fa-paper-plane"></i>
+                )}
+              </Button>
+            </div>
           </div>
-        </Card>
+        </div>
       )}
     </div>
   );
