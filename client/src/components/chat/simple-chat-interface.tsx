@@ -152,8 +152,6 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
 
   const handleCategorySelection = async (categories: string[]) => {
     try {
-      // Show loader immediately when user clicks confirm
-      setShowCategoryLoader(true);
       setIsSelectingCategories(true);
       
       const response = await apiRequest('POST', '/api/chat/select-categories', {
@@ -164,19 +162,12 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
       const result = await response.json();
       
       if (result.success) {
-        // Update state and reload messages while loader is still showing
         setShowCategorySelection(false);
         await loadMessages();
         window.dispatchEvent(new CustomEvent('onboarding-completed'));
-        
-        // Keep loader visible for a moment to ensure smooth transition
-        setTimeout(() => {
-          setShowCategoryLoader(false);
-        }, 1200);
       }
     } catch (error) {
       console.error('Error selecting categories:', error);
-      setShowCategoryLoader(false);
     } finally {
       setIsSelectingCategories(false);
     }
@@ -209,10 +200,7 @@ To get started, please select the data categories you'd like to monitor. You can
     }
   }
 
-  // Show category selection loader
-  if (showCategoryLoader) {
-    return <LoadingScreen message="Setting up your personalized dashboard..." />;
-  }
+
 
   return (
     <div className="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-gray-900">
