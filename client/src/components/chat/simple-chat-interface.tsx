@@ -298,27 +298,32 @@ To get started, please select the data categories you'd like to monitor. You can
   return (
     <div className="flex-1 flex flex-col bg-gray-50 dark:bg-gray-900">
       {/* Header inside the chat interface */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex-shrink-0">
-        <div className="flex items-center justify-between max-w-6xl mx-auto">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <i className="fas fa-chart-line text-white text-sm"></i>
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                <i className="fas fa-chart-line text-white"></i>
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">HEOR Signal</h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Onboarding Assistant
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">HEOR Signal</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Onboarding Assistant
-              </p>
+            
+            <div className="flex items-center space-x-4">
+              <Button 
+                onClick={() => window.location.reload()}
+                variant="outline"
+                size="sm"
+                className="hover:bg-blue-50 dark:hover:bg-blue-900/20"
+              >
+                <i className="fas fa-plus mr-2"></i>
+                New Session
+              </Button>
             </div>
-          </div>
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => window.location.reload()}
-              className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 px-3 py-1 rounded border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-            >
-              <i className="fas fa-plus mr-2"></i>
-              New Session
-            </button>
           </div>
         </div>
       </header>
