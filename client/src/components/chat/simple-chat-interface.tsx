@@ -162,13 +162,19 @@ export function SimpleChatInterface({ sessionId, onboardingCompleted }: SimpleCh
       const result = await response.json();
       
       if (result.success) {
-        // Small delay to show loading state
+        // Hide category selection immediately but keep loading overlay
+        setShowCategorySelection(false);
+        
+        // Wait a bit longer to ensure message transition is complete
         setTimeout(async () => {
-          setShowCategorySelection(false);
           await loadMessages();
           window.dispatchEvent(new CustomEvent('onboarding-completed'));
-          setIsSelectingCategories(false);
-        }, 800);
+          
+          // Additional delay to ensure everything is settled before hiding overlay
+          setTimeout(() => {
+            setIsSelectingCategories(false);
+          }, 500);
+        }, 1200);
       }
     } catch (error) {
       console.error('Error selecting categories:', error);
