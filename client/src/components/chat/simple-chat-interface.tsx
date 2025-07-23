@@ -179,6 +179,8 @@ export function SimpleChatInterface({ sessionId, userStatus }: SimpleChatInterfa
           setTimeout(() => {
             console.log('Setting showDashboard to true after 3 seconds');
             setShowDashboard(true);
+            // Force a user status refresh to get updated preference_expertise
+            window.dispatchEvent(new CustomEvent('refresh-user-status'));
           }, 3000);
         }
       }
@@ -277,6 +279,14 @@ To get started, please select the data categories you'd like to monitor. You can
   }
 
   // Show dashboard only if onboarding is completed AND preference_expertise is set
+  console.log('Dashboard render check:', { 
+    showDashboard, 
+    canShowDashboard, 
+    onboardingCompleted, 
+    hasPreferenceExpertise,
+    userStatus: userStatus?.preference_expertise 
+  });
+  
   if (showDashboard && canShowDashboard) {
     console.log('Rendering HEOR Dashboard with categories:', selectedCategories);
     return <HEORDashboard selectedCategories={selectedCategories} sessionId={sessionId} />;

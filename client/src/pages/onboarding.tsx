@@ -70,6 +70,10 @@ export default function Onboarding() {
       queryClient.invalidateQueries({ queryKey: ['/api/user/status', sessionId] });
     };
 
+    const handleRefreshUserStatus = () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/user/status', sessionId] });
+    };
+
     const handleMessagesLoaded = () => {
       // Hide loader once messages are loaded (only on initial load)
       if (showInitialLoader) {
@@ -78,10 +82,12 @@ export default function Onboarding() {
     };
     
     window.addEventListener('onboarding-completed', handleOnboardingCompleted);
+    window.addEventListener('refresh-user-status', handleRefreshUserStatus);
     window.addEventListener('messages-loaded', handleMessagesLoaded);
     
     return () => {
       window.removeEventListener('onboarding-completed', handleOnboardingCompleted);
+      window.removeEventListener('refresh-user-status', handleRefreshUserStatus);
       window.removeEventListener('messages-loaded', handleMessagesLoaded);
     };
   }, [sessionId, queryClient, showInitialLoader]);
