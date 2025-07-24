@@ -6,7 +6,16 @@ from config import settings
 # Create Base first
 Base = declarative_base()
 
-engine = create_engine(settings.database_url)
+# Add connection pooling and timeout settings
+engine = create_engine(
+    settings.database_url,
+    pool_size=10,  # Number of connections to maintain
+    max_overflow=20,  # Additional connections that can be created
+    pool_timeout=30,  # Timeout for getting connection from pool
+    pool_recycle=3600,  # Recycle connections after 1 hour
+    pool_pre_ping=True,  # Validate connections before use
+    echo=False  # Set to True for SQL debugging
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def get_db():
