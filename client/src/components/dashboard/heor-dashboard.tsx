@@ -393,7 +393,7 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
                                   </span>
                                   <span className="flex items-center">
                                     <i className="fas fa-clock mr-1"></i>
-                                    {new Date(item.date).toLocaleDateString()}
+                                    {item.date}
                                   </span>
                                   <span className="flex items-center">
                                     <i className="fas fa-star mr-1"></i>
