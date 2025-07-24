@@ -66,6 +66,12 @@ export function SimpleChatInterface({ sessionId, userStatus, onStartChat, hasSta
     }
   };
 
+  // Handler for new session without going back to landing page
+  const handleNewSession = () => {
+    // Navigate to a fresh session without going back to landing page
+    window.location.href = window.location.origin + '?new_session=true';
+  };
+
 
 
   // Update category selection state when userStatus changes  
@@ -335,7 +341,7 @@ To get started, please select the data categories you'd like to monitor.`,
             
             <div className="flex items-center space-x-4">
               <Button 
-                onClick={() => window.location.reload()}
+                onClick={handleNewSession}
                 variant="outline"
                 size="sm"
                 className="hover:bg-blue-50 dark:hover:bg-blue-900/20"

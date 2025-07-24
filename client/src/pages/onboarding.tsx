@@ -18,7 +18,12 @@ export default function Onboarding() {
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [showInitialLoader, setShowInitialLoader] = useState<boolean>(true);
   const [retryCount, setRetryCount] = useState<number>(0);
-  const [hasStartedChat, setHasStartedChat] = useState<boolean>(false);
+  
+  // Check URL parameters to see if this is a new session request
+  const urlParams = new URLSearchParams(window.location.search);
+  const isNewSession = urlParams.get('new_session') === 'true';
+  const [hasStartedChat, setHasStartedChat] = useState<boolean>(isNewSession);
+  
   const queryClient = useQueryClient();
 
   // Initialize user session
@@ -68,8 +73,13 @@ export default function Onboarding() {
     if (hasStartedChat && !isInitialized && !initUserMutation.isPending) {
       console.log('Starting user initialization...');
       initUserMutation.mutate();
+      
+      // Clean up URL parameter after starting initialization
+      if (isNewSession) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
     }
-  }, [hasStartedChat, isInitialized, initUserMutation]);
+  }, [hasStartedChat, isInitialized, initUserMutation, isNewSession]);
 
   useEffect(() => {
     // Listen for onboarding completion events only when we have a session

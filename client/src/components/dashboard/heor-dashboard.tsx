@@ -200,7 +200,9 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
   };
 
   const handleNewSession = () => {
-    window.location.reload();
+    // Navigate to a fresh session without going back to landing page
+    // We'll create a URL parameter to bypass landing page
+    window.location.href = window.location.origin + '?new_session=true';
   };
 
   return (
