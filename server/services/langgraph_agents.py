@@ -7,6 +7,7 @@ from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 from enum import Enum
 from sqlalchemy.orm import Session
+from dateutil import parser as date_parser
 
 from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import ToolNode
@@ -192,8 +193,35 @@ class LangGraphNewsAgents:
         }
         return mapping.get(domain, AgentCategory.REGULATORY)
 
+    def _validate_and_filter_dates(self, items: List[NewsItem]) -> List[NewsItem]:
+        """Filter news items to only those within the last year and fix invalid/missing dates."""
+        filtered = []
+        now = datetime.now()
+        one_year_ago = now - timedelta(days=365)
+        for item in items:
+            date_str = item.date
+            parsed_date = None
+            if date_str:
+                try:
+                    parsed_date = date_parser.parse(date_str, fuzzy=True)
+                except Exception:
+                    item.date = "Date not found"
+            else:
+                item.date = "Date not found"
+            # Only include if date is valid and within the last year, or if date is not found (to not lose potentially relevant items)
+            if parsed_date:
+                if one_year_ago <= parsed_date <= now:
+                    item.date = parsed_date.strftime("%Y-%m-%d")
+                    filtered.append(item)
+            else:
+                # If date is not found, still include but with 'Date not found'
+                filtered.append(item)
+        return filtered
+
     def _deduplicate_news_items(self, items: List[NewsItem]) -> List[NewsItem]:
-        """Remove duplicate news items based on title similarity and NCT IDs"""
+        """Remove duplicate news items based on title similarity and NCT IDs, and filter by date."""
+        # First, filter and normalize dates
+        items = self._validate_and_filter_dates(items)
         unique_items = []
         seen_titles = set()
         seen_nct_ids = set()
