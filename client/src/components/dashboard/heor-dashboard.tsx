@@ -275,7 +275,7 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
         </Alert>
         {/* Dashboard Stats */}
         <div className="mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -304,21 +304,7 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-950 dark:to-orange-900 border-orange-200 dark:border-orange-800">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-orange-600 dark:text-orange-400">Total Alerts</p>
-                    <p className="text-3xl font-bold text-orange-900 dark:text-orange-100">
-                      {selectedCategories.reduce((total, cat) => total + (MOCK_NEWS[cat]?.length || 0), 0)}
-                    </p>
-                  </div>
-                  <div className="w-12 h-12 bg-orange-600 rounded-lg flex items-center justify-center">
-                    <i className="fas fa-exclamation-triangle text-white text-lg"></i>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+
 
             <Card className="bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 border-purple-200 dark:border-purple-800">
               <CardContent className="p-6">
