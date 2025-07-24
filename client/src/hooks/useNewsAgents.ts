@@ -36,6 +36,7 @@ export interface UseNewsAgentsReturn {
   fetchNews: (preferences: UserPreferences) => Promise<void>;
   fetchPersonalizedNews: (sessionId: string) => Promise<void>;
   fetchCategoryNews: (category: string, preferences: UserPreferences) => Promise<NewsItem[]>;
+  sendCategoryChat: (category: string, message: string, sessionId: string) => Promise<any>;
 }
 
 export const useNewsAgents = (): UseNewsAgentsReturn => {
@@ -120,6 +121,35 @@ export const useNewsAgents = (): UseNewsAgentsReturn => {
     }
   }, []);
 
+  const sendCategoryChat = useCallback(async (
+    category: string,
+    message: string,
+    sessionId: string
+  ): Promise<any> => {
+    try {
+      const response = await fetch(`/api/chat/category/${category}/send`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          session_id: sessionId,
+          message: message
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (err) {
+      console.error(`Error sending category chat:`, err);
+      throw err;
+    }
+  }, []);
+
   return {
     newsData,
     loading,
@@ -127,5 +157,6 @@ export const useNewsAgents = (): UseNewsAgentsReturn => {
     fetchNews,
     fetchPersonalizedNews,
     fetchCategoryNews,
+    sendCategoryChat,
   };
 };

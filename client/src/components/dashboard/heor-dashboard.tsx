@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { useNewsAgents, UserPreferences, NewsItem } from "@/hooks/useNewsAgents";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CategoryChatModal } from "./category-chat-modal";
 import agilLogo from "@assets/Logo Primary_1753368301220.png";
 
 interface DashboardProps {
@@ -174,6 +175,13 @@ const MOCK_NEWS: Record<string, NewsItem[]> = {
 export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps) {
   const { newsData, loading, error, fetchPersonalizedNews } = useNewsAgents();
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [chatModalOpen, setChatModalOpen] = useState(false);
+  const [selectedCategoryForChat, setSelectedCategoryForChat] = useState<{
+    category: string;
+    categoryName: string;
+    categoryIcon: string;
+    categoryColor: string;
+  } | null>(null);
 
   useEffect(() => {
     if (selectedCategories.length > 0 && sessionId) {
@@ -201,6 +209,19 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
 
   const handleNewSession = () => {
     window.location.reload();
+  };
+
+  const handleOpenChat = (categoryId: string) => {
+    const config = CATEGORY_CONFIGS[categoryId as keyof typeof CATEGORY_CONFIGS];
+    if (config) {
+      setSelectedCategoryForChat({
+        category: categoryId,
+        categoryName: config.name,
+        categoryIcon: config.icon,
+        categoryColor: config.iconColor
+      });
+      setChatModalOpen(true);
+    }
   };
 
   return (
@@ -351,12 +372,23 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
                       </div>
                     </CardTitle>
                     
-                    {newsItems.some(item => item.is_new) && (
-                      <Badge className={`${config.badgeColor} border-0`}>
-                        <i className="fas fa-star mr-1"></i>
-                        New Updates
-                      </Badge>
-                    )}
+                    <div className="flex items-center space-x-2">
+                      {newsItems.some(item => item.is_new) && (
+                        <Badge className={`${config.badgeColor} border-0`}>
+                          <i className="fas fa-star mr-1"></i>
+                          New Updates
+                        </Badge>
+                      )}
+                      <Button
+                        onClick={() => handleOpenChat(categoryId)}
+                        variant="outline"
+                        size="sm"
+                        className="hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                      >
+                        <i className="fas fa-comments mr-2"></i>
+                        Chat
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
 
@@ -443,6 +475,22 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
           </Card>
         )}
       </main>
+
+      {/* Category Chat Modal */}
+      {selectedCategoryForChat && (
+        <CategoryChatModal
+          isOpen={chatModalOpen}
+          onClose={() => {
+            setChatModalOpen(false);
+            setSelectedCategoryForChat(null);
+          }}
+          category={selectedCategoryForChat.category}
+          categoryName={selectedCategoryForChat.categoryName}
+          categoryIcon={selectedCategoryForChat.categoryIcon}
+          categoryColor={selectedCategoryForChat.categoryColor}
+          sessionId={sessionId}
+        />
+      )}
     </div>
   );
 }

@@ -179,9 +179,9 @@ class CategoryChatAgent:
             category = category_mapping.get(self.category, "regulatory")
             
             # Create a temporary state for the existing agent
-            temp_state = self.existing_agents._create_agent_state(
+            temp_state = AgentState(
                 user_preferences=chat_enhanced_preferences,
-                category=category
+                category=self.existing_agents._get_category_enum(category)
             )
             
             # Override the search queries with our dynamic ones
@@ -223,9 +223,9 @@ class CategoryChatAgent:
             category = category_mapping.get(self.category, "regulatory")
             
             # Create temporary state for filtering
-            temp_state = self.existing_agents._create_agent_state(
+            temp_state = AgentState(
                 user_preferences=state.user_preferences,
-                category=category
+                category=self.existing_agents._get_category_enum(category)
             )
             temp_state.news_items = state.news_items
             
