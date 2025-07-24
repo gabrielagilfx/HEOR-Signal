@@ -8,6 +8,7 @@ import { LoadingScreen } from "@/components/ui/loading-screen";
 import { HEORDashboard } from "@/components/dashboard/heor-dashboard";
 import { apiRequest } from "@/lib/queryClient";
 import type { ChatMessage } from "@/types/chat";
+import agilLogo from "@assets/Logo Primary_1753368301220.png";
 
 interface UserStatus {
   session_id: string;
@@ -303,7 +304,7 @@ To get started, please select the data categories you'd like to monitor. You can
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <img 
-                src="/attached_assets/Logo Primary_1753368129483.png" 
+                src={agilLogo} 
                 alt="AGILf(x)" 
                 className="w-10 h-10 object-contain" 
               />

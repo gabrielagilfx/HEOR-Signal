@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { useNewsAgents, UserPreferences, NewsItem } from "@/hooks/useNewsAgents";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import agilLogo from "@assets/Logo Primary_1753368301220.png";
 
 interface DashboardProps {
   selectedCategories: string[];
@@ -210,7 +211,7 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <img 
-                src="/attached_assets/Logo Primary_1753368129483.png" 
+                src={agilLogo} 
                 alt="AGILf(x)" 
                 className="w-10 h-10 object-contain" 
               />

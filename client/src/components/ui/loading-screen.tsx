@@ -1,3 +1,5 @@
+import agilLogo from "@assets/Logo Primary_1753368301220.png";
+
 interface LoadingScreenProps {
   message?: string;
 }
@@ -9,7 +11,7 @@ export function LoadingScreen({ message = "Initializing your assistant..." }: Lo
         {/* AGILf(x) Logo */}
         <div className="w-16 h-16 flex items-center justify-center">
           <img 
-            src="/attached_assets/Logo Primary_1753368129483.png" 
+            src={agilLogo} 
             alt="AGILf(x)" 
             className="w-16 h-16 object-contain" 
           />
