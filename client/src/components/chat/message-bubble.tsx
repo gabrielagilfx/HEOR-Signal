@@ -4,9 +4,10 @@ import { format } from "date-fns";
 
 interface MessageBubbleProps {
   message: ChatMessage;
+  category?: string;
 }
 
-export function MessageBubble({ message }: MessageBubbleProps) {
+export function MessageBubble({ message, category }: MessageBubbleProps) {
   const isAssistant = message.role === 'assistant';
   
   return (
@@ -23,14 +24,16 @@ export function MessageBubble({ message }: MessageBubbleProps) {
             ? 'rounded-2xl rounded-tl-md border border-border bg-card' 
             : 'rounded-2xl rounded-tr-md bg-primary text-primary-foreground'
         } px-6 py-4`}>
-          {isAssistant && (
-            <div className="flex items-center mb-3">
-              <span className="font-semibold text-foreground text-sm">HEOR Assistant</span>
-              <span className="ml-2 text-xs text-muted-foreground">
-                {format(message.timestamp, 'HH:mm')}
-              </span>
-            </div>
-          )}
+                {isAssistant && (
+        <div className="flex items-center mb-3">
+          <span className="font-semibold text-foreground text-sm">
+            {category ? `${category.charAt(0).toUpperCase() + category.slice(1)} Assistant` : 'HEOR Assistant'}
+          </span>
+          <span className="ml-2 text-xs text-muted-foreground">
+            {format(message.timestamp, 'HH:mm')}
+          </span>
+        </div>
+      )}
           <p className={`leading-relaxed ${
             isAssistant ? 'text-foreground' : 'text-primary-foreground'
           }`}>
