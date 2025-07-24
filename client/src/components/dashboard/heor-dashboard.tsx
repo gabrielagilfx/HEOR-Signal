@@ -218,7 +218,7 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">HEOR Signal</h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Health Economics & Outcomes Research Dashboard
+                  AI-powered healthcare insights and regulatory monitoring
                 </p>
               </div>
             </div>
