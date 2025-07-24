@@ -306,7 +306,7 @@ To get started, please select the data categories you'd like to monitor. You can
               <img 
                 src={agilLogo} 
                 alt="AGILf(x)" 
-                className="w-10 h-10 object-contain" 
+                className="w-12 h-12 object-contain" 
               />
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">HEOR Signal</h1>

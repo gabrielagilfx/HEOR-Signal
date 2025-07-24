@@ -9,11 +9,11 @@ export function LoadingScreen({ message = "Initializing your assistant..." }: Lo
     <div className="fixed inset-0 bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center z-50">
       <div className="flex flex-col items-center space-y-4">
         {/* AGILf(x) Logo */}
-        <div className="w-16 h-16 flex items-center justify-center">
+        <div className="w-20 h-20 flex items-center justify-center">
           <img 
             src={agilLogo} 
             alt="AGILf(x)" 
-            className="w-16 h-16 object-contain" 
+            className="w-20 h-20 object-contain" 
           />
         </div>
         
