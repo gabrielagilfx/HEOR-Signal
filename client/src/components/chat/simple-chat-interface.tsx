@@ -256,7 +256,7 @@ export function SimpleChatInterface({ sessionId, userStatus }: SimpleChatInterfa
     role: 'assistant',
     content: `Welcome to HEOR Signal! I'm here to help you set up your personalized dashboard for Health Economics and Outcomes Research insights.
 
-To get started, please select the data categories you'd like to monitor. You can always adjust these preferences later in your dashboard settings.`,
+To get started, please select the data categories you'd like to monitor.`,
     timestamp: new Date(),
   };
 
@@ -348,7 +348,7 @@ To get started, please select the data categories you'd like to monitor. You can
                     <i className="fas fa-robot text-white text-sm"></i>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">HEOR Assistant</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Hero</h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Personalizing your dashboard experience</p>
                   </div>
                 </div>
@@ -370,7 +370,7 @@ To get started, please select the data categories you'd like to monitor. You can
                     </div>
                     <div className="flex-1">
                       <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                        Welcome to <strong>HEOR Signal!</strong> I'm here to help you set up your personalized dashboard for health economics and outcomes research insights.
+                        Welcome to <strong>HEOR Signal!</strong> I'm here to help you set up your personalized dashboard for Health Economics and Outcomes Research insights.
                       </div>
                       <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">now</div>
                     </div>
@@ -382,7 +382,7 @@ To get started, please select the data categories you'd like to monitor. You can
                     </div>
                     <div className="flex-1">
                       <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                        To get started, please select the data categories you'd like to monitor on your dashboard. You can always modify these preferences later:
+                        To get started, please select the data categories you'd like to monitor.
                       </div>
                     </div>
                   </div>
