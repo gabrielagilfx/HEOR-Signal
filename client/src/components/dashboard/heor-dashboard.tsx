@@ -174,18 +174,13 @@ const MOCK_NEWS: Record<string, NewsItem[]> = {
 export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps) {
   const { newsData, loading, error, fetchPersonalizedNews } = useNewsAgents();
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
-  const [activeTab, setActiveTab] = useState<string>(selectedCategories[0] || '');
 
   useEffect(() => {
     if (selectedCategories.length > 0 && sessionId) {
       // Use personalized news endpoint that fetches user preferences from database
       fetchPersonalizedNews(sessionId);
-      // Set active tab to first category if not already set
-      if (!activeTab || !selectedCategories.includes(activeTab)) {
-        setActiveTab(selectedCategories[0]);
-      }
     }
-  }, [selectedCategories, sessionId, fetchPersonalizedNews, activeTab]);
+  }, [selectedCategories, sessionId, fetchPersonalizedNews]);
 
   const handleRefresh = async () => {
     if (selectedCategories.length > 0 && sessionId) {
@@ -202,10 +197,6 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
       count += items.filter(item => item.is_new).length;
     });
     return count;
-  };
-
-  const clearError = () => {
-    setError(null);
   };
 
   const handleNewSession = () => {
@@ -260,54 +251,8 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
         </div>
       </header>
 
-      <div className="flex">
-        {/* Sidebar */}
-        <aside className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 sticky top-[84px] h-[calc(100vh-84px)] overflow-y-auto">
-          <div className="p-4">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Active Categories</h3>
-            <nav className="space-y-2">
-              {selectedCategories.map((categoryId) => {
-                const config = CATEGORY_CONFIGS[categoryId as keyof typeof CATEGORY_CONFIGS];
-                if (!config) return null;
-                
-                const newsItems = newsData?.[categoryId as keyof typeof newsData] || [];
-                const newItemsCount = newsItems.filter(item => item.is_new).length;
-                
-                return (
-                  <button
-                    key={categoryId}
-                    onClick={() => setActiveTab(categoryId)}
-                    className={`w-full text-left p-3 rounded-lg transition-all duration-200 ${
-                      activeTab === categoryId
-                        ? `${config.color} border-2 shadow-sm`
-                        : 'bg-gray-50 dark:bg-gray-700 border-2 border-transparent hover:bg-gray-100 dark:hover:bg-gray-600'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className={`w-8 h-8 bg-white dark:bg-gray-800 rounded-lg flex items-center justify-center shadow-sm`}>
-                          <i className={`${config.icon} ${config.iconColor} text-sm`}></i>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{config.name}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{newsItems.length} updates</p>
-                        </div>
-                      </div>
-                      {newItemsCount > 0 && (
-                        <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
-                          <span className="text-xs text-white font-medium">{newItemsCount}</span>
-                        </div>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex-1 p-6">
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-6 py-8">
         {/* Error Display */}
         {error && (
           <Alert className="mb-6 border-red-200 bg-red-50 dark:bg-red-950">
@@ -382,101 +327,103 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
           </div>
         </div>
 
-        {/* Active Category Section */}
-        {activeTab && (() => {
-          const config = CATEGORY_CONFIGS[activeTab as keyof typeof CATEGORY_CONFIGS];
-          const newsItems = newsData?.[activeTab as keyof typeof newsData] || [];
-          
-          if (!config) return null;
+        {/* Category Sections */}
+        <div className="space-y-8">
+          {selectedCategories.map((categoryId) => {
+            const config = CATEGORY_CONFIGS[categoryId as keyof typeof CATEGORY_CONFIGS];
+            const newsItems = newsData?.[categoryId as keyof typeof newsData] || [];
+            
+            if (!config) return null;
 
-          return (
-            <Card className={`${config.color} border-2`}>
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center space-x-3">
-                    <div className={`w-10 h-10 bg-white dark:bg-gray-800 rounded-lg flex items-center justify-center shadow-sm`}>
-                      <i className={`${config.icon} ${config.iconColor} text-lg`}></i>
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{config.name}</h2>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 font-normal">
-                        {newsItems.length} updates available
-                      </p>
-                    </div>
-                  </CardTitle>
-                  
-                  {newsItems.some(item => item.is_new) && (
-                    <Badge className={`${config.badgeColor} border-0`}>
-                      <i className="fas fa-star mr-1"></i>
-                      New Updates
-                    </Badge>
-                  )}
-                </div>
-              </CardHeader>
-
-              <CardContent className="pt-0">
-                {loading ? (
-                  <div className="space-y-4">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                        <Skeleton className="h-5 w-3/4 mb-2" />
-                        <Skeleton className="h-4 w-full mb-2" />
-                        <Skeleton className="h-3 w-1/4" />
+            return (
+              <Card key={categoryId} className={`${config.color} border-2`}>
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center space-x-3">
+                      <div className={`w-10 h-10 bg-white dark:bg-gray-800 rounded-lg flex items-center justify-center shadow-sm`}>
+                        <i className={`${config.icon} ${config.iconColor} text-lg`}></i>
                       </div>
-                    ))}
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{config.name}</h2>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 font-normal">
+                          {newsItems.length} updates available
+                        </p>
+                      </div>
+                    </CardTitle>
+                    
+                    {newsItems.some(item => item.is_new) && (
+                      <Badge className={`${config.badgeColor} border-0`}>
+                        <i className="fas fa-star mr-1"></i>
+                        New Updates
+                      </Badge>
+                    )}
                   </div>
-                ) : (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {newsItems.map((item, index) => (
-                      <div key={item.id} className="bg-white dark:bg-gray-800 rounded-lg p-5 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center">
-                              {item.is_new && (
-                                <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-                              )}
-                              <a href={item.url} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors" target="_blank" rel="noopener noreferrer">
-                                {item.title}
-                              </a>
-                            </h3>
-                            <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-3">
-                              {item.snippet}
-                            </p>
-                            <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                              <div className="flex items-center space-x-4">
-                                <span className="flex items-center">
-                                  <i className="fas fa-building mr-1"></i>
-                                  {item.source}
-                                </span>
-                                <span className="flex items-center">
-                                  <i className="fas fa-clock mr-1"></i>
-                                  {item.date}
-                                </span>
-                                <span className="flex items-center">
-                                  <i className="fas fa-star mr-1"></i>
-                                  Relevance: {(item.relevance_score * 100).toFixed(0)}%
-                                </span>
+                </CardHeader>
+
+                <CardContent className="pt-0">
+                  {loading ? (
+                    <div className="space-y-4">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                          <Skeleton className="h-5 w-3/4 mb-2" />
+                          <Skeleton className="h-4 w-full mb-2" />
+                          <Skeleton className="h-3 w-1/4" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {newsItems.map((item, index) => (
+                        <div key={item.id} className="bg-white dark:bg-gray-800 rounded-lg p-5 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center">
+                                {item.is_new && (
+                                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+                                )}
+                                <a href={item.url} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors" target="_blank" rel="noopener noreferrer">
+                                  {item.title}
+                                </a>
+                              </h3>
+                              <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-3">
+                                {item.snippet}
+                              </p>
+                              <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                                <div className="flex items-center space-x-4">
+                                  <span className="flex items-center">
+                                    <i className="fas fa-building mr-1"></i>
+                                    {item.source}
+                                  </span>
+                                  <span className="flex items-center">
+                                    <i className="fas fa-clock mr-1"></i>
+                                    {item.date}
+                                  </span>
+                                  <span className="flex items-center">
+                                    <i className="fas fa-star mr-1"></i>
+                                    Relevance: {(item.relevance_score * 100).toFixed(0)}%
+                                  </span>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 px-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700"
+                                  onClick={() => window.open(item.url, '_blank')}
+                                >
+                                  <i className="fas fa-external-link-alt mr-1"></i>
+                                  Read More
+                                </Button>
                               </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 px-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700"
-                                onClick={() => window.open(item.url, '_blank')}
-                              >
-                                <i className="fas fa-external-link-alt mr-1"></i>
-                                Read More
-                              </Button>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })()}
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
 
         {selectedCategories.length === 0 && (
           <Card className="text-center py-12">
@@ -497,8 +444,7 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
             </CardContent>
           </Card>
         )}
-        </main>
-      </div>
+      </main>
     </div>
   );
 }
