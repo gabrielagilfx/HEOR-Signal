@@ -412,7 +412,7 @@ To get started, please select the data categories you'd like to monitor.`,
                           <i className="fas fa-robot text-white text-sm"></i>
                         </div>
                         <div className="flex-1">
-                          <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                          <div className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
                             {message.content}
                           </div>
                         </div>
