@@ -213,7 +213,7 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
               <img 
                 src={agilLogo} 
                 alt="AGILf(x)" 
-                className="w-12 h-12 object-contain" 
+                className="w-20 h-20 object-contain" 
               />
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">HEOR Signal</h1>
