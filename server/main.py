@@ -38,13 +38,22 @@ async def health_check():
         db.execute("SELECT 1")
         db.close()
         db_status = "healthy"
+        ssl_status = "enabled" if settings.ssl_mode != "disable" else "disabled"
     except Exception as e:
-        db_status = f"unhealthy: {str(e)}"
+        error_msg = str(e)
+        if "SSL" in error_msg or "ssl" in error_msg:
+            db_status = f"ssl_error: {error_msg}"
+            ssl_status = "error"
+        else:
+            db_status = f"unhealthy: {error_msg}"
+            ssl_status = "unknown"
     
     return {
         "status": "healthy", 
         "service": "HEOR Signal API",
-        "database": db_status
+        "database": db_status,
+        "ssl_mode": settings.ssl_mode,
+        "ssl_status": ssl_status
     }
 
 # Serve static files for production, proxy to Vite in development

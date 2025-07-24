@@ -2,11 +2,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from config import settings
+import ssl
 
 # Create Base first
 Base = declarative_base()
 
-# Add connection pooling and timeout settings
+# Add connection pooling and timeout settings with SSL configuration
 engine = create_engine(
     settings.database_url,
     pool_size=10,  # Number of connections to maintain
@@ -14,7 +15,13 @@ engine = create_engine(
     pool_timeout=30,  # Timeout for getting connection from pool
     pool_recycle=3600,  # Recycle connections after 1 hour
     pool_pre_ping=True,  # Validate connections before use
-    echo=False  # Set to True for SQL debugging
+    echo=False,  # Set to True for SQL debugging
+    # SSL Configuration
+    connect_args={
+        "sslmode": settings.ssl_mode,  # Use SSL mode from config
+        "connect_timeout": 10,  # Connection timeout in seconds
+        "application_name": "heor_signal_app",  # Application name for monitoring
+    }
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
