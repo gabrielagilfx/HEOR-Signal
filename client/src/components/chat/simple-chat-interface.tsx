@@ -302,9 +302,11 @@ To get started, please select the data categories you'd like to monitor. You can
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                <i className="fas fa-chart-line text-white"></i>
-              </div>
+              <img 
+                src="/attached_assets/Logo Primary_1753368129483.png" 
+                alt="AGILf(x)" 
+                className="w-10 h-10 object-contain" 
+              />
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">HEOR Signal</h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400">

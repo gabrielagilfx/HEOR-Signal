@@ -6,9 +6,13 @@ export function LoadingScreen({ message = "Initializing your assistant..." }: Lo
   return (
     <div className="fixed inset-0 bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center z-50">
       <div className="flex flex-col items-center space-y-4">
-        {/* HEOR Signal Logo */}
-        <div className="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-          <i className="fas fa-chart-line text-white text-xl"></i>
+        {/* AGILf(x) Logo */}
+        <div className="w-16 h-16 flex items-center justify-center">
+          <img 
+            src="/attached_assets/Logo Primary_1753368129483.png" 
+            alt="AGILf(x)" 
+            className="w-16 h-16 object-contain" 
+          />
         </div>
         
         {/* App Name */}
