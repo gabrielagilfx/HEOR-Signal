@@ -372,7 +372,7 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
                       ))}
                     </div>
                   ) : (
-                    <div className="space-y-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                       {newsItems.map((item, index) => (
                         <div key={item.id} className="bg-white dark:bg-gray-800 rounded-lg p-5 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600">
                           <div className="flex items-start justify-between">
