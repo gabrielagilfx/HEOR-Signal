@@ -21,6 +21,8 @@ interface UserStatus {
 interface SimpleChatInterfaceProps {
   sessionId: string;
   userStatus?: UserStatus;
+  onStartChat?: () => void;
+  hasStartedChat?: boolean;
 }
 
 interface ApiMessage {
@@ -35,7 +37,7 @@ interface MessagesResponse {
   messages: ApiMessage[];
 }
 
-export function SimpleChatInterface({ sessionId, userStatus }: SimpleChatInterfaceProps) {
+export function SimpleChatInterface({ sessionId, userStatus, onStartChat, hasStartedChat = false }: SimpleChatInterfaceProps) {
   const onboardingCompleted = userStatus?.onboarding_completed ?? false;
   const hasPreferenceExpertise = !!(userStatus?.preference_expertise);
   const canShowDashboard = onboardingCompleted && hasPreferenceExpertise;
@@ -59,6 +61,9 @@ export function SimpleChatInterface({ sessionId, userStatus }: SimpleChatInterfa
   // Handler for starting chat from landing page
   const handleStartChat = () => {
     setShowLandingPage(false);
+    if (onStartChat) {
+      onStartChat();
+    }
   };
 
 
@@ -284,8 +289,8 @@ To get started, please select the data categories you'd like to monitor.`,
 
 
 
-  // Show landing page first
-  if (showLandingPage) {
+  // Show landing page first (only if chat hasn't started)
+  if (showLandingPage && !hasStartedChat) {
     return <LandingPage onStartChat={handleStartChat} />;
   }
 

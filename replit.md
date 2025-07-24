@@ -21,6 +21,15 @@ The application is built with a **Python FastAPI backend** and React TypeScript 
 
 ## Recent Changes
 
+### July 24, 2025 - Professional Landing Page + Deferred Initialization
+- **Landing Page**: Created professional landing page component with clean design showcasing HEOR Signal features
+- **User Flow**: Landing page now appears first without any backend initialization
+- **Deferred Initialization**: User session only initializes when "Let's Chat" button is clicked
+- **Improved UX**: No unnecessary API calls or loading screens until user explicitly starts interaction
+- **Hero Branding**: Updated assistant name from "HEOR Assistant" to "Hero" throughout interface
+- **Dashboard Layout**: Implemented 2-column grid layout for news cards with single loading skeleton
+- **Status**: ✅ FULLY FUNCTIONAL - Landing page to chat initialization flow working perfectly
+
 ### July 23, 2025 - Complete Dashboard Navigation Flow + UI Polish
 - **Dashboard Navigation**: Implemented complete 3-second timer navigation from expertise validation to dashboard
 - **Backend Integration**: Fixed user status endpoint to include preference_expertise field for proper dashboard validation

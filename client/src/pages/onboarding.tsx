@@ -18,6 +18,7 @@ export default function Onboarding() {
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [showInitialLoader, setShowInitialLoader] = useState<boolean>(true);
   const [retryCount, setRetryCount] = useState<number>(0);
+  const [hasStartedChat, setHasStartedChat] = useState<boolean>(false);
   const queryClient = useQueryClient();
 
   // Initialize user session
@@ -53,13 +54,22 @@ export default function Onboarding() {
     enabled: !!sessionId,
   });
 
-  useEffect(() => {
-    // Initialize user only once on component mount
+  // Function to initialize user when "Let's Chat" is clicked
+  const handleStartChat = () => {
+    setHasStartedChat(true);
     if (!isInitialized && !initUserMutation.isPending) {
       console.log('Starting user initialization...');
       initUserMutation.mutate();
     }
-  }, [isInitialized, initUserMutation]);
+  };
+
+  useEffect(() => {
+    // Only initialize user if they have started chat
+    if (hasStartedChat && !isInitialized && !initUserMutation.isPending) {
+      console.log('Starting user initialization...');
+      initUserMutation.mutate();
+    }
+  }, [hasStartedChat, isInitialized, initUserMutation]);
 
   useEffect(() => {
     // Listen for onboarding completion events only when we have a session
@@ -104,8 +114,8 @@ export default function Onboarding() {
     }
   }, [userStatus, isLoadingStatus, showInitialLoader]);
 
-  // Show loading screen when initializing or when showInitialLoader is true
-  if (showInitialLoader || initUserMutation.isPending || isLoadingStatus || !sessionId) {
+  // Show loading screen only when chat has started and we're initializing
+  if (hasStartedChat && (showInitialLoader || initUserMutation.isPending || isLoadingStatus || !sessionId)) {
     const loadingMessage = retryCount > 0 
       ? `Retrying connection... (attempt ${retryCount + 1}/3)`
       : "Initializing your assistant...";
@@ -149,6 +159,8 @@ export default function Onboarding() {
       <SimpleChatInterface 
         sessionId={sessionId} 
         userStatus={userStatus}
+        onStartChat={handleStartChat}
+        hasStartedChat={hasStartedChat}
       />
     </div>
   );
