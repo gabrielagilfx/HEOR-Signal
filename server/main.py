@@ -6,7 +6,7 @@ from fastapi.responses import FileResponse
 import uvicorn
 import os
 from config import settings
-from database import engine, Base
+from database import engine, Base, get_db
 from controllers import chat_controller, user_controller, news_controller
 
 # Create tables
@@ -31,7 +31,21 @@ app.include_router(news_controller.router)
 # Health check endpoint
 @app.get("/api/health")
 async def health_check():
-    return {"status": "healthy", "service": "HEOR Signal API"}
+    # Test database connection
+    try:
+        db = next(get_db())
+        # Try a simple query to test connection
+        db.execute("SELECT 1")
+        db.close()
+        db_status = "healthy"
+    except Exception as e:
+        db_status = f"unhealthy: {str(e)}"
+    
+    return {
+        "status": "healthy", 
+        "service": "HEOR Signal API",
+        "database": db_status
+    }
 
 # Serve static files for production, proxy to Vite in development
 if os.path.exists("../dist/public"):
