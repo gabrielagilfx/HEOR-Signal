@@ -6,6 +6,7 @@ import { TypingIndicator } from "./typing-indicator";
 import { CategorySelection } from "./category-selection";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import { HEORDashboard } from "@/components/dashboard/heor-dashboard";
+import { LandingPage } from "@/components/landing/landing-page";
 import { apiRequest } from "@/lib/queryClient";
 import type { ChatMessage } from "@/types/chat";
 import agilLogo from "@assets/Logo Primary_1753368301220.png";
@@ -50,9 +51,15 @@ export function SimpleChatInterface({ sessionId, userStatus }: SimpleChatInterfa
   const [showDashboard, setShowDashboard] = useState(canShowDashboard);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(userStatus?.selected_categories || []);
   const [isNavigatingToDashboard, setIsNavigatingToDashboard] = useState(false);
+  const [showLandingPage, setShowLandingPage] = useState(true);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Handler for starting chat from landing page
+  const handleStartChat = () => {
+    setShowLandingPage(false);
+  };
 
 
 
@@ -276,6 +283,11 @@ To get started, please select the data categories you'd like to monitor.`,
   }
 
 
+
+  // Show landing page first
+  if (showLandingPage) {
+    return <LandingPage onStartChat={handleStartChat} />;
+  }
 
   // Show dashboard loading screen during transition
   if (isNavigatingToDashboard) {
