@@ -1,5 +1,3 @@
-import agilLogo from "@assets/Logo Primary_1753368301220.png";
-
 interface LoadingScreenProps {
   message?: string;
 }
@@ -8,15 +6,6 @@ export function LoadingScreen({ message = "Initializing your assistant..." }: Lo
   return (
     <div className="fixed inset-0 bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center z-50">
       <div className="flex flex-col items-center space-y-4">
-        {/* AGILf(x) Logo */}
-        <div className="w-20 h-20 flex items-center justify-center">
-          <img 
-            src={agilLogo} 
-            alt="AGILf(x)" 
-            className="w-20 h-20 object-contain" 
-          />
-        </div>
-        
         {/* App Name */}
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
           HEOR Signal
