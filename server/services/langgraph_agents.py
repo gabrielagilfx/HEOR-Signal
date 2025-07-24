@@ -211,7 +211,8 @@ class LangGraphNewsAgents:
             # Only include if date is valid and within the last year, or if date is not found (to not lose potentially relevant items)
             if parsed_date:
                 if one_year_ago <= parsed_date <= now:
-                    item.date = parsed_date.strftime("%Y-%m-%d")
+                    # Keep the original date string from the news site
+                    item.date = date_str
                     filtered.append(item)
             else:
                 # If date is not found, still include but with 'Date not found'
