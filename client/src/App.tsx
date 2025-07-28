@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import NotFound from "@/pages/not-found";
 import Onboarding from "@/pages/onboarding";
 
@@ -12,6 +13,11 @@ function Router() {
     <Switch>
       <Route path="/" component={Onboarding} />
       <Route path="/onboarding" component={Onboarding} />
+      <Route path="/chat" component={() => (
+        <ProtectedRoute>
+          <Onboarding />
+        </ProtectedRoute>
+      )} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -8,7 +8,7 @@ import { apiRequest } from "@/lib/queryClient";
 import agilLogo from "@assets/Logo Primary_1753368301220.png";
 
 interface RegisterProps {
-  onRegisterSuccess: (sessionId: string) => void;
+  onRegisterSuccess: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   onBackToLanding: () => void;
   onSwitchToLogin: () => void;
 }
@@ -70,21 +70,17 @@ export function Register({ onRegisterSuccess, onBackToLanding, onSwitchToLogin }
     setIsLoading(true);
 
     try {
-      const response = await apiRequest('POST', '/api/auth/register', {
-        name: formData.name.trim(),
-        email: formData.email.trim().toLowerCase(),
-        password: formData.password
-      });
+      const result = await onRegisterSuccess(
+        formData.name.trim(),
+        formData.email.trim().toLowerCase(),
+        formData.password
+      );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Registration failed');
+      if (!result.success) {
+        setError(result.error || 'Registration failed. Please try again.');
       }
-
-      const data = await response.json();
-      onRegisterSuccess(data.session_id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
+      setError('Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }

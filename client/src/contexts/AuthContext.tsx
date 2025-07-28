@@ -1,10 +1,13 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { sessionManager, UserSession } from '@/lib/session';
+import { authService, User } from '@/lib/auth';
 
 interface AuthContextType {
   session: UserSession | null;
+  user: User | null;
   isAuthenticated: boolean;
-  login: (sessionId: string, email?: string, name?: string) => void;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   loading: boolean;
 }
@@ -13,11 +16,15 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<UserSession | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Initialize session from session manager
+    // Initialize from auth service
+    const currentUser = authService.getUser();
     const currentSession = sessionManager.getSession();
+    
+    setUser(currentUser);
     setSession(currentSession);
     setLoading(false);
 
@@ -29,18 +36,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return unsubscribe;
   }, []);
 
-  const login = (sessionId: string, email?: string, name?: string) => {
-    sessionManager.setSession(sessionId, email, name);
+  const login = async (email: string, password: string) => {
+    const result = await authService.login(email, password);
+    if (result.success && result.user) {
+      setUser(result.user);
+      setSession(sessionManager.getSession());
+    }
+    return result;
+  };
+
+  const register = async (name: string, email: string, password: string) => {
+    const result = await authService.register(name, email, password);
+    if (result.success && result.user) {
+      setUser(result.user);
+      setSession(sessionManager.getSession());
+    }
+    return result;
   };
 
   const logout = () => {
-    sessionManager.clearSession();
+    authService.logout();
   };
 
   const value: AuthContextType = {
     session,
-    isAuthenticated: session?.isAuthenticated === true,
+    user,
+    isAuthenticated: authService.isAuthenticated(),
     login,
+    register,
     logout,
     loading
   };

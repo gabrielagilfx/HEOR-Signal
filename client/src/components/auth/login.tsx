@@ -8,7 +8,7 @@ import { apiRequest } from "@/lib/queryClient";
 import agilLogo from "@assets/Logo Primary_1753368301220.png";
 
 interface LoginProps {
-  onLoginSuccess: (sessionId: string) => void;
+  onLoginSuccess: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   onBackToLanding: () => void;
   onSwitchToRegister: () => void;
 }
@@ -58,20 +58,16 @@ export function Login({ onLoginSuccess, onBackToLanding, onSwitchToRegister }: L
     setIsLoading(true);
 
     try {
-      const response = await apiRequest('POST', '/api/auth/login', {
-        email: formData.email.trim().toLowerCase(),
-        password: formData.password
-      });
+      const result = await onLoginSuccess(
+        formData.email.trim().toLowerCase(),
+        formData.password
+      );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Login failed');
+      if (!result.success) {
+        setError(result.error || 'Login failed. Please try again.');
       }
-
-      const data = await response.json();
-      onLoginSuccess(data.session_id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
+      setError('Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }

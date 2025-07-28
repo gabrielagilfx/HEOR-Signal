@@ -86,21 +86,27 @@ export default function Onboarding() {
   };
 
   // Function to handle successful registration
-  const handleRegisterSuccess = (newSessionId: string) => {
-    login(newSessionId);
-    setSessionId(newSessionId);
-    setShowRegister(false);
-    setHasStartedChat(true);
-    setIsInitialized(true);
+  const handleRegisterSuccess = async (name: string, email: string, password: string) => {
+    const result = await register(name, email, password);
+    if (result.success) {
+      setSessionId(session!.sessionId);
+      setShowRegister(false);
+      setHasStartedChat(true);
+      setIsInitialized(true);
+    }
+    return result;
   };
 
   // Function to handle successful login
-  const handleLoginSuccess = (newSessionId: string) => {
-    login(newSessionId);
-    setSessionId(newSessionId);
-    setShowLogin(false);
-    setHasStartedChat(true);
-    setIsInitialized(true);
+  const handleLoginSuccess = async (email: string, password: string) => {
+    const result = await login(email, password);
+    if (result.success) {
+      setSessionId(session!.sessionId);
+      setShowLogin(false);
+      setHasStartedChat(true);
+      setIsInitialized(true);
+    }
+    return result;
   };
 
   // Function to go back to landing page from register
