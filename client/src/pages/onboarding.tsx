@@ -216,9 +216,16 @@ export default function Onboarding() {
 
   // Show loading screen only when chat has started and we're initializing
   if (hasStartedChat && (showInitialLoader || initUserMutation.isPending || isLoadingStatus)) {
-    const loadingMessage = retryCount > 0 
-      ? `Retrying connection... (attempt ${retryCount + 1}/3)`
-      : "Initializing your assistant...";
+    let loadingMessage = "Loading...";
+    
+    if (retryCount > 0) {
+      loadingMessage = `Retrying connection... (attempt ${retryCount + 1}/3)`;
+    } else if (isNewSession) {
+      loadingMessage = "Initializing your assistant...";
+    } else if (sessionId) {
+      loadingMessage = "Logging you in...";
+    }
+    
     return <LoadingScreen message={loadingMessage} />;
   }
 
