@@ -6,12 +6,14 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import NotFound from "@/pages/not-found";
 import Onboarding from "@/pages/onboarding";
+import NewChat from "@/pages/new-chat";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Onboarding} />
       <Route path="/onboarding" component={Onboarding} />
+      <Route path="/new-chat" component={NewChat} />
       <Route component={NotFound} />
     </Switch>
   );

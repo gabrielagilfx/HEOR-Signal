@@ -1,23 +1,29 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/contexts/AuthContext';
-import { apiRequest } from '@/lib/queryClient';
+import { useState, useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { MessageBubble } from "./message-bubble";
+import { TypingIndicator } from "./typing-indicator";
+import { CategorySelection } from "./category-selection";
+import { LoadingScreen } from "@/components/ui/loading-screen";
+import { HEORDashboard } from "@/components/dashboard/heor-dashboard";
+import { LandingPage } from "@/components/landing/landing-page";
+import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/contexts/AuthContext";
+import type { ChatMessage } from "@/types/chat";
+import agilLogo from "@assets/Logo Primary_1753368301220.png";
 
-interface NewChatInterfaceProps {
-  threadId: string;
-  threadTitle: string;
-  selectedCategories: string[];
-  preferenceExpertise?: string;
-  onBack: () => void;
+interface UserStatus {
+  session_id: string;
+  onboarding_completed: boolean;
+  selected_categories: string[];
+  preference_expertise?: string;
 }
 
-interface ChatMessage {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
+interface NewChatInterfaceProps {
+  sessionId: string;
+  userStatus?: UserStatus;
+  onStartChat?: () => void;
+  hasStartedChat?: boolean;
 }
 
 interface ApiMessage {
@@ -32,37 +38,72 @@ interface MessagesResponse {
   messages: ApiMessage[];
 }
 
-export function NewChatInterface({ 
-  threadId, 
-  threadTitle, 
-  selectedCategories, 
-  preferenceExpertise, 
-  onBack 
-}: NewChatInterfaceProps) {
-  const { session } = useAuth();
+export function NewChatInterface({ sessionId, userStatus, onStartChat, hasStartedChat = false }: NewChatInterfaceProps) {
+  const { logout } = useAuth();
+  const onboardingCompleted = userStatus?.onboarding_completed ?? false;
+  const hasPreferenceExpertise = !!(userStatus?.preference_expertise);
+  const canShowDashboard = onboardingCompleted && hasPreferenceExpertise;
+  
+  const [inputMessage, setInputMessage] = useState("");
+  const [showCategorySelection, setShowCategorySelection] = useState(!onboardingCompleted);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [inputMessage, setInputMessage] = useState('');
-  const [isSending, setIsSending] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isSending, setIsSending] = useState(false);
+  const [isSelectingCategories, setIsSelectingCategories] = useState(false);
+  const [showCategoryLoader, setShowCategoryLoader] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(canShowDashboard);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(userStatus?.selected_categories || []);
+  const [isNavigatingToDashboard, setIsNavigatingToDashboard] = useState(false);
+  const [showLandingPage, setShowLandingPage] = useState(true);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Load messages for this thread
+  // Handler for starting chat from landing page
+  const handleStartChat = () => {
+    setShowLandingPage(false);
+    if (onStartChat) {
+      onStartChat();
+    }
+  };
+
+  // Handler for new session without going back to landing page
+  const handleNewSession = () => {
+    // Navigate to a fresh session without going back to landing page
+    window.location.href = window.location.origin + '?new_session=true';
+  };
+
+  const handleLogout = () => {
+    logout();
+    // Redirect to landing page
+    window.location.href = window.location.origin;
+  };
+
+  // Update category selection state when userStatus changes  
   useEffect(() => {
-    if (threadId) {
+    setShowCategorySelection(!onboardingCompleted);
+    // Only set dashboard if we're not in a timer-controlled state
+    // (Don't override dashboard state set by the 3-second timer)
+    if (!showDashboard) {
+      setShowDashboard(canShowDashboard);
+    }
+    setSelectedCategories(userStatus?.selected_categories || []);
+  }, [onboardingCompleted, canShowDashboard, userStatus?.selected_categories, showDashboard]);
+
+  // Load messages on mount and when sessionId changes
+  useEffect(() => {
+    if (sessionId) {
       loadMessages();
     }
-  }, [threadId]);
+  }, [sessionId]);
 
   const loadMessages = async () => {
     try {
       setIsLoading(true);
-      console.log('Loading messages for thread:', threadId);
+      console.log('Loading messages for session:', sessionId);
       
-      // For now, we'll use the existing message endpoint
-      // In the future, this should be updated to use thread-specific endpoints
-      const response = await apiRequest('GET', `/api/chat/messages/${session?.sessionId}`, undefined);
+      const response = await apiRequest('GET', `/api/chat/messages/${sessionId}`, undefined);
       const data: MessagesResponse = await response.json();
       
       if (data.success && data.messages) {
@@ -81,6 +122,9 @@ export function NewChatInterface({
         
         setMessages(transformedMessages);
         console.log('Messages loaded successfully:', transformedMessages.length, 'messages');
+        
+        // Dispatch event to notify that messages are loaded
+        window.dispatchEvent(new CustomEvent('messages-loaded'));
       } else {
         console.log('No messages found or API response failed');
         setMessages([]);
@@ -122,9 +166,8 @@ export function NewChatInterface({
 
     try {
       const response = await apiRequest('POST', '/api/chat/send', {
-        session_id: session?.sessionId,
-        message: userMessage.content,
-        thread_id: threadId // Pass thread ID for thread-specific chat
+        session_id: sessionId,
+        message: userMessage.content
       });
 
       const data = await response.json();
@@ -181,152 +224,311 @@ export function NewChatInterface({
     autoResize();
   }, [inputMessage]);
 
+  const handleCategorySelection = async (categories: string[]) => {
+    try {
+      setIsSelectingCategories(true);
+      
+      const response = await apiRequest('POST', '/api/chat/select-categories', {
+        categories,
+        session_id: sessionId,
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        setSelectedCategories(categories);
+        setShowCategorySelection(false);
+        
+        // Add the confirmation message smoothly instead of reloading all messages
+        if (result.message) {
+          const confirmationMessage: ChatMessage = {
+            id: `category-confirmation-${Date.now()}`,
+            role: 'assistant',
+            content: result.message,
+            timestamp: new Date()
+          };
+          setMessages(prev => [...prev, confirmationMessage]);
+        }
+        
+        // Don't navigate to dashboard yet - need to collect expertise preference first
+        // Just acknowledge category selection for now
+        
+        window.dispatchEvent(new CustomEvent('onboarding-completed'));
+      }
+    } catch (error) {
+      console.error('Error selecting categories:', error);
+    } finally {
+      setIsSelectingCategories(false);
+    }
+  };
+
+  // Create welcome message for new chat
+  const welcomeMessage: ChatMessage = {
+    id: 'welcome',
+    role: 'assistant',
+    content: `Welcome back to HEOR Signal! I'm ready to help you with your new conversation about Health Economics and Outcomes Research.
+
+What would you like to discuss today? You can ask me about regulatory updates, market access strategies, clinical evidence, or any other HEOR topics.`,
+    timestamp: new Date(),
+  };
+
+  // Create the full messages array safely
+  const allMessages: ChatMessage[] = [];
+  
+  // Always show welcome message
+  allMessages.push(welcomeMessage);
+  
+  // Add actual messages one by one to avoid spread operator issues
+  if (messages && messages.length > 0) {
+    for (const message of messages) {
+      if (message && message.id) {
+        allMessages.push(message);
+      }
+    }
+  }
+
+  // Show landing page first (only if chat hasn't started)
+  if (showLandingPage && !hasStartedChat) {
+    return <LandingPage onStartChat={handleStartChat} />;
+  }
+
+  // Show dashboard loading screen during transition
+  if (isNavigatingToDashboard) {
+    return <LoadingScreen message="Setting up your HEOR dashboard..." />;
+  }
+
+  // Show dashboard only if onboarding is completed AND preference_expertise is set
+  console.log('Dashboard render check:', { 
+    showDashboard, 
+    canShowDashboard, 
+    onboardingCompleted, 
+    hasPreferenceExpertise,
+    userStatus: userStatus?.preference_expertise 
+  });
+  
+  if (showDashboard && canShowDashboard) {
+    console.log('Rendering HEOR Dashboard with categories:', selectedCategories);
+    return <HEORDashboard selectedCategories={selectedCategories} sessionId={sessionId} />;
+  }
+
   return (
-    <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Button onClick={onBack} variant="ghost" size="sm">
-              <i className="fas fa-arrow-left mr-2"></i>
-              Back
-            </Button>
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                {threadTitle}
-              </h1>
-              <div className="flex items-center space-x-2 mt-1">
-                {selectedCategories.map((category) => (
-                  <Badge key={category} variant="secondary" className="text-xs">
-                    {category}
-                  </Badge>
-                ))}
-                {preferenceExpertise && (
-                  <Badge variant="outline" className="text-xs">
-                    {preferenceExpertise}
-                  </Badge>
+    <div className="flex-1 flex flex-col bg-gray-50 dark:bg-gray-900">
+      {/* Header inside the chat interface */}
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <img 
+                src={agilLogo} 
+                alt="AGILf(x)" 
+                className="w-20 h-20 object-contain" 
+              />
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">HEOR Signal</h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  AI-powered healthcare insights and regulatory monitoring
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <Button 
+                onClick={handleNewSession}
+                variant="outline"
+                size="sm"
+                className="hover:bg-blue-50 dark:hover:bg-blue-900/20"
+              >
+                <i className="fas fa-plus mr-2"></i>
+                New Session
+              </Button>
+              <Button 
+                onClick={handleLogout}
+                variant="outline"
+                size="sm"
+                className="hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400"
+              >
+                <i className="fas fa-sign-out-alt mr-2"></i>
+                Logout
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+      
+      <div className="flex-1 overflow-y-auto p-6">
+      <div className="max-w-4xl mx-auto">
+        {/* Only show loading text if this is NOT the initial load (messages are empty) */}
+        {isLoading && messages.length > 0 ? (
+          <div className="flex justify-center py-8">
+            <div className="text-gray-500 dark:text-gray-400">Loading conversation...</div>
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+            {/* Header inside the card */}
+            <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <i className="fas fa-robot text-white text-sm"></i>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Hero</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Ready for your new conversation</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2 text-sm">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="text-gray-600 dark:text-gray-300">Online</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Messages */}
+            <div className="p-6 space-y-6 min-h-[500px]">
+              {/* Always show initial welcome messages */}
+              {allMessages.length === 0 && (
+                <>
+                  <div className="flex items-start space-x-3">
+                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <i className="fas fa-robot text-white text-sm"></i>
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                        Welcome back to <strong>HEOR Signal!</strong> I'm ready to help you with your new conversation about Health Economics and Outcomes Research.
+                      </div>
+                      <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">now</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-3">
+                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <i className="fas fa-robot text-white text-sm"></i>
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                        What would you like to discuss today? You can ask me about regulatory updates, market access strategies, clinical evidence, or any other HEOR topics.
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+              
+              {/* Display actual chat messages */}
+              {allMessages.map((message, index) => (
+                <div key={`${message.id}-${index}`}>
+                  <div className={`flex items-start space-x-3 ${message.role === 'user' ? 'justify-end' : ''}`}>
+                    {message.role === 'user' ? (
+                      // User message - right aligned
+                      <>
+                        <div className="flex-1 flex justify-end">
+                          <div className="max-w-[80%] bg-blue-600 text-white rounded-lg px-4 py-2">
+                            {message.content}
+                          </div>
+                        </div>
+                        <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <i className="fas fa-user text-gray-600 dark:text-gray-300 text-sm"></i>
+                        </div>
+                      </>
+                    ) : (
+                      // Assistant message - left aligned
+                      <>
+                        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <i className="fas fa-robot text-white text-sm"></i>
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
+                            {message.content}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  
+                  {/* Show category selection after welcome message */}
+                  {message.id === 'welcome' && showCategorySelection && !canShowDashboard && (
+                    <div className="mt-6 ml-11">
+                      <CategorySelection
+                        onConfirm={handleCategorySelection}
+                        isLoading={isSelectingCategories}
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
+              
+              {/* Show category selection if no messages yet but dashboard cannot be shown */}
+              {allMessages.length === 0 && showCategorySelection && !canShowDashboard && (
+                <div className="mt-6 ml-11">
+                  <CategorySelection
+                    onConfirm={handleCategorySelection}
+                    isLoading={isSelectingCategories}
+                  />
+                </div>
+              )}
+              
+              {isTyping && (
+                <div className="flex items-start space-x-3">
+                  <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <i className="fas fa-robot text-white text-sm"></i>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+            
+            {/* Input Area - Moved outside the card to be at bottom */}
+            
+          </div>
+        )}
+        
+        {/* Input Area at Bottom - only show if categories selected but no dashboard yet */}
+        {!showCategorySelection && !canShowDashboard && (
+          <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-4">
+            <div className="flex items-start space-x-3">
+              <div className="flex-1">
+                <Textarea
+                  ref={textareaRef}
+                  value={inputMessage}
+                  onChange={(e) => {
+                    setInputMessage(e.target.value);
+                    autoResize();
+                  }}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Type a message or question about your preferences..."
+                  className="w-full min-h-[48px] max-h-[120px] resize-none border-gray-200 dark:border-gray-600 rounded-lg px-4 py-3 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={isSending}
+                />
+              </div>
+              <Button 
+                onClick={handleSendMessage}
+                disabled={!inputMessage.trim() || isSending}
+                className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg flex-shrink-0 min-w-[48px] h-[48px]"
+              >
+                {isSending ? (
+                  <i className="fas fa-spinner fa-spin"></i>
+                ) : (
+                  <i className="fas fa-paper-plane"></i>
                 )}
+              </Button>
+            </div>
+            <div className="flex items-center justify-between mt-2 text-xs text-gray-500 dark:text-gray-400">
+              <span>Press Enter to send, Shift+Enter for new line</span>
+              <div className="flex items-center space-x-1">
+                <i className="fas fa-shield-alt text-gray-400"></i>
+                <span>Secure & Private</span>
               </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {isLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <i className="fas fa-spinner fa-spin text-2xl text-blue-600 mb-2"></i>
-              <p className="text-gray-600 dark:text-gray-400">Loading conversation...</p>
-            </div>
-          </div>
-        ) : messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <i className="fas fa-comments text-4xl text-gray-400 mb-4"></i>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                Start Your Conversation
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Ask me anything about HEOR, regulatory updates, market access, or any other healthcare topics.
-              </p>
-            </div>
-          </div>
-        ) : (
-          messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <Card className={`max-w-3xl ${
-                message.role === 'user' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-white dark:bg-gray-800'
-              }`}>
-                <CardContent className="p-4">
-                  <div className="flex items-start space-x-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                      message.role === 'user' 
-                        ? 'bg-blue-700' 
-                        : 'bg-gray-200 dark:bg-gray-700'
-                    }`}>
-                      <i className={`fas ${
-                        message.role === 'user' ? 'fa-user' : 'fa-robot'
-                      } text-sm ${message.role === 'user' ? 'text-white' : 'text-gray-600 dark:text-gray-400'}`}></i>
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium mb-1">
-                        {message.role === 'user' ? 'You' : 'HEOR Assistant'}
-                      </p>
-                      <div className={`prose max-w-none ${
-                        message.role === 'user' ? 'text-white' : 'text-gray-900 dark:text-gray-100'
-                      }`}>
-                        <p className="whitespace-pre-wrap">{message.content}</p>
-                      </div>
-                      <p className={`text-xs mt-2 ${
-                        message.role === 'user' ? 'text-blue-200' : 'text-gray-500 dark:text-gray-400'
-                      }`}>
-                        {message.timestamp.toLocaleTimeString()}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          ))
         )}
-        
-        {isTyping && (
-          <div className="flex justify-start">
-            <Card className="bg-white dark:bg-gray-800">
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                    <i className="fas fa-robot text-sm text-gray-600 dark:text-gray-400"></i>
-                  </div>
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-        
-        <div ref={messagesEndRef} />
       </div>
-
-      {/* Input */}
-      <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
-        <div className="flex space-x-4">
-          <div className="flex-1">
-            <textarea
-              ref={textareaRef}
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Type your message..."
-              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              rows={1}
-              maxLength={4000}
-            />
-          </div>
-          <Button
-            onClick={handleSendMessage}
-            disabled={isSending || !inputMessage.trim()}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6"
-          >
-            {isSending ? (
-              <i className="fas fa-spinner fa-spin"></i>
-            ) : (
-              <i className="fas fa-paper-plane"></i>
-            )}
-          </Button>
-        </div>
-      </div>
+    </div>
     </div>
   );
 }
