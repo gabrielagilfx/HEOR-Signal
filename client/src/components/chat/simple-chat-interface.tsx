@@ -24,6 +24,9 @@ interface SimpleChatInterfaceProps {
   userStatus?: UserStatus;
   onStartChat?: () => void;
   hasStartedChat?: boolean;
+  isNewChat?: boolean;
+  onBack?: () => void;
+  onNewChat?: () => void;
 }
 
 interface ApiMessage {
@@ -38,7 +41,7 @@ interface MessagesResponse {
   messages: ApiMessage[];
 }
 
-export function SimpleChatInterface({ sessionId, userStatus, onStartChat, hasStartedChat = false }: SimpleChatInterfaceProps) {
+export function SimpleChatInterface({ sessionId, userStatus, onStartChat, hasStartedChat = false, isNewChat = false, onBack, onNewChat }: SimpleChatInterfaceProps) {
   const { logout } = useAuth();
   const onboardingCompleted = userStatus?.onboarding_completed ?? false;
   const hasPreferenceExpertise = !!(userStatus?.preference_expertise);
@@ -280,7 +283,11 @@ export function SimpleChatInterface({ sessionId, userStatus, onStartChat, hasSta
   const welcomeMessage: ChatMessage = {
     id: 'welcome',
     role: 'assistant',
-    content: `Welcome to HEOR Signal! I'm here to help you set up your personalized dashboard for Health Economics and Outcomes Research insights.
+    content: isNewChat 
+      ? `Welcome back to HEOR Signal! I'm here to help you start a new conversation with your preferred settings.
+
+To begin, please select the data categories you'd like to monitor for this conversation.`
+      : `Welcome to HEOR Signal! I'm here to help you set up your personalized dashboard for Health Economics and Outcomes Research insights.
 
 To get started, please select the data categories you'd like to monitor.`,
     timestamp: new Date(),
@@ -324,7 +331,7 @@ To get started, please select the data categories you'd like to monitor.`,
   
   if (showDashboard && canShowDashboard) {
     console.log('Rendering HEOR Dashboard with categories:', selectedCategories);
-    return <HEORDashboard selectedCategories={selectedCategories} sessionId={sessionId} />;
+    return <HEORDashboard selectedCategories={selectedCategories} sessionId={sessionId} onNewChat={onNewChat} />;
   }
 
   return (
@@ -348,15 +355,38 @@ To get started, please select the data categories you'd like to monitor.`,
             </div>
             
             <div className="flex items-center space-x-4">
-              <Button 
-                onClick={handleNewSession}
-                variant="outline"
-                size="sm"
-                className="hover:bg-blue-50 dark:hover:bg-blue-900/20"
-              >
-                <i className="fas fa-plus mr-2"></i>
-                New Session
-              </Button>
+              {isNewChat && onBack && (
+                <Button 
+                  onClick={onBack}
+                  variant="outline"
+                  size="sm"
+                  className="hover:bg-gray-50 dark:hover:bg-gray-900/20"
+                >
+                  <i className="fas fa-arrow-left mr-2"></i>
+                  Back to Dashboard
+                </Button>
+              )}
+              {onNewChat ? (
+                <Button 
+                  onClick={onNewChat}
+                  variant="outline"
+                  size="sm"
+                  className="hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                >
+                  <i className="fas fa-plus mr-2"></i>
+                  New Chat
+                </Button>
+              ) : (
+                <Button 
+                  onClick={handleNewSession}
+                  variant="outline"
+                  size="sm"
+                  className="hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                >
+                  <i className="fas fa-plus mr-2"></i>
+                  New Session
+                </Button>
+              )}
               <Button 
                 onClick={handleLogout}
                 variant="outline"

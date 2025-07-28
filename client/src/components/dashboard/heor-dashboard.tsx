@@ -12,6 +12,7 @@ import agilLogo from "@assets/Logo Primary_1753368301220.png";
 interface DashboardProps {
   selectedCategories: string[];
   sessionId: string;
+  onNewChat?: () => void;
 }
 
 // NewsItem interface now imported from useNewsAgents hook
@@ -58,7 +59,8 @@ const MOCK_NEWS: Record<string, NewsItem[]> = {
       source: "FDA Drug Approvals",
       date: "2 hours ago",
       category: "regulatory",
-      isNew: true,
+      is_new: true,
+      relevance_score: 0.95,
       url: "#"
     },
     {
@@ -68,6 +70,8 @@ const MOCK_NEWS: Record<string, NewsItem[]> = {
       source: "FDA Safety Alerts",
       date: "4 hours ago",
       category: "regulatory",
+      is_new: false,
+      relevance_score: 0.87,
       url: "#"
     },
     {
@@ -77,6 +81,8 @@ const MOCK_NEWS: Record<string, NewsItem[]> = {
       source: "FDA Labeling Updates",
       date: "1 day ago", 
       category: "regulatory",
+      is_new: false,
+      relevance_score: 0.82,
       url: "#"
     }
   ],
@@ -88,7 +94,8 @@ const MOCK_NEWS: Record<string, NewsItem[]> = {
       source: "ClinicalTrials.gov",
       date: "3 hours ago",
       category: "clinical",
-      isNew: true,
+      is_new: true,
+      relevance_score: 0.93,
       url: "#"
     },
     {
@@ -98,6 +105,8 @@ const MOCK_NEWS: Record<string, NewsItem[]> = {
       source: "ClinicalTrials.gov", 
       date: "6 hours ago",
       category: "clinical",
+      is_new: false,
+      relevance_score: 0.78,
       url: "#"
     },
     {
@@ -107,6 +116,8 @@ const MOCK_NEWS: Record<string, NewsItem[]> = {
       source: "ClinicalTrials.gov",
       date: "1 day ago",
       category: "clinical",
+      is_new: false,
+      relevance_score: 0.65,
       url: "#"
     }
   ],
@@ -118,7 +129,8 @@ const MOCK_NEWS: Record<string, NewsItem[]> = {
       source: "PBM Policy Updates",
       date: "1 hour ago",
       category: "market",
-      isNew: true,
+      is_new: true,
+      relevance_score: 0.91,
       url: "#"
     },
     {
@@ -128,6 +140,8 @@ const MOCK_NEWS: Record<string, NewsItem[]> = {
       source: "ICER Reports",
       date: "5 hours ago", 
       category: "market",
+      is_new: false,
+      relevance_score: 0.84,
       url: "#"
     },
     {
@@ -137,6 +151,8 @@ const MOCK_NEWS: Record<string, NewsItem[]> = {
       source: "CMS Policy",
       date: "2 days ago",
       category: "market", 
+      is_new: false,
+      relevance_score: 0.79,
       url: "#"
     }
   ],
@@ -148,7 +164,8 @@ const MOCK_NEWS: Record<string, NewsItem[]> = {
       source: "CDC WONDER",
       date: "2 hours ago",
       category: "rwe",
-      isNew: true,
+      is_new: true,
+      relevance_score: 0.89,
       url: "#"
     },
     {
@@ -158,6 +175,8 @@ const MOCK_NEWS: Record<string, NewsItem[]> = {
       source: "AHRQ Research",
       date: "7 hours ago",
       category: "rwe",
+      is_new: false,
+      relevance_score: 0.76,
       url: "#"
     },
     {
@@ -167,12 +186,14 @@ const MOCK_NEWS: Record<string, NewsItem[]> = {
       source: "RWE Database",
       date: "1 day ago",
       category: "rwe",
+      is_new: false,
+      relevance_score: 0.83,
       url: "#"
     }
   ]
 };
 
-export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps) {
+export function HEORDashboard({ selectedCategories, sessionId, onNewChat }: DashboardProps) {
   const { logout } = useAuth();
   const { newsData, loading, error, fetchPersonalizedNews } = useNewsAgents();
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
@@ -195,22 +216,31 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
     if (!newsData) return 0;
     let count = 0;
     selectedCategories.forEach(category => {
-      const items = newsData[category as keyof typeof newsData] || [];
-      count += items.filter(item => item.is_new).length;
+      const items = (newsData[category as keyof typeof newsData] as NewsItem[]) || [];
+      count += items.filter((item: NewsItem) => item.is_new).length;
     });
     return count;
   };
 
   const handleNewChat = () => {
-    // This will be handled by the parent component to show the new chat interface
-    // For now, we'll use a simple state management approach
-    window.location.href = window.location.origin + '?new_chat=true';
+    // Use SPA navigation if available, otherwise fallback to URL
+    if (onNewChat) {
+      onNewChat();
+    } else {
+      window.location.href = window.location.origin + '?new_chat=true';
+    }
   };
 
   const handleLogout = () => {
     logout();
     // Redirect to landing page
     window.location.href = window.location.origin;
+  };
+
+  const clearError = () => {
+    // This would clear the error state if we had one
+    // For now, we'll just log it
+    console.log('Error cleared');
   };
 
   return (
@@ -350,7 +380,7 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
         <div className="space-y-8">
           {selectedCategories.map((categoryId) => {
             const config = CATEGORY_CONFIGS[categoryId as keyof typeof CATEGORY_CONFIGS];
-            const newsItems = newsData?.[categoryId as keyof typeof newsData] || [];
+            const newsItems: NewsItem[] = (newsData?.[categoryId as keyof typeof newsData] as NewsItem[]) || [];
             
             if (!config) return null;
 
@@ -454,7 +484,7 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
               <p className="text-gray-600 dark:text-gray-400 mb-4">
                 Please select data categories to start monitoring HEOR signals.
               </p>
-              <Button onClick={handleNewSession} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={handleNewChat} className="bg-blue-600 hover:bg-blue-700">
                 <i className="fas fa-cog mr-2"></i>
                 Configure Categories
               </Button>

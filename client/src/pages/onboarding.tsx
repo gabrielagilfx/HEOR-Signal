@@ -29,9 +29,10 @@ export default function Onboarding() {
   // Check URL parameters to see if this is a new session request
   const urlParams = new URLSearchParams(window.location.search);
   const isNewSession = urlParams.get('new_session') === 'true';
-  const isNewChat = urlParams.get('new_chat') === 'true';
   const [hasStartedChat, setHasStartedChat] = useState<boolean>(isNewSession);
-  const [showNewChat, setShowNewChat] = useState<boolean>(isNewChat);
+  
+  // Add state for SPA navigation
+  const [currentView, setCurrentView] = useState<'onboarding' | 'newChat'>('onboarding');
   
   const queryClient = useQueryClient();
 
@@ -124,6 +125,16 @@ export default function Onboarding() {
     setShowRegister(true);
   };
 
+  // Function to handle new chat navigation (SPA)
+  const handleNewChat = () => {
+    setCurrentView('newChat');
+  };
+
+  // Function to go back to onboarding from new chat
+  const handleBackToOnboarding = () => {
+    setCurrentView('onboarding');
+  };
+
   useEffect(() => {
     // Initialize user if they have started chat and either have a session ID or are creating a new session
     if (hasStartedChat && !isInitialized && !initUserMutation.isPending) {
@@ -147,15 +158,7 @@ export default function Onboarding() {
     }
   }, [isNewSession, hasStartedChat]);
 
-  // Handle new chat parameter
-  useEffect(() => {
-    if (isNewChat && !showNewChat) {
-      // For new chat, we need to show the new chat interface
-      setShowNewChat(true);
-      // Clean up URL parameter
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-  }, [isNewChat, showNewChat]);
+
 
   useEffect(() => {
     // Listen for onboarding completion events only when we have a session
@@ -274,14 +277,11 @@ export default function Onboarding() {
   // Check if dashboard should be shown (both onboarding completed and expertise set)
   const shouldShowDashboard = userStatus?.onboarding_completed && userStatus?.preference_expertise;
 
-  // Show new chat manager if requested
-  if (showNewChat) {
+  // Show new chat manager if requested (SPA navigation)
+  if (currentView === 'newChat') {
     return (
       <NewChatManager 
-        onBack={() => {
-          setShowNewChat(false);
-          window.history.replaceState({}, document.title, window.location.pathname);
-        }}
+        onBack={handleBackToOnboarding}
       />
     );
   }
@@ -293,6 +293,7 @@ export default function Onboarding() {
         userStatus={userStatus}
         onStartChat={handleStartChat}
         hasStartedChat={hasStartedChat}
+        onNewChat={handleNewChat}
       />
     </div>
   );

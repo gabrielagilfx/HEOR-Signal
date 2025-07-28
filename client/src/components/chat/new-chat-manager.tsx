@@ -1,107 +1,79 @@
-import React, { useState } from 'react';
-import { NewChatLanding } from './new-chat-landing';
-import { UserPreferenceSelector } from './user-preference-selector';
-import { NewChatInterface } from './new-chat-interface';
-
-type ChatState = 'landing' | 'preferences' | 'chat';
+import React, { useState, useEffect } from 'react';
+import { SimpleChatInterface } from './simple-chat-interface';
+import { useAuth } from '@/contexts/AuthContext';
+import { apiRequest } from '@/lib/queryClient';
 
 interface NewChatManagerProps {
   onBack: () => void;
 }
 
-interface ChatPreferences {
+interface UserStatus {
+  session_id: string;
+  onboarding_completed: boolean;
   selected_categories: string[];
   preference_expertise?: string;
-  conversation_title?: string;
-}
-
-interface ThreadData {
-  threadId: string;
-  threadTitle: string;
-  selectedCategories: string[];
-  preferenceExpertise?: string;
 }
 
 export function NewChatManager({ onBack }: NewChatManagerProps) {
-  const [currentState, setCurrentState] = useState<ChatState>('landing');
-  const [preferences, setPreferences] = useState<ChatPreferences | null>(null);
-  const [threadData, setThreadData] = useState<ThreadData | null>(null);
+  const { session } = useAuth();
+  const [sessionId, setSessionId] = useState<string>("");
+  const [userStatus, setUserStatus] = useState<UserStatus | null>(null);
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const handleStartNewChat = (newPreferences: ChatPreferences) => {
-    setPreferences(newPreferences);
-    
-    // If preferences are complete, go directly to chat
-    if (newPreferences.selected_categories.length > 0 && newPreferences.preference_expertise) {
-      // Create thread data
-      const thread: ThreadData = {
-        threadId: Date.now().toString(), // This will be replaced with actual thread ID from API
-        threadTitle: newPreferences.conversation_title || 'New Conversation',
-        selectedCategories: newPreferences.selected_categories,
-        preferenceExpertise: newPreferences.preference_expertise
-      };
-      setThreadData(thread);
-      setCurrentState('chat');
-    } else {
-      // Go to preference selector
-      setCurrentState('preferences');
-    }
-  };
-
-  const handlePreferencesSelected = (selectedPreferences: ChatPreferences) => {
-    setPreferences(selectedPreferences);
-    
-    // Create thread data
-    const thread: ThreadData = {
-      threadId: Date.now().toString(), // This will be replaced with actual thread ID from API
-      threadTitle: selectedPreferences.conversation_title || 'New Conversation',
-      selectedCategories: selectedPreferences.selected_categories,
-      preferenceExpertise: selectedPreferences.preference_expertise
+  // Initialize new chat session
+  useEffect(() => {
+    const initializeNewChat = async () => {
+      if (!session?.sessionId) return;
+      
+      try {
+        setIsLoading(true);
+        
+        // Create a new chat session
+        const response = await apiRequest('POST', '/api/user/init', {
+          session_id: session.sessionId
+        });
+        const data = await response.json();
+        
+        setSessionId(data.session_id);
+        setUserStatus({
+          session_id: data.session_id,
+          onboarding_completed: false, // Reset for new chat
+          selected_categories: [],
+          preference_expertise: undefined
+        });
+        setIsInitialized(true);
+      } catch (error) {
+        console.error('Error initializing new chat:', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
-    setThreadData(thread);
-    setCurrentState('chat');
-  };
 
-  const handleBackToLanding = () => {
-    setCurrentState('landing');
-    setPreferences(null);
-    setThreadData(null);
-  };
+    initializeNewChat();
+  }, [session?.sessionId]);
 
-  const handleBackToPreferences = () => {
-    setCurrentState('preferences');
-    setThreadData(null);
-  };
-
-  const handleBackToMain = () => {
-    onBack();
-  };
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Setting up your new conversation...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="h-screen">
-      {currentState === 'landing' && (
-        <NewChatLanding
-          onStartNewChat={handleStartNewChat}
-          onBack={handleBackToMain}
-        />
-      )}
-
-      {currentState === 'preferences' && (
-        <UserPreferenceSelector
-          onPreferencesSelected={handlePreferencesSelected}
-          onBack={handleBackToLanding}
-          initialPreferences={preferences}
-        />
-      )}
-
-      {currentState === 'chat' && threadData && (
-        <NewChatInterface
-          threadId={threadData.threadId}
-          threadTitle={threadData.threadTitle}
-          selectedCategories={threadData.selectedCategories}
-          preferenceExpertise={threadData.preferenceExpertise}
-          onBack={handleBackToPreferences}
-        />
-      )}
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden">
+      <SimpleChatInterface 
+        sessionId={sessionId} 
+        userStatus={userStatus || undefined}
+        onStartChat={() => {}} // No-op since we're already started
+        hasStartedChat={true}
+        isNewChat={true} // Flag to show different message
+        onBack={onBack}
+      />
     </div>
   );
 }
