@@ -134,6 +134,11 @@ class AuthService {
     window.location.href = '/';
   }
 
+  reset(): void {
+    this.clearToken();
+    // Don't redirect, just clear state
+  }
+
   async refreshToken(): Promise<boolean> {
     // For now, we'll just check if the session is still valid
     // In a real implementation, this would refresh JWT tokens
@@ -151,12 +156,13 @@ class AuthService {
     try {
       const response = await fetch(`/api/user/status/${this.token}`, {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${this.token}`,
-        },
       });
       
-      return response.ok;
+      if (response.ok) {
+        const data = await response.json();
+        return data.valid === true;
+      }
+      return false;
     } catch {
       return false;
     }

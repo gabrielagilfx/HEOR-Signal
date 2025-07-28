@@ -143,3 +143,18 @@ async def get_user_status(session_id: str, db: Session = Depends(get_db)):
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Error retrieving user status: {str(e)}"
             )
+
+@router.get("/status/{session_id}")
+async def validate_session(
+    session_id: str,
+    db: Session = Depends(get_db)
+):
+    """Validate if a session is still active"""
+    try:
+        user = auth_service.get_user_by_session_id(db, session_id)
+        if user:
+            return {"valid": True, "user_id": str(user.id)}
+        else:
+            return {"valid": False}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error validating session: {str(e)}")

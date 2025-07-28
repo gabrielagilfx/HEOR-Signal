@@ -17,7 +17,18 @@ interface UserStatus {
 }
 
 export default function Onboarding() {
-  const { session, isAuthenticated, login, loading: authLoading } = useAuth();
+  const { session, isAuthenticated, login, register, reset, loading: authLoading } = useAuth();
+  
+  // Debug logging
+  console.log('Onboarding state:', {
+    isAuthenticated,
+    hasStartedChat,
+    showInitialLoader,
+    sessionId,
+    authLoading,
+    showRegister,
+    showLogin
+  });
   const [sessionId, setSessionId] = useState<string>("");
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [showInitialLoader, setShowInitialLoader] = useState<boolean>(true);
@@ -198,6 +209,41 @@ export default function Onboarding() {
     return <LoadingScreen message="Loading..." />;
   }
 
+  // Debug: Add reset button if stuck
+  if (showInitialLoader && !initUserMutation.isPending && !isLoadingStatus) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <div className="flex-1 flex items-center justify-center">
+          <Card className="w-full max-w-md">
+            <CardContent className="p-6 text-center">
+              <div className="text-yellow-500 mb-4">
+                <i className="fas fa-exclamation-triangle text-4xl"></i>
+              </div>
+              <h2 className="text-xl font-semibold text-foreground mb-2">
+                Loading Issue Detected
+              </h2>
+              <p className="text-muted-foreground mb-4">
+                The app seems to be stuck loading. Click the button below to reset and try again.
+              </p>
+              <button 
+                onClick={() => {
+                  reset();
+                  setShowInitialLoader(false);
+                  setHasStartedChat(false);
+                  setSessionId("");
+                  setIsInitialized(false);
+                }}
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              >
+                Reset and Continue
+              </button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   // Show register component when user clicks "Let's Chat"
   if (showRegister) {
     return (
@@ -239,6 +285,26 @@ export default function Onboarding() {
   if (showInitialLoader && !hasStartedChat) {
     return <LoadingScreen message="Initializing your assistant..." />;
   }
+
+  // If user is authenticated but hasn't started chat, start it automatically
+  if (isAuthenticated && !hasStartedChat && !showRegister && !showLogin) {
+    console.log('User is authenticated, starting chat automatically');
+    setHasStartedChat(true);
+    setSessionId(session!.sessionId);
+    return <LoadingScreen message="Loading your session..." />;
+  }
+
+  // Fallback: if we're stuck loading for too long, show the chat interface
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (showInitialLoader && !initUserMutation.isPending && !isLoadingStatus) {
+        console.log('Fallback: hiding loader due to timeout');
+        setShowInitialLoader(false);
+      }
+    }, 10000); // 10 second timeout
+
+    return () => clearTimeout(timeout);
+  }, [showInitialLoader, initUserMutation.isPending, isLoadingStatus]);
 
   if (initUserMutation.error) {
     console.error('Init mutation error:', initUserMutation.error);

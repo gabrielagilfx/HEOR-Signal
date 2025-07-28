@@ -9,6 +9,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   register: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
+  reset: () => void;
   loading: boolean;
 }
 
@@ -58,6 +59,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     authService.logout();
   };
 
+  const reset = () => {
+    authService.reset();
+    setUser(null);
+    setSession(null);
+  };
+
   const value: AuthContextType = {
     session,
     user,
@@ -65,6 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     login,
     register,
     logout,
+    reset,
     loading
   };
 

@@ -14,20 +14,9 @@ export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
   const [isValid, setIsValid] = useState(false);
 
   useEffect(() => {
-    const validateAuth = async () => {
-      if (isAuthenticated) {
-        // Validate session with server
-        const isValid = await authService.validateSession();
-        setIsValid(isValid);
-      } else {
-        setIsValid(false);
-      }
-      setIsValidating(false);
-    };
-
-    if (!loading) {
-      validateAuth();
-    }
+    // Simplified validation - just check if authenticated
+    setIsValid(isAuthenticated);
+    setIsValidating(false);
   }, [isAuthenticated, loading]);
 
   // Show loading while validating
