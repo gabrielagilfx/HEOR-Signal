@@ -13,5 +13,8 @@ class User(Base):
     selected_categories = Column(JSON, default=[])
     preference_expertise = Column(String(500), nullable=True)
     onboarding_completed = Column(Boolean, default=False)
+    email = Column(String, nullable=True)
+    name = Column(String, nullable=True)
+    password_hash = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
