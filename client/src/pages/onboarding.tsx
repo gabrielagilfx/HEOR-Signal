@@ -229,6 +229,11 @@ export default function Onboarding() {
     return <LoadingScreen message={loadingMessage} />;
   }
 
+  // Show loading screen for new chat creation
+  if (showInitialLoader && !hasStartedChat) {
+    return <LoadingScreen message="Initializing your assistant..." />;
+  }
+
   if (initUserMutation.error) {
     console.error('Init mutation error:', initUserMutation.error);
     return (

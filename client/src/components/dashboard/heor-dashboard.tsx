@@ -204,23 +204,23 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
 
   const handleNewChat = async () => {
     try {
-      // Call API to reset onboarding status
-      const response = await apiRequest('POST', '/api/user/reset-onboarding', {
+      // Call API to create new chat session
+      const response = await apiRequest('POST', '/api/user/new-chat', {
         session_id: sessionId
       });
       
       if (response.ok) {
         const data = await response.json();
-        console.log('Onboarding reset successfully:', data);
+        console.log('New chat created successfully:', data);
         
         // Navigate back to chat interface for the current user
         // Use window.location.replace to avoid adding to browser history
         window.location.replace(window.location.origin);
       } else {
-        console.error('Failed to reset onboarding');
+        console.error('Failed to create new chat');
       }
     } catch (error) {
-      console.error('Error resetting onboarding:', error);
+      console.error('Error creating new chat:', error);
     }
   };
 

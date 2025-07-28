@@ -61,12 +61,12 @@ async def initialize_user(
                 detail=f"Error initializing user: {str(e)}"
             )
 
-@router.post("/reset-onboarding", response_model=Dict[str, Any])
-async def reset_user_onboarding(
+@router.post("/new-chat", response_model=Dict[str, Any])
+async def create_new_chat(
     request: ResetOnboardingRequest,
     db: Session = Depends(get_db)
 ):
-    """Reset user onboarding status for new chat"""
+    """Create a new chat session for the user"""
     max_retries = 3
     retry_delay = 1  # seconds
     
@@ -80,8 +80,8 @@ async def reset_user_onboarding(
                     detail="User not found"
                 )
             
-            # Reset onboarding status
-            user = await user_service.reset_onboarding(db, user.id)
+            # Create new chat session
+            user = await user_service.create_new_chat(db, user.id)
             
             return {
                 "success": True,

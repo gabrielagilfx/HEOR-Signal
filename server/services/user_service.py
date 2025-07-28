@@ -77,10 +77,26 @@ class UserService:
             db.refresh(user)
         return user
 
-    async def reset_onboarding(self, db: Session, user_id: str) -> User:
-        """Reset onboarding status for new chat"""
+    async def create_new_chat(self, db: Session, user_id: str) -> User:
+        """Create a new chat session for the user"""
         user = db.query(User).filter(User.id == user_id).first()
         if user:
+            # Create new OpenAI Thread for fresh chat
+            openai_thread_id = await self.openai_service.create_thread()
+            
+            # Create new thread linked to user
+            thread = Thread(
+                user_id=user.id,
+                thread_id=openai_thread_id,
+                title="HEOR Signal Chat",
+                status="active"
+            )
+            
+            db.add(thread)
+            db.commit()
+            db.refresh(thread)
+            
+            # Reset onboarding status for fresh start
             user.onboarding_completed = False  # type: ignore
             user.selected_categories = []  # type: ignore
             user.preference_expertise = None  # type: ignore
