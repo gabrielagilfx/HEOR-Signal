@@ -76,3 +76,14 @@ class UserService:
             db.commit()
             db.refresh(user)
         return user
+
+    async def reset_onboarding(self, db: Session, user_id: str) -> User:
+        """Reset onboarding status for new chat"""
+        user = db.query(User).filter(User.id == user_id).first()
+        if user:
+            user.onboarding_completed = False  # type: ignore
+            user.selected_categories = []  # type: ignore
+            user.preference_expertise = None  # type: ignore
+            db.commit()
+            db.refresh(user)
+        return user

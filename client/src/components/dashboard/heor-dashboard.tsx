@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { useNewsAgents, UserPreferences, NewsItem } from "@/hooks/useNewsAgents";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/AuthContext";
+import { apiRequest } from "@/lib/queryClient";
 import agilLogo from "@assets/Logo Primary_1753368301220.png";
 
 interface DashboardProps {
@@ -201,9 +202,26 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
     return count;
   };
 
-  const handleNewChat = () => {
-    // Navigate back to chat interface for the current user
-    window.location.href = window.location.origin + '/onboarding';
+  const handleNewChat = async () => {
+    try {
+      // Call API to reset onboarding status
+      const response = await apiRequest('POST', '/api/user/reset-onboarding', {
+        session_id: sessionId
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Onboarding reset successfully:', data);
+        
+        // Navigate back to chat interface for the current user
+        // Use window.location.replace to avoid adding to browser history
+        window.location.replace(window.location.origin);
+      } else {
+        console.error('Failed to reset onboarding');
+      }
+    } catch (error) {
+      console.error('Error resetting onboarding:', error);
+    }
   };
 
   const handleLogout = () => {

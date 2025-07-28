@@ -68,16 +68,37 @@ export function SimpleChatInterface({ sessionId, userStatus, onStartChat, hasSta
     }
   };
 
-  // Handler for new session without going back to landing page
-  const handleNewChat = () => {
-    // Reset the chat interface for the current user
-    setMessages([]);
-    setShowCategorySelection(true);
-    setShowDashboard(false);
-    setInputMessage("");
-    // Scroll to top
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+  // Handler for new chat - reset onboarding status
+  const handleNewChat = async () => {
+    try {
+      // Call API to reset onboarding status
+      const response = await apiRequest('POST', '/api/user/reset-onboarding', {
+        session_id: sessionId
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Onboarding reset successfully:', data);
+        
+        // Reset local state
+        setMessages([]);
+        setShowCategorySelection(true);
+        setShowDashboard(false);
+        setInputMessage("");
+        setSelectedCategories([]);
+        
+        // Scroll to top
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Invalidate user status query to refetch updated data
+        window.dispatchEvent(new CustomEvent('refresh-user-status'));
+      } else {
+        console.error('Failed to reset onboarding');
+      }
+    } catch (error) {
+      console.error('Error resetting onboarding:', error);
     }
   };
 
