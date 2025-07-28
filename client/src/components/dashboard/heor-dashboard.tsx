@@ -201,10 +201,10 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
     return count;
   };
 
-  const handleNewSession = () => {
-    // Navigate to a fresh session without going back to landing page
-    // We'll create a URL parameter to bypass landing page
-    window.location.href = window.location.origin + '?new_session=true';
+  const handleNewChat = () => {
+    // This will be handled by the parent component to show the new chat interface
+    // For now, we'll use a simple state management approach
+    window.location.href = window.location.origin + '?new_chat=true';
   };
 
   const handleLogout = () => {
@@ -248,13 +248,13 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
                 Refresh
               </Button>
               <Button 
-                onClick={handleNewSession}
+                onClick={handleNewChat}
                 variant="outline" 
                 size="sm"
                 className="hover:bg-gray-50 dark:hover:bg-gray-800"
               >
                 <i className="fas fa-plus mr-2"></i>
-                New Session
+                New Chat
               </Button>
               <Button 
                 onClick={handleLogout}
