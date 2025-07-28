@@ -8,6 +8,7 @@ import { LoadingScreen } from "@/components/ui/loading-screen";
 import { HEORDashboard } from "@/components/dashboard/heor-dashboard";
 import { LandingPage } from "@/components/landing/landing-page";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/contexts/AuthContext";
 import type { ChatMessage } from "@/types/chat";
 import agilLogo from "@assets/Logo Primary_1753368301220.png";
 
@@ -38,6 +39,7 @@ interface MessagesResponse {
 }
 
 export function SimpleChatInterface({ sessionId, userStatus, onStartChat, hasStartedChat = false }: SimpleChatInterfaceProps) {
+  const { logout } = useAuth();
   const onboardingCompleted = userStatus?.onboarding_completed ?? false;
   const hasPreferenceExpertise = !!(userStatus?.preference_expertise);
   const canShowDashboard = onboardingCompleted && hasPreferenceExpertise;
@@ -348,6 +350,15 @@ To get started, please select the data categories you'd like to monitor.`,
               >
                 <i className="fas fa-plus mr-2"></i>
                 New Session
+              </Button>
+              <Button 
+                onClick={logout}
+                variant="outline"
+                size="sm"
+                className="hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400"
+              >
+                <i className="fas fa-sign-out-alt mr-2"></i>
+                Logout
               </Button>
             </div>
           </div>

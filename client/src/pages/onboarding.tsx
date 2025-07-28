@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { SimpleChatInterface } from "@/components/chat/simple-chat-interface";
 import { Register } from "@/components/auth/register";
+import { Login } from "@/components/auth/login";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LoadingScreen } from "@/components/ui/loading-screen";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface UserStatus {
   session_id: string;
@@ -15,11 +17,13 @@ interface UserStatus {
 }
 
 export default function Onboarding() {
+  const { session, isAuthenticated, login, loading: authLoading } = useAuth();
   const [sessionId, setSessionId] = useState<string>("");
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [showInitialLoader, setShowInitialLoader] = useState<boolean>(true);
   const [retryCount, setRetryCount] = useState<number>(0);
   const [showRegister, setShowRegister] = useState<boolean>(false);
+  const [showLogin, setShowLogin] = useState<boolean>(false);
   
   // Check URL parameters to see if this is a new session request
   const urlParams = new URLSearchParams(window.location.search);
@@ -65,13 +69,31 @@ export default function Onboarding() {
 
   // Function to initialize user when "Let's Chat" is clicked
   const handleStartChat = () => {
-    setShowRegister(true);
+    if (isAuthenticated) {
+      // User is already authenticated, go directly to chat
+      setSessionId(session!.sessionId);
+      setHasStartedChat(true);
+      setIsInitialized(true);
+    } else {
+      // User needs to register or login
+      setShowRegister(true);
+    }
   };
 
   // Function to handle successful registration
   const handleRegisterSuccess = (newSessionId: string) => {
+    login(newSessionId);
     setSessionId(newSessionId);
     setShowRegister(false);
+    setHasStartedChat(true);
+    setIsInitialized(true);
+  };
+
+  // Function to handle successful login
+  const handleLoginSuccess = (newSessionId: string) => {
+    login(newSessionId);
+    setSessionId(newSessionId);
+    setShowLogin(false);
     setHasStartedChat(true);
     setIsInitialized(true);
   };
@@ -79,6 +101,19 @@ export default function Onboarding() {
   // Function to go back to landing page from register
   const handleBackToLanding = () => {
     setShowRegister(false);
+    setShowLogin(false);
+  };
+
+  // Function to switch from register to login
+  const handleSwitchToLogin = () => {
+    setShowRegister(false);
+    setShowLogin(true);
+  };
+
+  // Function to switch from login to register
+  const handleSwitchToRegister = () => {
+    setShowLogin(false);
+    setShowRegister(true);
   };
 
   useEffect(() => {
@@ -137,12 +172,29 @@ export default function Onboarding() {
     }
   }, [userStatus, isLoadingStatus, showInitialLoader]);
 
+  // Show loading while auth is initializing
+  if (authLoading) {
+    return <LoadingScreen message="Loading..." />;
+  }
+
   // Show register component when user clicks "Let's Chat"
   if (showRegister) {
     return (
       <Register 
         onRegisterSuccess={handleRegisterSuccess}
         onBackToLanding={handleBackToLanding}
+        onSwitchToLogin={handleSwitchToLogin}
+      />
+    );
+  }
+
+  // Show login component
+  if (showLogin) {
+    return (
+      <Login 
+        onLoginSuccess={handleLoginSuccess}
+        onBackToLanding={handleBackToLanding}
+        onSwitchToRegister={handleSwitchToRegister}
       />
     );
   }
