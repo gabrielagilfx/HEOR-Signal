@@ -279,6 +279,10 @@ export function SimpleChatInterface({ sessionId, userStatus, onStartChat, hasSta
         // Dispatch the appropriate event based on whether this is new chat or onboarding
         if (isNewChat) {
           window.dispatchEvent(new CustomEvent('refresh-user-status'));
+          // Force a user status refresh for new chat to ensure input area shows
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('refresh-user-status'));
+          }, 100);
         } else {
           window.dispatchEvent(new CustomEvent('onboarding-completed'));
         }
@@ -546,7 +550,12 @@ To get started, please select the data categories you'd like to monitor.`,
         )}
         
         {/* Input Area at Bottom - only show if categories selected but no dashboard yet */}
-        {!showCategorySelection && !canShowDashboard && (
+        {(() => {
+          console.log('Input area conditions:', { showCategorySelection, canShowDashboard, onboardingCompleted, hasPreferenceExpertise, isNewChat });
+          // For new chat, show input area if categories are not being selected
+          // For onboarding, show input area if categories are not being selected and dashboard can't be shown
+          return !showCategorySelection && (isNewChat || !canShowDashboard);
+        })() && (
           <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-4">
             <div className="flex items-start space-x-3">
               <div className="flex-1">
