@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { SimpleChatInterface } from './simple-chat-interface';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/queryClient';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface NewChatManagerProps {
   onBack: () => void;
@@ -17,9 +18,9 @@ interface UserStatus {
 export function NewChatManager({ onBack }: NewChatManagerProps) {
   const { session } = useAuth();
   const [sessionId, setSessionId] = useState<string>("");
-  const [userStatus, setUserStatus] = useState<UserStatus | null>(null);
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const queryClient = useQueryClient();
 
   // Initialize new chat session
   useEffect(() => {
@@ -29,20 +30,17 @@ export function NewChatManager({ onBack }: NewChatManagerProps) {
       try {
         setIsLoading(true);
         
-        // Create a new chat session
+        // Create a new chat session - this will reset onboarding_completed to false
         const response = await apiRequest('POST', '/api/user/init', {
           session_id: session.sessionId
         });
         const data = await response.json();
         
         setSessionId(data.session_id);
-        setUserStatus({
-          session_id: data.session_id,
-          onboarding_completed: false, // Reset for new chat
-          selected_categories: [],
-          preference_expertise: undefined
-        });
         setIsInitialized(true);
+        
+        // Invalidate user status to force a refresh
+        queryClient.invalidateQueries({ queryKey: ['/api/user/status', data.session_id] });
       } catch (error) {
         console.error('Error initializing new chat:', error);
       } finally {
@@ -51,9 +49,15 @@ export function NewChatManager({ onBack }: NewChatManagerProps) {
     };
 
     initializeNewChat();
-  }, [session?.sessionId]);
+  }, [session?.sessionId, queryClient]);
 
-  if (isLoading) {
+  // Get user status - this will show the updated status after initialization
+  const { data: userStatus, isLoading: isLoadingStatus } = useQuery<UserStatus>({
+    queryKey: ['/api/user/status', sessionId],
+    enabled: !!sessionId,
+  });
+
+  if (isLoading || isLoadingStatus) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">

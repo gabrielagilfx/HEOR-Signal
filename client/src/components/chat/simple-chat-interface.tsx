@@ -212,7 +212,13 @@ export function SimpleChatInterface({ sessionId, userStatus, onStartChat, hasSta
             
             // Give time for status refresh, then show dashboard
             setTimeout(() => {
-              setShowDashboard(true);
+              if (isNewChat && onBack) {
+                // For new chat, go back to the main dashboard
+                onBack();
+              } else {
+                // For onboarding, show the dashboard
+                setShowDashboard(true);
+              }
             }, 500);
           }, 3000);
         }
@@ -270,7 +276,12 @@ export function SimpleChatInterface({ sessionId, userStatus, onStartChat, hasSta
         // Don't navigate to dashboard yet - need to collect expertise preference first
         // Just acknowledge category selection for now
         
-        window.dispatchEvent(new CustomEvent('onboarding-completed'));
+        // Dispatch the appropriate event based on whether this is new chat or onboarding
+        if (isNewChat) {
+          window.dispatchEvent(new CustomEvent('refresh-user-status'));
+        } else {
+          window.dispatchEvent(new CustomEvent('onboarding-completed'));
+        }
       }
     } catch (error) {
       console.error('Error selecting categories:', error);
