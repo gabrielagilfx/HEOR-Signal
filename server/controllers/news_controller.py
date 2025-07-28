@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends, Header
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 import asyncio
@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from services.langgraph_agents import news_agents, UserPreferences, NewsItem
 from database import get_db
+from auth import verify_token
 
 router = APIRouter(prefix="/api/news", tags=["news"])
 
@@ -20,7 +21,7 @@ class UserPreferencesRequest(BaseModel):
 
 
 class PersonalizedNewsRequest(BaseModel):
-    session_id: str
+    session_id: Optional[str] = None
 
 
 class NewsResponse(BaseModel):
@@ -47,16 +48,33 @@ class NewsAggregateResponse(BaseModel):
 @router.post("/fetch-personalized", response_model=NewsAggregateResponse)
 async def fetch_personalized_news(
     request: PersonalizedNewsRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    authorization: Optional[str] = Header(None)
 ):
     """
     Fetch news from all four agents using user preferences from database
+    Supports both session-based and authenticated users
     """
     try:
         start_time = datetime.now()
         
+        # Determine user identifier (session_id or user_id from JWT)
+        user_identifier = request.session_id
+        
+        # Check if user is authenticated via JWT
+        if authorization and authorization.startswith("Bearer "):
+            token = authorization.replace("Bearer ", "")
+            payload = verify_token(token)
+            if payload:
+                user_id = payload.get("sub")
+                # Use user_id for authenticated users
+                user_identifier = user_id
+        
+        if not user_identifier:
+            raise HTTPException(status_code=400, detail="User identifier required")
+        
         # Run all agents using user preferences from database
-        results = await news_agents.run_parallel_agents_for_user(request.session_id, db)
+        results = await news_agents.run_parallel_agents_for_user(user_identifier, db)
         
         # Convert results to response format
         response_data = {

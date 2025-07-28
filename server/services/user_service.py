@@ -4,13 +4,14 @@ from sqlalchemy.orm import Session
 from database import User
 from models.thread import Thread
 from services.openai_service import OpenAIService
+from auth import get_current_user
 
 class UserService:
     def __init__(self):
         self.openai_service = OpenAIService()
     
     async def create_or_get_user(self, db: Session, session_id: Optional[str] = None) -> User:
-        """Create a new user or retrieve existing one"""
+        """Create a new user or retrieve existing one (for session-based auth)"""
         if not session_id:
             session_id = str(uuid.uuid4())
         
@@ -26,7 +27,8 @@ class UserService:
                 session_id=session_id,
                 assistant_id=assistant_id,
                 selected_categories=[],
-                onboarding_completed=False
+                onboarding_completed=False,
+                is_authenticated=False
             )
             
             db.add(user)
@@ -46,6 +48,14 @@ class UserService:
             db.refresh(thread)
         
         return user
+    
+    async def get_current_user(self, db: Session, user_id: str) -> Optional[User]:
+        """Get user by ID (for authenticated users)"""
+        return db.query(User).filter(User.id == user_id).first()
+    
+    async def get_user_by_email(self, db: Session, email: str) -> Optional[User]:
+        """Get user by email"""
+        return db.query(User).filter(User.email == email).first()
     
     async def update_categories(self, db: Session, user_id: str, categories: List[str]) -> User:
         """Update user's selected categories"""

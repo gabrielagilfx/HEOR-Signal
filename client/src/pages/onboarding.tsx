@@ -5,12 +5,19 @@ import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LoadingScreen } from "@/components/ui/loading-screen";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
+import { LogOut, User } from "lucide-react";
 
 interface UserStatus {
-  session_id: string;
+  session_id?: string;
+  user_id?: string;
+  email?: string;
   onboarding_completed: boolean;
   selected_categories: string[];
   preference_expertise?: string;
+  is_authenticated?: boolean;
 }
 
 export default function Onboarding() {
@@ -18,6 +25,7 @@ export default function Onboarding() {
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [showInitialLoader, setShowInitialLoader] = useState<boolean>(true);
   const [retryCount, setRetryCount] = useState<number>(0);
+  const { user, token, logout } = useAuth();
   
   // Check URL parameters to see if this is a new session request
   const urlParams = new URLSearchParams(window.location.search);
@@ -42,7 +50,7 @@ export default function Onboarding() {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
     onSuccess: (data) => {
       console.log('Setting session ID:', data.session_id);
-      setSessionId(data.session_id);
+      setSessionId(data.session_id || '');
       setIsInitialized(true);
       setRetryCount(0); // Reset retry count on success
     },
@@ -55,8 +63,8 @@ export default function Onboarding() {
 
   // Get user status
   const { data: userStatus, isLoading: isLoadingStatus } = useQuery<UserStatus>({
-    queryKey: ['/api/user/status', sessionId],
-    enabled: !!sessionId,
+    queryKey: ['/api/user/status', sessionId || user?.user_id],
+    enabled: !!(sessionId || user?.user_id),
   });
 
   // Function to initialize user when "Let's Chat" is clicked
@@ -83,14 +91,14 @@ export default function Onboarding() {
 
   useEffect(() => {
     // Listen for onboarding completion events only when we have a session
-    if (!sessionId) return;
+    if (!sessionId && !user?.user_id) return;
     
     const handleOnboardingCompleted = () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/user/status', sessionId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user/status', sessionId || user?.user_id] });
     };
 
     const handleRefreshUserStatus = () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/user/status', sessionId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user/status', sessionId || user?.user_id] });
     };
 
     const handleMessagesLoaded = () => {
@@ -109,7 +117,7 @@ export default function Onboarding() {
       window.removeEventListener('refresh-user-status', handleRefreshUserStatus);
       window.removeEventListener('messages-loaded', handleMessagesLoaded);
     };
-  }, [sessionId, queryClient, showInitialLoader]);
+  }, [sessionId, user?.user_id, queryClient, showInitialLoader]);
 
   // Fallback: Hide loader after user status is loaded (backup mechanism)
   useEffect(() => {
@@ -125,7 +133,7 @@ export default function Onboarding() {
   }, [userStatus, isLoadingStatus, showInitialLoader]);
 
   // Show loading screen only when chat has started and we're initializing
-  if (hasStartedChat && (showInitialLoader || initUserMutation.isPending || isLoadingStatus || !sessionId)) {
+  if (hasStartedChat && (showInitialLoader || initUserMutation.isPending || isLoadingStatus || (!sessionId && !user?.user_id))) {
     const loadingMessage = retryCount > 0 
       ? `Retrying connection... (attempt ${retryCount + 1}/3)`
       : "Initializing your assistant...";
@@ -166,6 +174,46 @@ export default function Onboarding() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden">
+      {/* Header with authentication status */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
+        <div className="flex justify-between items-center">
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+            HEOR Signal Assistant
+          </h1>
+          <div className="flex items-center space-x-4">
+            {user ? (
+              <div className="flex items-center space-x-2">
+                <User className="h-4 w-4 text-gray-500" />
+                <span className="text-sm text-gray-600 dark:text-gray-300">
+                  {user.email}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={logout}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <Link href="/login">
+                  <Button variant="outline" size="sm">
+                    Sign In
+                  </Button>
+                </Link>
+                <Link href="/register">
+                  <Button size="sm">
+                    Sign Up
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      
       <SimpleChatInterface 
         sessionId={sessionId} 
         userStatus={userStatus}
