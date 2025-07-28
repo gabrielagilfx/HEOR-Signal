@@ -9,6 +9,9 @@ class User(Base):
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     session_id = Column(String, unique=True, index=True, nullable=False)
+    name = Column(String, nullable=True)
+    email = Column(String, unique=True, index=True, nullable=True)
+    password = Column(String, nullable=True)
     assistant_id = Column(String, nullable=True)
     selected_categories = Column(JSON, default=[])
     preference_expertise = Column(String(500), nullable=True)
