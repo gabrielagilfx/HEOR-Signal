@@ -69,9 +69,16 @@ export function SimpleChatInterface({ sessionId, userStatus, onStartChat, hasSta
   };
 
   // Handler for new session without going back to landing page
-  const handleNewSession = () => {
-    // Navigate to a fresh session without going back to landing page
-    window.location.href = window.location.origin + '?new_session=true';
+  const handleNewChat = () => {
+    // Reset the chat interface for the current user
+    setMessages([]);
+    setShowCategorySelection(true);
+    setShowDashboard(false);
+    setInputMessage("");
+    // Scroll to top
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   const handleLogout = () => {
@@ -349,13 +356,13 @@ To get started, please select the data categories you'd like to monitor.`,
             
             <div className="flex items-center space-x-4">
               <Button 
-                onClick={handleNewSession}
+                onClick={handleNewChat}
                 variant="outline"
                 size="sm"
                 className="hover:bg-blue-50 dark:hover:bg-blue-900/20"
               >
-                <i className="fas fa-plus mr-2"></i>
-                New Session
+                <i className="fas fa-comments mr-2"></i>
+                New Chat
               </Button>
               <Button 
                 onClick={handleLogout}
