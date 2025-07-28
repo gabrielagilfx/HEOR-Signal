@@ -74,6 +74,12 @@ export function SimpleChatInterface({ sessionId, userStatus, onStartChat, hasSta
     window.location.href = window.location.origin + '?new_session=true';
   };
 
+  const handleLogout = () => {
+    logout();
+    // Redirect to landing page
+    window.location.href = window.location.origin;
+  };
+
 
 
   // Update category selection state when userStatus changes  
@@ -352,7 +358,7 @@ To get started, please select the data categories you'd like to monitor.`,
                 New Session
               </Button>
               <Button 
-                onClick={logout}
+                onClick={handleLogout}
                 variant="outline"
                 size="sm"
                 className="hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400"

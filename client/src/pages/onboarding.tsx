@@ -37,7 +37,7 @@ export default function Onboarding() {
     mutationFn: async () => {
       console.log('Initializing user session...');
       const response = await apiRequest('POST', '/api/user/init', {
-        session_id: sessionId
+        session_id: sessionId || undefined
       });
       const data = await response.json();
       console.log('User session initialized:', data);
@@ -53,6 +53,11 @@ export default function Onboarding() {
       setSessionId(data.session_id);
       setIsInitialized(true);
       setRetryCount(0); // Reset retry count on success
+      
+      // If this was a new session, also set the session in auth context
+      if (isNewSession) {
+        login(data.session_id);
+      }
     },
     onError: (error) => {
       console.error('Failed to initialize user after retries:', error);
@@ -117,8 +122,8 @@ export default function Onboarding() {
   };
 
   useEffect(() => {
-    // Only initialize user if they have started chat and have a session ID
-    if (hasStartedChat && sessionId && !isInitialized && !initUserMutation.isPending) {
+    // Initialize user if they have started chat and either have a session ID or are creating a new session
+    if (hasStartedChat && !isInitialized && !initUserMutation.isPending) {
       console.log('Starting user initialization...');
       initUserMutation.mutate();
       
@@ -127,7 +132,17 @@ export default function Onboarding() {
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     }
-  }, [hasStartedChat, sessionId, isInitialized, initUserMutation, isNewSession]);
+  }, [hasStartedChat, isInitialized, initUserMutation, isNewSession]);
+
+  // Handle new session parameter
+  useEffect(() => {
+    if (isNewSession && !hasStartedChat) {
+      // For new sessions, we need to create a new user session
+      setHasStartedChat(true);
+      // Clean up URL parameter
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [isNewSession, hasStartedChat]);
 
   useEffect(() => {
     // Listen for onboarding completion events only when we have a session
@@ -200,7 +215,7 @@ export default function Onboarding() {
   }
 
   // Show loading screen only when chat has started and we're initializing
-  if (hasStartedChat && (showInitialLoader || initUserMutation.isPending || isLoadingStatus || !sessionId)) {
+  if (hasStartedChat && (showInitialLoader || initUserMutation.isPending || isLoadingStatus)) {
     const loadingMessage = retryCount > 0 
       ? `Retrying connection... (attempt ${retryCount + 1}/3)`
       : "Initializing your assistant...";

@@ -27,13 +27,8 @@ async def initialize_user(
     
     for attempt in range(max_retries):
         try:
+            # For new sessions, we can create a user without session_id
             # For registered users, we expect a session_id
-            if not request.session_id:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Session ID is required for registered users"
-                )
-            
             user = await user_service.create_or_get_user(db, request.session_id)
             
             return {
