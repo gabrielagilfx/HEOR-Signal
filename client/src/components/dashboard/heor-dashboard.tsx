@@ -207,6 +207,12 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
     window.location.href = window.location.origin + '?new_session=true';
   };
 
+  const handleLogout = () => {
+    logout();
+    // Redirect to landing page
+    window.location.href = window.location.origin;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
@@ -251,10 +257,10 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
                 New Session
               </Button>
               <Button 
-                onClick={logout}
+                onClick={handleLogout}
                 variant="outline"
                 size="sm"
-                className="hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400"
+                className="hover:bg-red-600 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400"
               >
                 <i className="fas fa-sign-out-alt mr-2"></i>
                 Logout
