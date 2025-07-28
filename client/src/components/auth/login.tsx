@@ -7,18 +7,16 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { apiRequest } from "@/lib/queryClient";
 import agilLogo from "@assets/Logo Primary_1753368301220.png";
 
-interface RegisterProps {
-  onRegisterSuccess: (sessionId: string) => void;
+interface LoginProps {
+  onLoginSuccess: (sessionId: string) => void;
   onBackToLanding: () => void;
-  onSwitchToLogin: () => void;
+  onSwitchToRegister: () => void;
 }
 
-export function Register({ onRegisterSuccess, onBackToLanding, onSwitchToLogin }: RegisterProps) {
+export function Login({ onLoginSuccess, onBackToLanding, onSwitchToRegister }: LoginProps) {
   const [formData, setFormData] = useState({
-    name: "",
     email: "",
-    password: "",
-    confirmPassword: ""
+    password: ""
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -26,10 +24,6 @@ export function Register({ onRegisterSuccess, onBackToLanding, onSwitchToLogin }
 
   const validateForm = () => {
     const errors: Record<string, string> = {};
-
-    if (!formData.name.trim()) {
-      errors.name = "Name is required";
-    }
 
     if (!formData.email.trim()) {
       errors.email = "Email is required";
@@ -39,12 +33,6 @@ export function Register({ onRegisterSuccess, onBackToLanding, onSwitchToLogin }
 
     if (!formData.password) {
       errors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-      errors.password = "Password must be at least 6 characters";
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      errors.confirmPassword = "Passwords do not match";
     }
 
     setValidationErrors(errors);
@@ -70,21 +58,20 @@ export function Register({ onRegisterSuccess, onBackToLanding, onSwitchToLogin }
     setIsLoading(true);
 
     try {
-      const response = await apiRequest('POST', '/api/auth/register', {
-        name: formData.name.trim(),
+      const response = await apiRequest('POST', '/api/auth/login', {
         email: formData.email.trim().toLowerCase(),
         password: formData.password
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Registration failed');
+        throw new Error(errorData.detail || 'Login failed');
       }
 
       const data = await response.json();
-      onRegisterSuccess(data.session_id);
+      onLoginSuccess(data.session_id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
+      setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -97,16 +84,16 @@ export function Register({ onRegisterSuccess, onBackToLanding, onSwitchToLogin }
         <div className="text-center mb-8">
           <img src={agilLogo} alt="AGILf(x) Logo" className="h-12 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Create Your Account
+            Welcome Back
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Join HEOR Signal to get personalized healthcare insights
+            Sign in to your HEOR Signal account
           </p>
         </div>
 
         <Card className="w-full">
           <CardHeader>
-            <CardTitle className="text-center">Register</CardTitle>
+            <CardTitle className="text-center">Sign In</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -115,21 +102,6 @@ export function Register({ onRegisterSuccess, onBackToLanding, onSwitchToLogin }
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
-
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange("name", e.target.value)}
-                  placeholder="Enter your full name"
-                  className={validationErrors.name ? "border-red-500" : ""}
-                />
-                {validationErrors.name && (
-                  <p className="text-sm text-red-500">{validationErrors.name}</p>
-                )}
-              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -153,26 +125,11 @@ export function Register({ onRegisterSuccess, onBackToLanding, onSwitchToLogin }
                   type="password"
                   value={formData.password}
                   onChange={(e) => handleInputChange("password", e.target.value)}
-                  placeholder="Create a password"
+                  placeholder="Enter your password"
                   className={validationErrors.password ? "border-red-500" : ""}
                 />
                 {validationErrors.password && (
                   <p className="text-sm text-red-500">{validationErrors.password}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
-                  placeholder="Confirm your password"
-                  className={validationErrors.confirmPassword ? "border-red-500" : ""}
-                />
-                {validationErrors.confirmPassword && (
-                  <p className="text-sm text-red-500">{validationErrors.confirmPassword}</p>
                 )}
               </div>
 
@@ -184,10 +141,10 @@ export function Register({ onRegisterSuccess, onBackToLanding, onSwitchToLogin }
                 {isLoading ? (
                   <>
                     <i className="fas fa-spinner fa-spin mr-2"></i>
-                    Creating Account...
+                    Signing In...
                   </>
                 ) : (
-                  "Create Account"
+                  "Sign In"
                 )}
               </Button>
             </form>
@@ -195,10 +152,10 @@ export function Register({ onRegisterSuccess, onBackToLanding, onSwitchToLogin }
             <div className="mt-6 text-center space-y-2">
               <Button
                 variant="ghost"
-                onClick={onSwitchToLogin}
+                onClick={onSwitchToRegister}
                 className="text-blue-600 dark:text-blue-400"
               >
-                Already have an account? Sign in
+                Don't have an account? Sign up
               </Button>
               <div>
                 <Button

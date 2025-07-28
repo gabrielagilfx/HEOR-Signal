@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { useNewsAgents, UserPreferences, NewsItem } from "@/hooks/useNewsAgents";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAuth } from "@/contexts/AuthContext";
 import agilLogo from "@assets/Logo Primary_1753368301220.png";
 
 interface DashboardProps {
@@ -172,6 +173,7 @@ const MOCK_NEWS: Record<string, NewsItem[]> = {
 };
 
 export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps) {
+  const { logout } = useAuth();
   const { newsData, loading, error, fetchPersonalizedNews } = useNewsAgents();
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
@@ -247,6 +249,15 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
               >
                 <i className="fas fa-plus mr-2"></i>
                 New Session
+              </Button>
+              <Button 
+                onClick={logout}
+                variant="outline"
+                size="sm"
+                className="hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400"
+              >
+                <i className="fas fa-sign-out-alt mr-2"></i>
+                Logout
               </Button>
             </div>
           </div>
