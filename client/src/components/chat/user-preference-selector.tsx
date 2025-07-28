@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
-import { apiRequest } from '@/lib/api';
+import { apiRequest } from '@/lib/queryClient';
 
 interface UserPreferenceSelectorProps {
   onPreferencesSelected: (preferences: {
