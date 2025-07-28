@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { SimpleChatInterface } from "@/components/chat/simple-chat-interface";
 import { apiRequest } from "@/lib/queryClient";
+import { authService } from "@/lib/auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LoadingScreen } from "@/components/ui/loading-screen";
@@ -30,7 +31,7 @@ export default function Onboarding() {
   const initUserMutation = useMutation({
     mutationFn: async () => {
       console.log('Initializing user session...');
-      const response = await apiRequest('POST', '/api/user/init', {});
+      const response = await authService.getAuthenticatedRequest('/api/user/status');
       const data = await response.json();
       console.log('User session initialized:', data);
       return data as UserStatus;
@@ -55,8 +56,12 @@ export default function Onboarding() {
 
   // Get user status
   const { data: userStatus, isLoading: isLoadingStatus } = useQuery<UserStatus>({
-    queryKey: ['/api/user/status', sessionId],
-    enabled: !!sessionId,
+    queryKey: ['/api/user/status'],
+    queryFn: async () => {
+      const response = await authService.getAuthenticatedRequest('/api/user/status');
+      return response.json();
+    },
+    enabled: authService.isAuthenticated(),
   });
 
   // Function to initialize user when "Let's Chat" is clicked
@@ -86,11 +91,11 @@ export default function Onboarding() {
     if (!sessionId) return;
     
     const handleOnboardingCompleted = () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/user/status', sessionId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user/status'] });
     };
 
     const handleRefreshUserStatus = () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/user/status', sessionId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user/status'] });
     };
 
     const handleMessagesLoaded = () => {

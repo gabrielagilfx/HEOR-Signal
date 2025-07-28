@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AuthModal } from '@/components/auth/auth-modal';
 import agilLogo from '@assets/Logo Primary_1753368301220.png';
 
 interface LandingPageProps {
@@ -7,6 +9,24 @@ interface LandingPageProps {
 }
 
 export function LandingPage({ onStartChat }: LandingPageProps) {
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+
+  const handleLoginClick = () => {
+    setAuthMode('login');
+    setShowAuthModal(true);
+  };
+
+  const handleRegisterClick = () => {
+    setAuthMode('register');
+    setShowAuthModal(true);
+  };
+
+  const handleAuthSuccess = () => {
+    // Redirect to dashboard or onboarding based on user status
+    window.location.href = '/dashboard';
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Header */}
@@ -25,6 +45,11 @@ export function LandingPage({ onStartChat }: LandingPageProps) {
                   AI-powered healthcare insights and regulatory monitoring
                 </p>
               </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Button variant="ghost" onClick={handleLoginClick}>
+                Sign In
+              </Button>
             </div>
           </div>
         </div>
@@ -183,7 +208,7 @@ export function LandingPage({ onStartChat }: LandingPageProps) {
               Let Hero help you set up your personalized HEOR dashboard
             </p>
             <Button 
-              onClick={onStartChat}
+              onClick={handleRegisterClick}
               size="lg"
               className="bg-white text-blue-600 hover:bg-gray-100 font-semibold px-8 py-4 text-lg rounded-lg shadow-lg transition-all duration-200 hover:shadow-xl"
             >
@@ -202,6 +227,14 @@ export function LandingPage({ onStartChat }: LandingPageProps) {
           </p>
         </div>
       </footer>
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={handleAuthSuccess}
+        initialMode={authMode}
+      />
     </div>
   );
 }
