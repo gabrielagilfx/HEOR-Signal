@@ -1,5 +1,5 @@
 import asyncio
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
@@ -14,6 +14,7 @@ router = APIRouter(prefix="/api/chat", tags=["chat"])
 class ChatRequest(BaseModel):
     message: str
     session_id: str
+    thread_id: Optional[str] = None
 
 class CategorySelectionRequest(BaseModel):
     categories: List[str]
@@ -37,10 +38,19 @@ async def send_message(
         # Get or create user
         user = await user_service.create_or_get_user(db, request.session_id)
         
-        # Get user's thread
-        thread = db.query(Thread).filter(Thread.user_id == user.id).first()
-        if not thread:
-            raise HTTPException(status_code=500, detail="No thread found for user")
+        # Get user's thread (either specific thread or default)
+        if request.thread_id:
+            thread = db.query(Thread).filter(
+                Thread.id == request.thread_id,
+                Thread.user_id == user.id
+            ).first()
+            if not thread:
+                raise HTTPException(status_code=404, detail="Thread not found")
+        else:
+            # Use default thread for backward compatibility
+            thread = db.query(Thread).filter(Thread.user_id == user.id).first()
+            if not thread:
+                raise HTTPException(status_code=500, detail="No thread found for user")
         
         # Save user message
         import uuid

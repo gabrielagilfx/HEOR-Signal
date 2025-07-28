@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { SimpleChatInterface } from "@/components/chat/simple-chat-interface";
+import { NewChatManager } from "@/components/chat/new-chat-manager";
 import { Register } from "@/components/auth/register";
 import { Login } from "@/components/auth/login";
 import { apiRequest } from "@/lib/queryClient";
@@ -28,7 +29,9 @@ export default function Onboarding() {
   // Check URL parameters to see if this is a new session request
   const urlParams = new URLSearchParams(window.location.search);
   const isNewSession = urlParams.get('new_session') === 'true';
+  const isNewChat = urlParams.get('new_chat') === 'true';
   const [hasStartedChat, setHasStartedChat] = useState<boolean>(isNewSession);
+  const [showNewChat, setShowNewChat] = useState<boolean>(isNewChat);
   
   const queryClient = useQueryClient();
 
@@ -143,6 +146,16 @@ export default function Onboarding() {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, [isNewSession, hasStartedChat]);
+
+  // Handle new chat parameter
+  useEffect(() => {
+    if (isNewChat && !showNewChat) {
+      // For new chat, we need to show the new chat interface
+      setShowNewChat(true);
+      // Clean up URL parameter
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [isNewChat, showNewChat]);
 
   useEffect(() => {
     // Listen for onboarding completion events only when we have a session
@@ -260,6 +273,18 @@ export default function Onboarding() {
 
   // Check if dashboard should be shown (both onboarding completed and expertise set)
   const shouldShowDashboard = userStatus?.onboarding_completed && userStatus?.preference_expertise;
+
+  // Show new chat manager if requested
+  if (showNewChat) {
+    return (
+      <NewChatManager 
+        onBack={() => {
+          setShowNewChat(false);
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden">
