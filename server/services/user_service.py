@@ -4,10 +4,12 @@ from sqlalchemy.orm import Session
 from database import User
 from models.thread import Thread
 from services.openai_service import OpenAIService
+from services.auth_service import AuthService
 
 class UserService:
     def __init__(self):
         self.openai_service = OpenAIService()
+        self.auth_service = AuthService()
     
     async def create_or_get_user(self, db: Session, session_id: Optional[str] = None) -> User:
         """Create a new user or retrieve existing one"""
@@ -21,7 +23,7 @@ class UserService:
             assistant_id = await self.openai_service.create_assistant()
             openai_thread_id = await self.openai_service.create_thread()
             
-            # Create user first
+            # Create user first (session-based user without email/password)
             user = User(
                 session_id=session_id,
                 assistant_id=assistant_id,

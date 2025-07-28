@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { SimpleChatInterface } from "@/components/chat/simple-chat-interface";
+import { Register } from "@/components/auth/register";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,6 +19,7 @@ export default function Onboarding() {
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [showInitialLoader, setShowInitialLoader] = useState<boolean>(true);
   const [retryCount, setRetryCount] = useState<number>(0);
+  const [showRegister, setShowRegister] = useState<boolean>(false);
   
   // Check URL parameters to see if this is a new session request
   const urlParams = new URLSearchParams(window.location.search);
@@ -30,7 +32,9 @@ export default function Onboarding() {
   const initUserMutation = useMutation({
     mutationFn: async () => {
       console.log('Initializing user session...');
-      const response = await apiRequest('POST', '/api/user/init', {});
+      const response = await apiRequest('POST', '/api/user/init', {
+        session_id: sessionId
+      });
       const data = await response.json();
       console.log('User session initialized:', data);
       return data as UserStatus;
@@ -61,16 +65,25 @@ export default function Onboarding() {
 
   // Function to initialize user when "Let's Chat" is clicked
   const handleStartChat = () => {
+    setShowRegister(true);
+  };
+
+  // Function to handle successful registration
+  const handleRegisterSuccess = (newSessionId: string) => {
+    setSessionId(newSessionId);
+    setShowRegister(false);
     setHasStartedChat(true);
-    if (!isInitialized && !initUserMutation.isPending) {
-      console.log('Starting user initialization...');
-      initUserMutation.mutate();
-    }
+    setIsInitialized(true);
+  };
+
+  // Function to go back to landing page from register
+  const handleBackToLanding = () => {
+    setShowRegister(false);
   };
 
   useEffect(() => {
-    // Only initialize user if they have started chat
-    if (hasStartedChat && !isInitialized && !initUserMutation.isPending) {
+    // Only initialize user if they have started chat and have a session ID
+    if (hasStartedChat && sessionId && !isInitialized && !initUserMutation.isPending) {
       console.log('Starting user initialization...');
       initUserMutation.mutate();
       
@@ -79,7 +92,7 @@ export default function Onboarding() {
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     }
-  }, [hasStartedChat, isInitialized, initUserMutation, isNewSession]);
+  }, [hasStartedChat, sessionId, isInitialized, initUserMutation, isNewSession]);
 
   useEffect(() => {
     // Listen for onboarding completion events only when we have a session
@@ -123,6 +136,16 @@ export default function Onboarding() {
       return () => clearTimeout(fallbackTimer);
     }
   }, [userStatus, isLoadingStatus, showInitialLoader]);
+
+  // Show register component when user clicks "Let's Chat"
+  if (showRegister) {
+    return (
+      <Register 
+        onRegisterSuccess={handleRegisterSuccess}
+        onBackToLanding={handleBackToLanding}
+      />
+    );
+  }
 
   // Show loading screen only when chat has started and we're initializing
   if (hasStartedChat && (showInitialLoader || initUserMutation.isPending || isLoadingStatus || !sessionId)) {
