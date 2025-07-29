@@ -58,7 +58,7 @@ export function RegisterComponent({ onRegisterSuccess, onBackToLanding, onSwitch
                 <img 
                   src={agilLogo} 
                   alt="HEOR Signal" 
-                  className="h-12 w-12 object-contain" 
+                  className="h-16 w-16 object-contain" 
                 />
               </div>
               
