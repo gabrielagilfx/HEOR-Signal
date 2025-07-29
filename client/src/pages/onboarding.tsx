@@ -30,15 +30,9 @@ export default function Onboarding() {
   const initUserMutation = useMutation({
     mutationFn: async () => {
       console.log('Initializing user session...');
-      // For new sessions, don't pass existing session ID
-      const existingSessionId = isNewSession ? null : localStorage.getItem('heor_session_id');
-      const response = await apiRequest('POST', '/api/user/init', {
-        session_id: existingSessionId
-      });
+      const response = await apiRequest('POST', '/api/user/init', {});
       const data = await response.json();
       console.log('User session initialized:', data);
-      // Store session ID in localStorage for persistence
-      localStorage.setItem('heor_session_id', data.session_id);
       return data as UserStatus;
     },
     retry: (failureCount, error) => {

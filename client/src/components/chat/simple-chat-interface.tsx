@@ -192,9 +192,9 @@ export function SimpleChatInterface({ sessionId, userStatus, onStartChat, hasSta
             // Force a user status refresh first, then navigate to dashboard
             window.dispatchEvent(new CustomEvent('refresh-user-status'));
             
-            // Give time for status refresh, then navigate to dashboard
+            // Give time for status refresh, then navigate to dashboard with session ID
             setTimeout(() => {
-              window.location.href = '/dashboard';
+              window.location.href = `/dashboard?session_id=${sessionId}`;
             }, 500);
           }, 3000);
         }
