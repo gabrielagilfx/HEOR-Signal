@@ -10,7 +10,7 @@ from services.user_service import UserService
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 class RegisterRequest(BaseModel):
-    name: str
+    username: str
     email: EmailStr
     password: str
 
@@ -26,7 +26,7 @@ class AuthResponse(BaseModel):
     email: str
     onboarding_completed: bool
     selected_categories: list
-    preference_expertise: str = None
+    preference_expertise: str | None = None
 
 user_service = UserService()
 
@@ -61,7 +61,7 @@ async def register_user(
         # Create user with authenticated session
         user = await user_service.create_authenticated_user(
             db=db,
-            name=request.name,
+            name=request.username,
             email=request.email,
             password=hashed_password
         )
@@ -73,7 +73,7 @@ async def register_user(
             "name": user.name,
             "email": user.email,
             "onboarding_completed": bool(user.onboarding_completed),
-            "selected_categories": list(user.selected_categories) if user.selected_categories else [],
+            "selected_categories": user.selected_categories if user.selected_categories else [],
             "preference_expertise": getattr(user, 'preference_expertise', None)
         }
         
@@ -94,14 +94,14 @@ async def login_user(
     try:
         # Find user by email
         user = db.query(User).filter(User.email == request.email).first()
-        if not user or not user.password:
+        if not user or user.password is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid email or password"
             )
         
         # Verify password
-        if not verify_password(request.password, user.password):
+        if not verify_password(request.password, str(user.password)):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid email or password"
@@ -117,7 +117,7 @@ async def login_user(
             "name": user.name,
             "email": user.email,
             "onboarding_completed": bool(user.onboarding_completed),
-            "selected_categories": list(user.selected_categories) if user.selected_categories else [],
+            "selected_categories": user.selected_categories if user.selected_categories else [],
             "preference_expertise": getattr(user, 'preference_expertise', None)
         }
         

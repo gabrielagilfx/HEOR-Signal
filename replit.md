@@ -21,6 +21,14 @@ The application is built with a **Python FastAPI backend** and React TypeScript 
 
 ## Recent Changes
 
+### July 29, 2025 - Authentication UI Enhancements + Registration Fix
+- **Account Switching Integration**: Moved account switching messages directly into login and register components
+- **Enhanced Back Button**: Improved "Back to Home" button with proper ArrowLeft icon, glass-morphism styling, and hover effects
+- **Logo Size Consistency**: Standardized logo size to 64px (h-16 w-16) across both authentication components
+- **Registration Fix**: Fixed critical backend issue where registration endpoint expected `name` field but frontend sent `username` - updated backend to accept `username` parameter
+- **Authentication Flow**: Registration now works correctly with proper field mapping and validation
+- **Status**: ✅ FULLY FUNCTIONAL - Authentication system working perfectly with clean UI and proper backend integration
+
 ### July 24, 2025 - Professional Landing Page + Deferred Initialization
 - **Landing Page**: Created professional landing page component with clean design showcasing HEOR Signal features
 - **User Flow**: Landing page now appears first without any backend initialization

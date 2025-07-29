@@ -5,7 +5,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/auth-context";
-import { User, Mail, Lock, ArrowRight, Sparkles, Globe, Brain, ArrowLeft } from "lucide-react";
+import {
+  User,
+  Mail,
+  Lock,
+  ArrowRight,
+  Sparkles,
+  Globe,
+  Brain,
+  ArrowLeft,
+} from "lucide-react";
 import agilLogo from "@assets/Logo Primary_1753368301220.png";
 
 interface RegisterComponentProps {
@@ -14,7 +23,11 @@ interface RegisterComponentProps {
   onSwitchToLogin: () => void;
 }
 
-export function RegisterComponent({ onRegisterSuccess, onBackToLanding, onSwitchToLogin }: RegisterComponentProps) {
+export function RegisterComponent({
+  onRegisterSuccess,
+  onBackToLanding,
+  onSwitchToLogin,
+}: RegisterComponentProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,7 +46,7 @@ export function RegisterComponent({ onRegisterSuccess, onBackToLanding, onSwitch
         await register(name, email, password);
         onRegisterSuccess({ success: true });
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Registration failed');
+        setError(err instanceof Error ? err.message : "Registration failed");
       }
     }
   };
@@ -46,27 +59,28 @@ export function RegisterComponent({ onRegisterSuccess, onBackToLanding, onSwitch
           <div className="w-full max-w-md space-y-8">
             {/* Header */}
             <div className="text-center">
-              <button 
+              <button
                 onClick={onBackToLanding}
                 className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-white/60 dark:hover:bg-slate-800/60 rounded-lg transition-all duration-200 mb-8 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/50"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Back to Home
               </button>
-              
+
               <div className="flex items-center justify-center mb-6">
-                <img 
-                  src={agilLogo} 
-                  alt="HEOR Signal" 
-                  className="h-16 w-16 object-contain" 
+                <img
+                  src={agilLogo}
+                  alt="HEOR Signal"
+                  className="h-16 w-16 object-contain"
                 />
               </div>
-              
+
               <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
                 Join HEOR Signal
               </h1>
               <p className="text-slate-600 dark:text-slate-400">
-                Create your account to access personalized healthcare intelligence
+                Create your account to access personalized healthcare
+                intelligence
               </p>
             </div>
 
@@ -75,7 +89,10 @@ export function RegisterComponent({ onRegisterSuccess, onBackToLanding, onSwitch
               <CardContent className="p-8">
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="space-y-2">
-                    <Label htmlFor="name" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    <Label
+                      htmlFor="name"
+                      className="text-sm font-medium text-slate-700 dark:text-slate-300"
+                    >
                       Full name
                     </Label>
                     <div className="relative">
@@ -91,9 +108,12 @@ export function RegisterComponent({ onRegisterSuccess, onBackToLanding, onSwitch
                       />
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    <Label
+                      htmlFor="email"
+                      className="text-sm font-medium text-slate-700 dark:text-slate-300"
+                    >
                       Email address
                     </Label>
                     <div className="relative">
@@ -109,9 +129,12 @@ export function RegisterComponent({ onRegisterSuccess, onBackToLanding, onSwitch
                       />
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <Label htmlFor="password" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    <Label
+                      htmlFor="password"
+                      className="text-sm font-medium text-slate-700 dark:text-slate-300"
+                    >
                       Password
                     </Label>
                     <div className="relative">
@@ -127,9 +150,12 @@ export function RegisterComponent({ onRegisterSuccess, onBackToLanding, onSwitch
                       />
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <Label htmlFor="confirmPassword" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    <Label
+                      htmlFor="confirmPassword"
+                      className="text-sm font-medium text-slate-700 dark:text-slate-300"
+                    >
                       Confirm password
                     </Label>
                     <div className="relative">
@@ -145,19 +171,28 @@ export function RegisterComponent({ onRegisterSuccess, onBackToLanding, onSwitch
                       />
                     </div>
                   </div>
-                  
+
                   {error && (
-                    <Alert variant="destructive" className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20">
+                    <Alert
+                      variant="destructive"
+                      className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20"
+                    >
                       <AlertDescription className="text-red-600 dark:text-red-400">
                         {error}
                       </AlertDescription>
                     </Alert>
                   )}
-                  
-                  <Button 
-                    type="submit" 
+
+                  <Button
+                    type="submit"
                     className="w-full h-12 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200"
-                    disabled={isLoading || !name || !email || !password || !confirmPassword}
+                    disabled={
+                      isLoading ||
+                      !name ||
+                      !email ||
+                      !password ||
+                      !confirmPassword
+                    }
                   >
                     {isLoading ? (
                       <div className="flex items-center">
@@ -172,12 +207,12 @@ export function RegisterComponent({ onRegisterSuccess, onBackToLanding, onSwitch
                     )}
                   </Button>
                 </form>
-                
+
                 {/* Account Link */}
                 <div className="text-center mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
                   <p className="text-slate-600 dark:text-slate-400">
                     Already have an account?{" "}
-                    <button 
+                    <button
                       onClick={onSwitchToLogin}
                       className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium transition-colors"
                     >
@@ -198,38 +233,50 @@ export function RegisterComponent({ onRegisterSuccess, onBackToLanding, onSwitch
                 Unlock Healthcare Intelligence
               </h2>
               <p className="text-xl text-emerald-100 leading-relaxed">
-                Join thousands of healthcare professionals who trust HEOR Signal for critical insights and regulatory monitoring.
+                Join thousands of healthcare professionals who trust HEOR Signal
+                for critical insights and regulatory monitoring.
               </p>
             </div>
-            
+
             <div className="grid gap-6 text-left">
               <div className="flex items-start space-x-4">
                 <div className="bg-white/10 rounded-lg p-2">
                   <Sparkles className="h-6 w-6" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg">Personalized Experience</h3>
-                  <p className="text-emerald-100">Tailored insights based on your specific healthcare expertise and interests</p>
+                  <h3 className="font-semibold text-lg">
+                    Personalized Experience
+                  </h3>
+                  <p className="text-emerald-100">
+                    Tailored insights based on your specific healthcare
+                    expertise and interests
+                  </p>
                 </div>
               </div>
-              
+
               <div className="flex items-start space-x-4">
                 <div className="bg-white/10 rounded-lg p-2">
                   <Globe className="h-6 w-6" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg">Global Coverage</h3>
-                  <p className="text-emerald-100">Access regulatory updates and clinical data from sources worldwide</p>
+                  <p className="text-emerald-100">
+                    Access regulatory updates and clinical data from sources
+                    worldwide
+                  </p>
                 </div>
               </div>
-              
+
               <div className="flex items-start space-x-4">
                 <div className="bg-white/10 rounded-lg p-2">
                   <Brain className="h-6 w-6" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg">AI-Driven Analysis</h3>
-                  <p className="text-emerald-100">Advanced algorithms deliver relevant insights to accelerate your research</p>
+                  <p className="text-emerald-100">
+                    Advanced algorithms deliver relevant insights to accelerate
+                    your research
+                  </p>
                 </div>
               </div>
             </div>
