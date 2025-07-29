@@ -35,7 +35,8 @@ async def health_check():
     try:
         db = next(get_db())
         # Try a simple query to test connection
-        db.execute("SELECT 1")
+        from sqlalchemy import text
+        db.execute(text("SELECT 1"))
         db.close()
         db_status = "healthy"
     except Exception as e:
@@ -49,10 +50,21 @@ async def health_check():
 
 # Serve static files for production, proxy to Vite in development
 if os.path.exists("../dist/public"):
-    app.mount("/", StaticFiles(directory="../dist/public", html=True), name="static")
+    # Mount static assets (CSS, JS, images) at /assets
+    app.mount("/assets", StaticFiles(directory="../dist/public/assets"), name="assets")
     
+    # Serve the SPA for all non-API routes
     @app.get("/{path:path}")
     async def serve_spa(path: str):
+        # If it's an API route, let FastAPI handle it normally
+        if path.startswith("api/"):
+            raise HTTPException(status_code=404, detail="API endpoint not found")
+        # For all other routes, serve the React app
+        return FileResponse("../dist/public/index.html")
+    
+    # Serve index.html for root path  
+    @app.get("/")
+    async def serve_index():
         return FileResponse("../dist/public/index.html")
 else:
     @app.get("/")
