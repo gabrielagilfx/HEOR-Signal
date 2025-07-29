@@ -96,8 +96,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return await response.json();
     },
     onSuccess: (data) => {
-      setUser(data.user);
+      console.log('Login success data:', data);
+      // Map backend response to frontend format
+      const user = {
+        id: data.user_id,
+        email: data.email,
+        username: data.name,
+        created_at: new Date().toISOString()
+      };
+      setUser(user);
       setSessionId(data.session_id);
+      
+      // Store onboarding status for the userStatus
+      const userStatusData = {
+        session_id: data.session_id,
+        onboarding_completed: data.onboarding_completed,
+        selected_categories: data.selected_categories || [],
+        preference_expertise: data.preference_expertise
+      };
+      queryClient.setQueryData(['/api/user/status', data.session_id], userStatusData);
       toast({
         title: 'Welcome back!',
         description: 'You have been logged in successfully.',
@@ -123,8 +140,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return await response.json();
     },
     onSuccess: (data) => {
-      setUser(data.user);
+      console.log('Register success data:', data);
+      // Map backend response to frontend format
+      const user = {
+        id: data.user_id,
+        email: data.email,
+        username: data.name,
+        created_at: new Date().toISOString()
+      };
+      setUser(user);
       setSessionId(data.session_id);
+      
+      // Store onboarding status for the userStatus
+      const userStatusData = {
+        session_id: data.session_id,
+        onboarding_completed: data.onboarding_completed,
+        selected_categories: data.selected_categories || [],
+        preference_expertise: data.preference_expertise
+      };
+      queryClient.setQueryData(['/api/user/status', data.session_id], userStatusData);
       toast({
         title: 'Welcome to HEOR Signal!',
         description: 'Your account has been created successfully.',

@@ -24,7 +24,10 @@ export function LoginComponent({ onLoginSuccess, onBackToLanding }: LoginCompone
       try {
         setError(null);
         await login(email, password);
-        onLoginSuccess({ success: true });
+        // Give time for context to update, then redirect
+        setTimeout(() => {
+          onLoginSuccess({ success: true, onboarding_completed: true });
+        }, 200);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Login failed');
       }

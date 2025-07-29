@@ -25,8 +25,10 @@ export default function AuthPage() {
   }, [isAuthenticated, userStatus, setLocation]);
 
   const handleAuthSuccess = (userData: any) => {
-    // Auth context will handle the redirect automatically
-    // No need for manual navigation here
+    // Manual redirect after successful auth since context may not update immediately
+    setTimeout(() => {
+      setLocation('/dashboard'); // All authenticated users go to dashboard
+    }, 100);
   };
 
   const handleBackToLanding = () => {
