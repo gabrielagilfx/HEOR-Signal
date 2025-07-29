@@ -1,12 +1,11 @@
 from typing import Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, EmailStr
 import bcrypt
 from database import get_db
 from models.user import User
 from services.user_service import UserService
-from middleware.session_middleware import session_manager, get_current_user
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -44,7 +43,6 @@ def verify_password(password: str, hashed: str) -> bool:
 @router.post("/register", response_model=Dict[str, Any])
 async def register_user(
     request: RegisterRequest,
-    response: Response,
     db: Session = Depends(get_db)
 ):
     """Register a new user"""
@@ -68,17 +66,15 @@ async def register_user(
             password=hashed_password
         )
         
-        # Set session cookie
-        session_manager.create_session(response, str(user.id), str(user.session_id))
-        
         return {
             "success": True,
             "user_id": str(user.id),
-            "name": str(user.name),
-            "email": str(user.email),
+            "session_id": user.session_id,
+            "name": user.name,
+            "email": user.email,
             "onboarding_completed": bool(user.onboarding_completed),
             "selected_categories": list(user.selected_categories) if user.selected_categories else [],
-            "preference_expertise": str(user.preference_expertise) if user.preference_expertise else None
+            "preference_expertise": getattr(user, 'preference_expertise', None)
         }
         
     except HTTPException:
@@ -92,21 +88,20 @@ async def register_user(
 @router.post("/login", response_model=Dict[str, Any])
 async def login_user(
     request: LoginRequest,
-    response: Response,
     db: Session = Depends(get_db)
 ):
     """Login user"""
     try:
         # Find user by email
         user = db.query(User).filter(User.email == request.email).first()
-        if not user or not str(user.password):
+        if not user or not user.password:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid email or password"
             )
         
         # Verify password
-        if not verify_password(request.password, str(user.password)):
+        if not verify_password(request.password, user.password):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid email or password"
@@ -115,17 +110,15 @@ async def login_user(
         # Update session for login
         user = await user_service.refresh_user_session(db, str(user.id))
         
-        # Set session cookie
-        session_manager.create_session(response, str(user.id), str(user.session_id))
-        
         return {
             "success": True,
             "user_id": str(user.id),
-            "name": str(user.name),
-            "email": str(user.email),
+            "session_id": user.session_id,
+            "name": user.name,
+            "email": user.email,
             "onboarding_completed": bool(user.onboarding_completed),
             "selected_categories": list(user.selected_categories) if user.selected_categories else [],
-            "preference_expertise": str(user.preference_expertise) if user.preference_expertise else None
+            "preference_expertise": getattr(user, 'preference_expertise', None)
         }
         
     except HTTPException:
@@ -137,31 +130,6 @@ async def login_user(
         )
 
 @router.post("/logout", response_model=Dict[str, Any])
-async def logout_user(response: Response):
-    """Logout user and clear session cookie"""
-    session_manager.clear_session(response)
+async def logout_user():
+    """Logout user (for future session management)"""
     return {"success": True, "message": "Logged out successfully"}
-
-@router.get("/me", response_model=Dict[str, Any])
-async def get_current_user_info(
-    request: Request,
-    db: Session = Depends(get_db)
-):
-    """Get current authenticated user information"""
-    user = get_current_user(request, db)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated"
-        )
-    
-    return {
-        "success": True,
-        "user_id": str(user.id),
-        "name": str(user.name),
-        "email": str(user.email),
-        "onboarding_completed": bool(user.onboarding_completed),
-        "selected_categories": list(user.selected_categories) if user.selected_categories else [],
-        "preference_expertise": str(user.preference_expertise) if user.preference_expertise else None,
-        "session_id": str(user.session_id)  # Still needed for internal API calls
-    }
