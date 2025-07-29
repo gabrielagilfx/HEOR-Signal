@@ -60,7 +60,8 @@ const MOCK_NEWS: Record<string, NewsItem[]> = {
       source: "FDA Drug Approvals",
       date: "2 hours ago",
       category: "regulatory",
-      isNew: true,
+      is_new: true,
+      relevance_score: 0.95,
       url: "#"
     },
     {
@@ -70,6 +71,8 @@ const MOCK_NEWS: Record<string, NewsItem[]> = {
       source: "FDA Safety Alerts",
       date: "4 hours ago",
       category: "regulatory",
+      is_new: false,
+      relevance_score: 0.88,
       url: "#"
     },
     {
@@ -79,6 +82,8 @@ const MOCK_NEWS: Record<string, NewsItem[]> = {
       source: "FDA Labeling Updates",
       date: "1 day ago", 
       category: "regulatory",
+      is_new: false,
+      relevance_score: 0.82,
       url: "#"
     }
   ],
@@ -90,7 +95,8 @@ const MOCK_NEWS: Record<string, NewsItem[]> = {
       source: "ClinicalTrials.gov",
       date: "3 hours ago",
       category: "clinical",
-      isNew: true,
+      is_new: true,
+      relevance_score: 0.92,
       url: "#"
     },
     {
@@ -198,10 +204,16 @@ export default function HEORDashboard({ selectedCategories, sessionId }: Dashboa
     if (!newsData) return 0;
     let count = 0;
     selectedCategories.forEach(category => {
-      const items = newsData[category as keyof typeof newsData] || [];
-      count += items.filter(item => item.is_new).length;
+      const items = newsData[category as keyof typeof newsData];
+      if (Array.isArray(items)) {
+        count += items.filter(item => item.is_new).length;
+      }
     });
     return count;
+  };
+
+  const clearError = () => {
+    // Function to clear error - would be implemented if needed
   };
 
   const handleNewSession = () => {
@@ -351,7 +363,8 @@ export default function HEORDashboard({ selectedCategories, sessionId }: Dashboa
         <div className="space-y-8">
           {selectedCategories.map((categoryId) => {
             const config = CATEGORY_CONFIGS[categoryId as keyof typeof CATEGORY_CONFIGS];
-            const newsItems = newsData?.[categoryId as keyof typeof newsData] || [];
+            const newsItems = newsData?.[categoryId as keyof typeof newsData];
+            const items = Array.isArray(newsItems) ? newsItems : [];
             
             if (!config) return null;
 
@@ -366,12 +379,12 @@ export default function HEORDashboard({ selectedCategories, sessionId }: Dashboa
                       <div>
                         <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{config.name}</h2>
                         <p className="text-sm text-gray-600 dark:text-gray-400 font-normal">
-                          {newsItems.length} updates available
+                          {items.length} updates available
                         </p>
                       </div>
                     </CardTitle>
                     
-                    {newsItems.some(item => item.is_new) && (
+                    {items.some(item => item.is_new) && (
                       <Badge className={`${config.badgeColor} border-0`}>
                         <i className="fas fa-star mr-1"></i>
                         New Updates
@@ -391,7 +404,7 @@ export default function HEORDashboard({ selectedCategories, sessionId }: Dashboa
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                      {newsItems.map((item, index) => (
+                      {items.map((item, index) => (
                         <div key={item.id} className="bg-white dark:bg-gray-800 rounded-lg p-5 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">

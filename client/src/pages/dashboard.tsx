@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { HEORDashboard } from "@/components/dashboard/heor-dashboard";
+import HEORDashboard from "@/components/dashboard/heor-dashboard";
 import { Card, CardContent } from "@/components/ui/card";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import { useAuth } from "@/contexts/auth-context";
