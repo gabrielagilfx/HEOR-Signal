@@ -18,7 +18,7 @@ export default function ChatPage() {
   // Redirect if not authenticated
   useEffect(() => {
     if (!isAuthenticated && !isLoading) {
-      setLocation('/auth?mode=register');
+      setLocation('/auth');
     }
   }, [isAuthenticated, isLoading, setLocation]);
 
