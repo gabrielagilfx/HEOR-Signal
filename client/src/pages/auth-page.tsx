@@ -37,17 +37,17 @@ export default function AuthPage() {
 
   if (isLogin) {
     return (
-      <div>
+      <div className="relative">
         <LoginComponent 
           onLoginSuccess={handleAuthSuccess}
           onBackToLanding={handleBackToLanding}
         />
-        <div className="text-center mt-4 pb-6">
-          <p className="text-gray-600 dark:text-gray-400">
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 lg:left-1/4 lg:transform-none">
+          <p className="text-slate-600 dark:text-slate-400 text-center">
             Don't have an account?{" "}
             <button 
               onClick={() => setIsLogin(false)}
-              className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
             >
               Sign up here
             </button>
@@ -58,17 +58,17 @@ export default function AuthPage() {
   }
 
   return (
-    <div>
+    <div className="relative">
       <RegisterComponent 
         onRegisterSuccess={handleAuthSuccess}
         onBackToLanding={handleBackToLanding}
       />
-      <div className="text-center mt-4 pb-6">
-        <p className="text-gray-600 dark:text-gray-400">
+      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 lg:left-1/4 lg:transform-none">
+        <p className="text-slate-600 dark:text-slate-400 text-center">
           Already have an account?{" "}
           <button 
             onClick={() => setIsLogin(true)}
-            className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+            className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium transition-colors"
           >
             Sign in here
           </button>
