@@ -1,6 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLocation } from 'wouter';
+import { useEffect } from 'react';
+import { SessionManager } from '@/lib/session';
 import agilLogo from '@assets/Logo Primary_1753368301220.png';
 
 interface LandingPageProps {
@@ -9,6 +11,18 @@ interface LandingPageProps {
 
 export function LandingPage({ onStartChat }: LandingPageProps) {
   const [, setLocation] = useLocation();
+
+  // Check if user is already authenticated
+  useEffect(() => {
+    if (SessionManager.isAuthenticated()) {
+      const session = SessionManager.getSession();
+      if (session?.onboarding_completed) {
+        setLocation('/dashboard');
+      } else {
+        setLocation('/chat');
+      }
+    }
+  }, [setLocation]);
 
   const handleLogin = () => {
     setLocation('/auth?mode=login');
