@@ -5,6 +5,7 @@ import { MessageBubble } from "./message-bubble";
 import { TypingIndicator } from "./typing-indicator";
 import { CategorySelection } from "./category-selection";
 import { LoadingScreen } from "@/components/ui/loading-screen";
+import { LandingPage } from "@/components/landing/landing-page";
 import { apiRequest } from "@/lib/queryClient";
 import type { ChatMessage } from "@/types/chat";
 import agilLogo from "@assets/Logo Primary_1753368301220.png";
@@ -50,16 +51,23 @@ export function SimpleChatInterface({ sessionId, userStatus, onStartChat, hasSta
   const [showCategoryLoader, setShowCategoryLoader] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(userStatus?.selected_categories || []);
   const [isNavigatingToDashboard, setIsNavigatingToDashboard] = useState(false);
+  const [showLandingPage, setShowLandingPage] = useState(true);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-
+  // Handler for starting chat from landing page
+  const handleStartChat = () => {
+    setShowLandingPage(false);
+    if (onStartChat) {
+      onStartChat();
+    }
+  };
 
   // Handler for new session - navigate to home page
   const handleNewSession = () => {
-    // Navigate to home page without parameters
-    window.location.href = '/';
+    // Navigate to home page with new session parameter
+    window.location.href = '/?new_session=true';
   };
 
 
@@ -280,7 +288,10 @@ To get started, please select the data categories you'd like to monitor.`,
 
 
 
-
+  // Show landing page first (only if chat hasn't started)
+  if (showLandingPage && !hasStartedChat) {
+    return <LandingPage onStartChat={handleStartChat} />;
+  }
 
   // Show dashboard loading screen during transition
   if (isNavigatingToDashboard) {

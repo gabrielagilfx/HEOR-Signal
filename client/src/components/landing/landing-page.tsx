@@ -1,14 +1,22 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useLocation } from 'wouter';
 import agilLogo from '@assets/Logo Primary_1753368301220.png';
 
 interface LandingPageProps {
   onStartChat: () => void;
-  onShowLogin: () => void;
-  onShowRegister: () => void;
 }
 
-export function LandingPage({ onStartChat, onShowLogin, onShowRegister }: LandingPageProps) {
+export function LandingPage({ onStartChat }: LandingPageProps) {
+  const [, setLocation] = useLocation();
+
+  const handleLogin = () => {
+    setLocation('/auth?mode=login');
+  };
+
+  const handleRegister = () => {
+    setLocation('/auth?mode=register');
+  };
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Header */}
@@ -29,14 +37,10 @@ export function LandingPage({ onStartChat, onShowLogin, onShowRegister }: Landin
               </div>
             </div>
             
-            <div className="flex items-center space-x-3">
-              <Button onClick={onShowLogin} variant="outline" size="sm">
+            <div className="flex items-center">
+              <Button onClick={handleLogin} variant="outline" size="sm">
                 <i className="fas fa-sign-in-alt mr-2"></i>
                 Sign In
-              </Button>
-              <Button onClick={onShowRegister} variant="default" size="sm">
-                <i className="fas fa-user-plus mr-2"></i>
-                Sign Up
               </Button>
             </div>
           </div>
@@ -196,12 +200,12 @@ export function LandingPage({ onStartChat, onShowLogin, onShowRegister }: Landin
               Let Hero help you set up your personalized HEOR dashboard
             </p>
             <Button 
-              onClick={onStartChat}
+              onClick={handleRegister}
               size="lg"
               className="bg-white text-blue-600 hover:bg-gray-100 font-semibold px-8 py-4 text-lg rounded-lg shadow-lg transition-all duration-200 hover:shadow-xl"
             >
-              <i className="fas fa-comments mr-3"></i>
-              Let's Chat
+              <i className="fas fa-user-plus mr-3"></i>
+              Get Started
             </Button>
           </div>
         </div>
