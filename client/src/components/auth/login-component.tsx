@@ -11,9 +11,10 @@ import agilLogo from "@assets/Logo Primary_1753368301220.png";
 interface LoginComponentProps {
   onLoginSuccess: (userData: any) => void;
   onBackToLanding: () => void;
+  onSwitchToRegister: () => void;
 }
 
-export function LoginComponent({ onLoginSuccess, onBackToLanding }: LoginComponentProps) {
+export function LoginComponent({ onLoginSuccess, onBackToLanding, onSwitchToRegister }: LoginComponentProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { login, isLoading } = useAuth();
@@ -132,6 +133,19 @@ export function LoginComponent({ onLoginSuccess, onBackToLanding }: LoginCompone
                     )}
                   </Button>
                 </form>
+                
+                {/* Account Link */}
+                <div className="text-center mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
+                  <p className="text-slate-600 dark:text-slate-400">
+                    Don't have an account?{" "}
+                    <button 
+                      onClick={onSwitchToRegister}
+                      className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
+                    >
+                      Sign up here
+                    </button>
+                  </p>
+                </div>
               </CardContent>
             </Card>
           </div>

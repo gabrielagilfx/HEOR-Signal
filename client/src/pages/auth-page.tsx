@@ -37,43 +37,19 @@ export default function AuthPage() {
 
   if (isLogin) {
     return (
-      <div className="relative">
-        <LoginComponent 
-          onLoginSuccess={handleAuthSuccess}
-          onBackToLanding={handleBackToLanding}
-        />
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 lg:left-1/4 lg:transform-none">
-          <p className="text-slate-600 dark:text-slate-400 text-center">
-            Don't have an account?{" "}
-            <button 
-              onClick={() => setIsLogin(false)}
-              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
-            >
-              Sign up here
-            </button>
-          </p>
-        </div>
-      </div>
+      <LoginComponent 
+        onLoginSuccess={handleAuthSuccess}
+        onBackToLanding={handleBackToLanding}
+        onSwitchToRegister={() => setIsLogin(false)}
+      />
     );
   }
 
   return (
-    <div className="relative">
-      <RegisterComponent 
-        onRegisterSuccess={handleAuthSuccess}
-        onBackToLanding={handleBackToLanding}
-      />
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 lg:left-1/4 lg:transform-none">
-        <p className="text-slate-600 dark:text-slate-400 text-center">
-          Already have an account?{" "}
-          <button 
-            onClick={() => setIsLogin(true)}
-            className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium transition-colors"
-          >
-            Sign in here
-          </button>
-        </p>
-      </div>
-    </div>
+    <RegisterComponent 
+      onRegisterSuccess={handleAuthSuccess}
+      onBackToLanding={handleBackToLanding}
+      onSwitchToLogin={() => setIsLogin(true)}
+    />
   );
 }
