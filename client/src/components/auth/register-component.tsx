@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/auth-context";
-import { User, Mail, Lock, ArrowRight, Sparkles, Globe, Brain } from "lucide-react";
+import { User, Mail, Lock, ArrowRight, Sparkles, Globe, Brain, ArrowLeft } from "lucide-react";
 import agilLogo from "@assets/Logo Primary_1753368301220.png";
 
 interface RegisterComponentProps {
@@ -48,9 +48,10 @@ export function RegisterComponent({ onRegisterSuccess, onBackToLanding, onSwitch
             <div className="text-center">
               <button 
                 onClick={onBackToLanding}
-                className="inline-flex items-center text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 mb-8 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-white/60 dark:hover:bg-slate-800/60 rounded-lg transition-all duration-200 mb-8 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/50"
               >
-                ← Back to Home
+                <ArrowLeft className="h-4 w-4" />
+                Back to Home
               </button>
               
               <div className="flex items-center justify-center mb-6">
