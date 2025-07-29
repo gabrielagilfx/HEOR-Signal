@@ -19,7 +19,7 @@ export default function Dashboard() {
   // Redirect if not authenticated
   useEffect(() => {
     if (!isAuthenticated && !isLoading) {
-      setLocation('/auth?mode=login');
+      setLocation('/auth');
     }
   }, [isAuthenticated, isLoading, setLocation]);
 

@@ -8,10 +8,8 @@ export default function AuthPage() {
   const [, setLocation] = useLocation();
   const { isAuthenticated, userStatus } = useAuth();
   
-  // Check URL params for mode
-  const urlParams = new URLSearchParams(window.location.search);
-  const mode = urlParams.get('mode');
-  const [isLogin, setIsLogin] = useState(mode !== 'register');
+  // Default to login mode, no URL parameters needed
+  const [isLogin, setIsLogin] = useState(true);
 
   // Redirect if already authenticated
   useEffect(() => {
