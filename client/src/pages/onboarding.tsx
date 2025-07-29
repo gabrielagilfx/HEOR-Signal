@@ -135,10 +135,10 @@ export default function Onboarding() {
   if (initUserMutation.error) {
     console.error('Init mutation error:', initUserMutation.error);
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-950/30 flex flex-col">
+      <div className="min-h-screen bg-background flex flex-col">
         <div className="flex-1 flex items-center justify-center">
-          <Card className="w-full max-w-md bg-white/70 dark:bg-slate-800/70 backdrop-blur-xl border border-white/30 dark:border-slate-700/50 shadow-2xl">
-            <CardContent className="p-8 text-center">
+          <Card className="w-full max-w-md">
+            <CardContent className="p-6 text-center">
               <div className="text-red-500 mb-4">
                 <i className="fas fa-exclamation-circle text-4xl"></i>
               </div>
@@ -165,7 +165,7 @@ export default function Onboarding() {
   const shouldShowDashboard = userStatus?.onboarding_completed && userStatus?.preference_expertise;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-950/30 flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden">
       <SimpleChatInterface 
         sessionId={sessionId} 
         userStatus={userStatus}

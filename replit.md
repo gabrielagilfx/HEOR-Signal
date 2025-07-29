@@ -21,16 +21,15 @@ The application is built with a **Python FastAPI backend** and React TypeScript 
 
 ## Recent Changes
 
-### July 29, 2025 - Comprehensive Design Enhancement + Clean URL Implementation
-- **Design System Upgrade**: Enhanced landing page, login, register, and onboarding components with sleek glass-morphism design
-- **Visual Consistency**: Implemented modern gradient backgrounds, backdrop blur effects, and enhanced typography across all components
-- **Interactive Elements**: Added hover animations, lift effects, and enhanced shadows to feature cards and buttons
-- **Professional Polish**: Upgraded form inputs with glass-morphism styling, enhanced focus states, and improved visual hierarchy
-- **Hero Sections**: Enhanced authentication hero sections with larger typography, improved spacing, and professional gradient backgrounds
+### July 29, 2025 - Authentication UI Enhancements + Registration Fix
+- **Account Switching Integration**: Moved account switching messages directly into login and register components
+- **Enhanced Back Button**: Improved "Back to Home" button with proper ArrowLeft icon, glass-morphism styling, and hover effects
+- **Logo Size Consistency**: Standardized logo size to 64px (h-16 w-16) across both authentication components
 - **Registration Fix**: Fixed critical backend issue where registration endpoint expected `name` field but frontend sent `username` - updated backend to accept `username` parameter
+- **Authentication Flow**: Registration now works correctly with proper field mapping and validation
 - **URL Parameter Elimination**: Removed session_id URL parameters from registration flow while maintaining the complete user journey: landing → register → onboarding → dashboard
-- **Unified Navigation**: All authentication flows now use parameter-free navigation with consistent session management through auth context
-- **Status**: ✅ FULLY FUNCTIONAL - Complete design system with enterprise-grade appearance, clean URLs, and seamless authentication flows
+- **Unified Navigation**: Both login and registration flows now navigate to /dashboard without URL parameters, using session management through auth context
+- **Status**: ✅ FULLY FUNCTIONAL - Authentication system working perfectly with clean UI, proper backend integration, and parameter-free navigation
 
 ### July 24, 2025 - Professional Landing Page + Deferred Initialization
 - **Landing Page**: Created professional landing page component with clean design showcasing HEOR Signal features
