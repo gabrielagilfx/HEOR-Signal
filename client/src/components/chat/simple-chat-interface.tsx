@@ -5,7 +5,6 @@ import { MessageBubble } from "./message-bubble";
 import { TypingIndicator } from "./typing-indicator";
 import { CategorySelection } from "./category-selection";
 import { LoadingScreen } from "@/components/ui/loading-screen";
-import { HEORDashboard } from "@/components/dashboard/heor-dashboard";
 import { LandingPage } from "@/components/landing/landing-page";
 import { apiRequest } from "@/lib/queryClient";
 import type { ChatMessage } from "@/types/chat";
@@ -50,7 +49,6 @@ export function SimpleChatInterface({ sessionId, userStatus, onStartChat, hasSta
   const [isSending, setIsSending] = useState(false);
   const [isSelectingCategories, setIsSelectingCategories] = useState(false);
   const [showCategoryLoader, setShowCategoryLoader] = useState(false);
-  const [showDashboard, setShowDashboard] = useState(canShowDashboard);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(userStatus?.selected_categories || []);
   const [isNavigatingToDashboard, setIsNavigatingToDashboard] = useState(false);
   const [showLandingPage, setShowLandingPage] = useState(true);
@@ -66,10 +64,10 @@ export function SimpleChatInterface({ sessionId, userStatus, onStartChat, hasSta
     }
   };
 
-  // Handler for new session without going back to landing page
+  // Handler for new session - navigate to home page
   const handleNewSession = () => {
-    // Navigate to a fresh session without going back to landing page
-    window.location.href = window.location.origin + '?new_session=true';
+    // Navigate to home page with new session parameter
+    window.location.href = '/?new_session=true';
   };
 
 
@@ -77,13 +75,8 @@ export function SimpleChatInterface({ sessionId, userStatus, onStartChat, hasSta
   // Update category selection state when userStatus changes  
   useEffect(() => {
     setShowCategorySelection(!onboardingCompleted);
-    // Only set dashboard if we're not in a timer-controlled state
-    // (Don't override dashboard state set by the 3-second timer)
-    if (!showDashboard) {
-      setShowDashboard(canShowDashboard);
-    }
     setSelectedCategories(userStatus?.selected_categories || []);
-  }, [onboardingCompleted, canShowDashboard, userStatus?.selected_categories, showDashboard]);
+  }, [onboardingCompleted, userStatus?.selected_categories]);
 
   // Load messages on mount and when sessionId changes
   useEffect(() => {
@@ -193,15 +186,15 @@ export function SimpleChatInterface({ sessionId, userStatus, onStartChat, hasSta
         // Check if this response indicates the dashboard should be shown
         if (result.show_dashboard) {
           console.log('Dashboard navigation triggered after expertise validation');
-          // 3-second pause then navigate directly to dashboard
+          // 3-second pause then navigate to dashboard page
           setTimeout(() => {
-            console.log('Setting showDashboard to true after 3 seconds');
-            // Force a user status refresh first, then set dashboard after a brief delay
+            console.log('Navigating to dashboard page after 3 seconds');
+            // Force a user status refresh first, then navigate to dashboard
             window.dispatchEvent(new CustomEvent('refresh-user-status'));
             
-            // Give time for status refresh, then show dashboard
+            // Give time for status refresh, then navigate to dashboard
             setTimeout(() => {
-              setShowDashboard(true);
+              window.location.href = '/dashboard';
             }, 500);
           }, 3000);
         }
@@ -303,20 +296,6 @@ To get started, please select the data categories you'd like to monitor.`,
   // Show dashboard loading screen during transition
   if (isNavigatingToDashboard) {
     return <LoadingScreen message="Setting up your HEOR dashboard..." />;
-  }
-
-  // Show dashboard only if onboarding is completed AND preference_expertise is set
-  console.log('Dashboard render check:', { 
-    showDashboard, 
-    canShowDashboard, 
-    onboardingCompleted, 
-    hasPreferenceExpertise,
-    userStatus: userStatus?.preference_expertise 
-  });
-  
-  if (showDashboard && canShowDashboard) {
-    console.log('Rendering HEOR Dashboard with categories:', selectedCategories);
-    return <HEORDashboard selectedCategories={selectedCategories} sessionId={sessionId} />;
   }
 
   return (
