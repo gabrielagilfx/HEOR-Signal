@@ -74,3 +74,49 @@ class UserService:
             db.commit()
             db.refresh(user)
         return user
+    
+    async def create_authenticated_user(self, db: Session, name: str, email: str, password: str) -> User:
+        """Create a new authenticated user with email and password"""
+        session_id = str(uuid.uuid4())
+        
+        # Create OpenAI Assistant and Thread
+        assistant_id = await self.openai_service.create_assistant()
+        openai_thread_id = await self.openai_service.create_thread()
+        
+        # Create user
+        user = User(
+            session_id=session_id,
+            name=name,
+            email=email,
+            password=password,
+            assistant_id=assistant_id,
+            selected_categories=[],
+            onboarding_completed=False
+        )
+        
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        
+        # Create thread linked to user
+        thread = Thread(
+            user_id=user.id,
+            thread_id=openai_thread_id,
+            title="HEOR Signal Chat",
+            status="active"
+        )
+        
+        db.add(thread)
+        db.commit()
+        db.refresh(thread)
+        
+        return user
+    
+    async def refresh_user_session(self, db: Session, user_id: str) -> User:
+        """Refresh user session (generate new session ID for login)"""
+        user = db.query(User).filter(User.id == user_id).first()
+        if user:
+            user.session_id = str(uuid.uuid4())  # type: ignore
+            db.commit()
+            db.refresh(user)
+        return user

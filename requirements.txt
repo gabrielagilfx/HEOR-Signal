@@ -1,1 +1,3 @@
 python-dateutil
+bcrypt
+email-validator
