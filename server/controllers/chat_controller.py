@@ -57,8 +57,8 @@ async def send_message(
         # Initialize validation result
         validation_result = None
         
-        # Check if user has completed onboarding and needs expertise validation
-        if getattr(user, 'onboarding_completed', False) and not getattr(user, 'preference_expertise', None):
+        # Check if user needs expertise validation (regardless of onboarding status)
+        if not getattr(user, 'preference_expertise', None):
             # Validate expertise using OpenAI
             validation_result = await openai_service.validate_heor_expertise(request.message)
             
@@ -68,13 +68,17 @@ async def send_message(
                     db, str(user.id), request.message
                 )
                 
-                assistant_response = "Perfect! I've validated and saved your expertise. Setting up your personalized HEOR dashboard now..."
+                # If user hasn't selected categories yet, prompt them to do so
+                if not getattr(user, 'onboarding_completed', False):
+                    assistant_response = "Perfect! I've validated and saved your expertise. Now please select the data categories you'd like to monitor from the options below so I can personalize your dashboard."
+                else:
+                    assistant_response = "Perfect! I've validated and saved your expertise. Setting up your personalized HEOR dashboard now..."
             else:
                 # Request valid HEOR expertise
                 assistant_response = validation_result.get("response", 
                     "Please provide your expertise or preference related to Health Economics and Outcomes Research (HEOR) or healthcare.")
         else:
-            # Normal chat processing
+            # Normal chat processing for users who already have expertise saved
             await openai_service.send_message(str(thread.thread_id), request.message)
             assistant_response = await openai_service.run_assistant(
                 str(user.assistant_id), 
@@ -92,7 +96,7 @@ async def send_message(
         db.commit()
         db.refresh(assistant_message)
         
-        # Check if expertise was just saved in this request
+        # Check if expertise was just saved and user has completed full onboarding
         expertise_just_saved = (
             validation_result is not None and
             validation_result.get("is_valid", False) and
