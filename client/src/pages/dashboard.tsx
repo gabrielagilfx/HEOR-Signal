@@ -24,9 +24,15 @@ export default function Dashboard() {
   const initUserMutation = useMutation({
     mutationFn: async () => {
       console.log('Initializing user session for dashboard...');
-      const response = await apiRequest('POST', '/api/user/init', {});
+      // Try to get existing session ID from localStorage
+      const existingSessionId = localStorage.getItem('heor_session_id');
+      const response = await apiRequest('POST', '/api/user/init', {
+        session_id: existingSessionId
+      });
       const data = await response.json();
       console.log('User session initialized for dashboard:', data);
+      // Store session ID in localStorage for persistence
+      localStorage.setItem('heor_session_id', data.session_id);
       return data as UserStatus;
     },
     retry: (failureCount, error) => {
