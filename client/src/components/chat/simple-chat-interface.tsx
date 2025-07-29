@@ -66,8 +66,8 @@ export function SimpleChatInterface({ sessionId, userStatus, onStartChat, hasSta
 
   // Handler for new session - navigate to home page
   const handleNewSession = () => {
-    // Navigate to home page with new session parameter
-    window.location.href = '/?new_session=true';
+    // Navigate to home page without parameters
+    window.location.href = '/';
   };
 
 
