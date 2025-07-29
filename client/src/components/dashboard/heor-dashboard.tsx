@@ -6,6 +6,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { useNewsAgents, UserPreferences, NewsItem } from "@/hooks/useNewsAgents";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAuth } from "@/contexts/auth-context";
+import { useLocation } from "wouter";
+import { LogOut } from "lucide-react";
 import agilLogo from "@assets/Logo Primary_1753368301220.png";
 
 interface DashboardProps {
@@ -171,8 +174,10 @@ const MOCK_NEWS: Record<string, NewsItem[]> = {
   ]
 };
 
-export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps) {
+export default function HEORDashboard({ selectedCategories, sessionId }: DashboardProps) {
   const { newsData, loading, error, fetchPersonalizedNews } = useNewsAgents();
+  const { logout } = useAuth();
+  const [, setLocation] = useLocation();
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
   useEffect(() => {
@@ -202,6 +207,11 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
   const handleNewSession = () => {
     // Navigate to home page with new session parameter
     window.location.href = '/?new_session=true';
+  };
+
+  const handleLogout = () => {
+    logout();
+    setLocation('/');
   };
 
   return (
@@ -246,6 +256,15 @@ export function HEORDashboard({ selectedCategories, sessionId }: DashboardProps)
               >
                 <i className="fas fa-plus mr-2"></i>
                 New Session
+              </Button>
+              <Button 
+                onClick={handleLogout}
+                variant="outline" 
+                size="sm"
+                className="hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
               </Button>
             </div>
           </div>
