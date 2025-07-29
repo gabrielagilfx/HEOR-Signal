@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocation } from "wouter";
-import agilLogo from "@assets/Logo Primary_1753368301220-DP2VvqsV.png";
+import agilLogo from "@assets/Logo Primary_1753368301220.png";
 
 export default function Home() {
   const [, setLocation] = useLocation();

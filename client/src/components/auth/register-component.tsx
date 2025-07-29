@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { apiRequest } from "@/lib/queryClient";
-import agilLogo from "@assets/Logo Primary_1753368301220-DP2VvqsV.png";
+import agilLogo from "@assets/Logo Primary_1753368301220.png";
 
 interface RegisterComponentProps {
   onRegisterSuccess: (userData: any) => void;
