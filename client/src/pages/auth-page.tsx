@@ -1,25 +1,32 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LoginComponent } from "@/components/auth/login-component";
 import { RegisterComponent } from "@/components/auth/register-component";
 import { useLocation } from "wouter";
+import { useAuth } from "@/contexts/auth-context";
 
 export default function AuthPage() {
   const [, setLocation] = useLocation();
+  const { isAuthenticated, userStatus } = useAuth();
   
   // Check URL params for mode
   const urlParams = new URLSearchParams(window.location.search);
   const mode = urlParams.get('mode');
   const [isLogin, setIsLogin] = useState(mode !== 'register');
 
-  const handleAuthSuccess = (userData: any) => {
-    // Redirect based on onboarding status
-    if (userData.onboarding_completed) {
-      // User has completed onboarding, go to dashboard
-      setLocation(`/dashboard?session=${userData.session_id}`);
-    } else {
-      // New user needs onboarding, go to chat
-      setLocation(`/chat?session=${userData.session_id}`);
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && userStatus) {
+      if (userStatus.onboarding_completed) {
+        setLocation('/dashboard');
+      } else {
+        setLocation('/chat');
+      }
     }
+  }, [isAuthenticated, userStatus, setLocation]);
+
+  const handleAuthSuccess = (userData: any) => {
+    // Auth context will handle the redirect automatically
+    // No need for manual navigation here
   };
 
   const handleBackToLanding = () => {

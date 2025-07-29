@@ -1,10 +1,8 @@
-import { useEffect, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { SimpleChatInterface } from "@/components/chat/simple-chat-interface";
-import { apiRequest } from "@/lib/queryClient";
-import { Card, CardContent } from "@/components/ui/card";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import { useLocation } from "wouter";
+import { useAuth } from "@/contexts/auth-context";
 
 interface UserStatus {
   session_id: string;
@@ -15,65 +13,29 @@ interface UserStatus {
 
 export default function ChatPage() {
   const [, setLocation] = useLocation();
-  const [sessionId, setSessionId] = useState<string>("");
-  const [isInitialized, setIsInitialized] = useState<boolean>(false);
-  const [showInitialLoader, setShowInitialLoader] = useState<boolean>(true);
-  const [retryCount, setRetryCount] = useState<number>(0);
-  
-  // Get session ID from URL
-  const urlParams = new URLSearchParams(window.location.search);
-  const urlSessionId = urlParams.get('session');
-  
-  const queryClient = useQueryClient();
+  const { isAuthenticated, userStatus, sessionId, isLoading } = useAuth();
 
-  // Get user status for existing session
-  const { data: userStatus, isLoading: isLoadingStatus } = useQuery<UserStatus>({
-    queryKey: ['/api/user/status', urlSessionId],
-    enabled: !!urlSessionId,
-  });
-
+  // Redirect if not authenticated
   useEffect(() => {
-    if (urlSessionId) {
-      setSessionId(urlSessionId);
-      setIsInitialized(true);
-      setTimeout(() => setShowInitialLoader(false), 1000);
-    } else {
-      // No session ID, redirect to auth
-      setLocation('/auth');
+    if (!isAuthenticated && !isLoading) {
+      setLocation('/auth?mode=register');
     }
-  }, [urlSessionId, setLocation]);
+  }, [isAuthenticated, isLoading, setLocation]);
 
+  // Redirect if user has completed onboarding
   useEffect(() => {
-    // Listen for onboarding completion events
-    if (!sessionId) return;
-    
-    const handleOnboardingCompleted = () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/user/status', sessionId] });
-    };
+    if (isAuthenticated && userStatus?.onboarding_completed) {
+      setLocation('/dashboard');
+    }
+  }, [isAuthenticated, userStatus, setLocation]);
 
-    const handleRefreshUserStatus = () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/user/status', sessionId] });
-    };
+  // Show loading if authenticating or no session
+  if (isLoading || !sessionId) {
+    return <LoadingScreen message="Loading your chat session..." />;
+  }
 
-    const handleMessagesLoaded = () => {
-      if (showInitialLoader) {
-        setTimeout(() => setShowInitialLoader(false), 600);
-      }
-    };
-    
-    window.addEventListener('onboarding-completed', handleOnboardingCompleted);
-    window.addEventListener('refresh-user-status', handleRefreshUserStatus);
-    window.addEventListener('messages-loaded', handleMessagesLoaded);
-    
-    return () => {
-      window.removeEventListener('onboarding-completed', handleOnboardingCompleted);
-      window.removeEventListener('refresh-user-status', handleRefreshUserStatus);
-      window.removeEventListener('messages-loaded', handleMessagesLoaded);
-    };
-  }, [sessionId, queryClient, showInitialLoader]);
-
-  // Show loading screen during initialization
-  if (showInitialLoader || isLoadingStatus || !sessionId) {
+  // Show loading if user status not loaded yet
+  if (!userStatus) {
     return <LoadingScreen message="Loading your chat session..." />;
   }
 

@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/contexts/auth-context";
 import agilLogo from "@assets/Logo Primary_1753368301220.png";
 
 interface LoginComponentProps {
@@ -16,29 +15,19 @@ interface LoginComponentProps {
 export function LoginComponent({ onLoginSuccess, onBackToLanding }: LoginComponentProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  
-  const loginMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest('POST', '/api/auth/login', {
-        email,
-        password
-      });
-      return await response.json();
-    },
-    onSuccess: (data) => {
-      if (data.success) {
-        onLoginSuccess(data);
-      }
-    },
-    onError: (error: any) => {
-      console.error('Login error:', error);
-    }
-  });
+  const { login, isLoading } = useAuth();
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (email && password) {
-      loginMutation.mutate();
+      try {
+        setError(null);
+        await login(email, password);
+        onLoginSuccess({ success: true });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Login failed');
+      }
     }
   };
 
@@ -112,12 +101,10 @@ export function LoginComponent({ onLoginSuccess, onBackToLanding }: LoginCompone
                 />
               </div>
               
-              {loginMutation.error && (
+              {error && (
                 <Alert variant="destructive">
                   <AlertDescription>
-                    {loginMutation.error instanceof Error 
-                      ? loginMutation.error.message 
-                      : 'Invalid email or password'}
+                    {error}
                   </AlertDescription>
                 </Alert>
               )}
@@ -125,9 +112,9 @@ export function LoginComponent({ onLoginSuccess, onBackToLanding }: LoginCompone
               <Button 
                 type="submit" 
                 className="w-full"
-                disabled={loginMutation.isPending || !email || !password}
+                disabled={isLoading || !email || !password}
               >
-                {loginMutation.isPending ? (
+                {isLoading ? (
                   <>
                     <i className="fas fa-spinner fa-spin mr-2"></i>
                     Signing in...

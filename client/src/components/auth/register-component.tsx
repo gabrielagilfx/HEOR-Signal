@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/contexts/auth-context";
 import agilLogo from "@assets/Logo Primary_1753368301220.png";
 
 interface RegisterComponentProps {
@@ -18,34 +17,22 @@ export function RegisterComponent({ onRegisterSuccess, onBackToLanding }: Regist
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  
-  const registerMutation = useMutation({
-    mutationFn: async () => {
-      if (password !== confirmPassword) {
-        throw new Error("Passwords do not match");
-      }
-      
-      const response = await apiRequest('POST', '/api/auth/register', {
-        name,
-        email,
-        password
-      });
-      return await response.json();
-    },
-    onSuccess: (data) => {
-      if (data.success) {
-        onRegisterSuccess(data);
-      }
-    },
-    onError: (error: any) => {
-      console.error('Registration error:', error);
-    }
-  });
+  const { register, isLoading } = useAuth();
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (name && email && password && confirmPassword) {
-      registerMutation.mutate();
+      try {
+        setError(null);
+        if (password !== confirmPassword) {
+          throw new Error("Passwords do not match");
+        }
+        await register(name, email, password);
+        onRegisterSuccess({ success: true });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Registration failed');
+      }
     }
   };
 
@@ -143,12 +130,10 @@ export function RegisterComponent({ onRegisterSuccess, onBackToLanding }: Regist
                 />
               </div>
               
-              {registerMutation.error && (
+              {error && (
                 <Alert variant="destructive">
                   <AlertDescription>
-                    {registerMutation.error instanceof Error 
-                      ? registerMutation.error.message 
-                      : 'Registration failed. Please try again.'}
+                    {error}
                   </AlertDescription>
                 </Alert>
               )}
@@ -156,9 +141,9 @@ export function RegisterComponent({ onRegisterSuccess, onBackToLanding }: Regist
               <Button 
                 type="submit" 
                 className="w-full"
-                disabled={registerMutation.isPending || !name || !email || !password || !confirmPassword}
+                disabled={isLoading || !name || !email || !password || !confirmPassword}
               >
-                {registerMutation.isPending ? (
+                {isLoading ? (
                   <>
                     <i className="fas fa-spinner fa-spin mr-2"></i>
                     Creating Account...
