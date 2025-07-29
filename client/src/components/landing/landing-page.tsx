@@ -15,6 +15,8 @@ export function LandingPage({ onStartChat }: LandingPageProps) {
   };
 
   const handleRegister = () => {
+    // Use sessionStorage to indicate register intent without URL parameters
+    sessionStorage.setItem('authIntent', 'register');
     setLocation('/auth');
   };
   return (
